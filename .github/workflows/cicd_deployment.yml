@@ -168,7 +168,7 @@ jobs:
         #  run: aws s3 cp ./index.html s3://${{ env.BUCKET_NAME }}-${{steps.get_branch_name.outputs.branch_name}}/
           run: |
             echo "Deploying image"
-            IMAGE_NAME=${{ github.event.repository.name }}:1.0.0
+            IMAGE_NAME=${{ github.event.repository.name }}
             docker build . -t $IMAGE_NAME      
             IMAGE_ID=ghcr.io/${{github.repository_owner}}/$IMAGE_NAME
 
@@ -189,7 +189,7 @@ jobs:
           if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false'}}
           run: |
             echo "pushing docker image ${{ steps.docker_image_info.outputs.image_id}}"
-            docker push ghcr.io/pallcorporation/${{ steps.docker_image_info.outputs.image_name}}
+            docker push ghcr.io/pallcorporation/${{ steps.docker_image_info.outputs.image_name}}:latest
 
 
             
