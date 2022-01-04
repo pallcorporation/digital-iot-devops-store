@@ -44,7 +44,7 @@ jobs:
           uses: actions/checkout@v1
           with:
             name: pallcorporation/beer-project-properties
-            ref: refs/heads/
+
 
         - name: Branch name
           id: get_branch_name
