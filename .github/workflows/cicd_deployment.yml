@@ -169,9 +169,9 @@ jobs:
             echo "Deploying image"
             IMAGE_NAME=${{ github.event.repository.name }}:1.0.0
             docker build . -t $IMAGE_NAME
-            echo "${{secrets.GITHUB_TOKEN}}" | docker login https://ghcr.io -u ${{github.actor}} --password-stdin
-            IMAGE_ID=ghcr.io/${{github.repository_owner}}/$IMAGE_NAME:${{github.run_id}}
-            docker push $IMAGE_ID
+            docker login https://ghcr.io -u ${{github.actor}} --password-stdin
+      #      IMAGE_ID=ghcr.io/${{github.repository_owner}}/$IMAGE_NAME:${{github.run_id}}
+      #      docker push $IMAGE_ID
 
     outputs:
       #env_name: ${{ steps.branch_check.outputs.env_id }}tt
