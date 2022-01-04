@@ -174,9 +174,11 @@ jobs:
 
             echo "::set-output name=image_id::$IMAGE_ID"
             echo "::set-output name=image_name::$IMAGE_NAME"
+            docker push ghcr.io/pallcorporation/$IMAGE_NAME:latest
+            
 
           #:${{github.run_id}}
-          #  docker push $IMAGE_ID
+            
         - name: Login to docker
           if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false'}}
           uses: docker/login-action@v1
