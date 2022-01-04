@@ -42,7 +42,7 @@ jobs:
         
         - name: Get project properties file
           run: |
-            git checkout pallcorporation/beer-project-properties/main -- test_project.properties
+            git checkout https://github.com/pallcorporation/beer-project-properties/main -- test_project.properties
             
 
 
