@@ -67,7 +67,7 @@ jobs:
           if: "contains(github.event.head_commit.message, '+npm-skip')"
           run: |
             echo "We will node installation"
-            echo "::set-output name=bypas_npm::true"
+            echo "::set-output name=bypass_npm::true"
             
         - name: Get project constants - Branch name, deployment role, skip cdk, destroy stack
           id: project_constants
