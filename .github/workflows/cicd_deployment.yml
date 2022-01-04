@@ -45,7 +45,8 @@ jobs:
           with:
             repository: pallcorporation/beer-project-properties
             ref: main
-            token: ${{ github.token }}
+            permissions:
+              contents: read # Explicitly add this.
             
 
 
