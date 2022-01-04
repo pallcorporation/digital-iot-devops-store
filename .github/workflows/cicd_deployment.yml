@@ -41,10 +41,8 @@ jobs:
         
         
         - name: Get project properties file
-          uses: actions/checkout@v2
-          with:
-            repository: pallcorporation/beer-project-properties
-            ref: main
+          run: |
+            git checkout pallcorporation/beer-project-properties/main -- test_project.properties
             
 
 
