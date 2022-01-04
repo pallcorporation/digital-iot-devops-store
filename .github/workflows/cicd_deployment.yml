@@ -167,7 +167,7 @@ jobs:
         #  run: aws s3 cp ./index.html s3://${{ env.BUCKET_NAME }}-${{steps.get_branch_name.outputs.branch_name}}/
           run: |
             echo "Deploying image"
-            ${{ github.event.repository.name }}
+            echo ${{ github.event.repository.name }}
     outputs:
       #env_name: ${{ steps.branch_check.outputs.env_id }}tt
       #role_arn: ${{ steps.aws_assume_role.outputs.role_arn1}}
