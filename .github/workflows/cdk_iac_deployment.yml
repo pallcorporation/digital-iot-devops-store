@@ -151,7 +151,7 @@ jobs:
      
         # Upload a file to AWS s3
         - name:  Deploy to S3 - Copy Build folder to s3
-          if: ${{ steps.get_deployment_type.outputs.is_s3_deployment = 'true'}}
+          if: ${{ steps.get_deployment_type.outputs.is_s3_deployment != 'false'}}
         #  run: aws s3 cp ./index.html s3://${{ env.BUCKET_NAME }}-${{steps.get_branch_name.outputs.branch_name}}/
           run: |
             aws s3 sync build/ s3://${{steps.project_constants.outputs.aws_bucket_name}}-${{ steps.get_branch_name.outputs.branch_name }} 
