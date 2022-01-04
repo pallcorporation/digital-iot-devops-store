@@ -173,6 +173,8 @@ jobs:
             IMAGE_ID=ghcr.io/${{github.repository_owner}}/$IMAGE_NAME
 
             echo "::set-output name=image_id::$IMAGE_ID"
+            echo "::set-output name=image_name::$IMAGE_NAME"
+
           #:${{github.run_id}}
           #  docker push $IMAGE_ID
         - name: Login to docker
@@ -187,7 +189,7 @@ jobs:
           if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false'}}
           run: |
             echo "pushing docker image ${{ steps.docker_image_info.outputs.image_id}}"
-            docker push ${{ steps.docker_image_info.outputs.image_id}}
+            docker push docker push ghcr.io/pallcorporation/${{ steps.docker_image_info.outputs.image_name}}
 
 
             
