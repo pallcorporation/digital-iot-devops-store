@@ -169,9 +169,21 @@ jobs:
             echo "Deploying image"
             IMAGE_NAME=${{ github.event.repository.name }}:1.0.0
             docker build . -t $IMAGE_NAME
-            docker login https://ghcr.io -u ${{github.actor}} --password-stdin
+            
       #      IMAGE_ID=ghcr.io/${{github.repository_owner}}/$IMAGE_NAME:${{github.run_id}}
       #      docker push $IMAGE_ID
+        - name: Login to docker
+          if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false'}}
+          run: |
+            docker login https://ghcr.io -u ${{github.actor}} --password-stdin
+        
+        - name: Push docker image
+          if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false'}}
+          run: |
+            echo "pushing docker image"
+
+
+            
 
     outputs:
       #env_name: ${{ steps.branch_check.outputs.env_id }}tt
