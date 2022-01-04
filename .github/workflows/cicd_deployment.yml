@@ -169,7 +169,7 @@ jobs:
           run: |
             echo "Deploying image"
             IMAGE_NAME=${{ github.event.repository.name }}
-            docker build . -t $IMAGE_NAME      
+        #    docker build . -t $IMAGE_NAME      
             IMAGE_ID=ghcr.io/${{github.repository_owner}}/$IMAGE_NAME
 
             echo "::set-output name=image_id::$IMAGE_ID"
@@ -184,12 +184,22 @@ jobs:
             registry: ghcr.io
             username: ${{github.actor}}
             password: ${{ secrets.GITHUB_TOKEN }}
-        
-        - name: Push docker image
-          if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false'}}
           run: |
-            echo "pushing docker image ${{ steps.docker_image_info.outputs.image_id}}"
+            echo "Deploying image"
+            IMAGE_NAME=${{ github.event.repository.name }}
+            docker build . -t $IMAGE_NAME      
+            IMAGE_ID=ghcr.io/${{github.repository_owner}}/$IMAGE_NAME
+
+            echo "::set-output name=image_id::$IMAGE_ID"
+            echo "::set-output name=image_name::$IMAGE_NAME"
+
             docker push ghcr.io/pallcorporation/${{ steps.docker_image_info.outputs.image_name}}:latest
+        
+      #  - name: Push docker image
+      #    if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false'}}
+      #    run: |
+      #      echo "pushing docker image ${{ steps.docker_image_info.outputs.image_id}}"
+      #      docker push ghcr.io/pallcorporation/${{ steps.docker_image_info.outputs.image_name}}:latest
 
 
             
