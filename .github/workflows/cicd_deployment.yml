@@ -38,13 +38,6 @@ jobs:
         
         - name: Git clone the repository
           uses: actions/checkout@v1
-        
-        
-        - name: Get project properties file
-          run: |
-            git checkout https://github.com/pallcorporation/beer-project-properties/main -- test_project.properties
-            
-
 
         - name: Branch name
           id: get_branch_name
