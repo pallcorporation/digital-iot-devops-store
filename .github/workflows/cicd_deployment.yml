@@ -150,7 +150,7 @@ jobs:
 
         - name: Deployment information
           run:
-            echo If "deploy to s3" flag is set to true, then the artifact will be build and deployed to S3 bucket, else an image will be built and pushed to registry.
+            echo If "deploy to s3" flag is set to true, then the artifact will be built and deployed to S3 bucket, else an image will be built and pushed to registry.
         
      
         # Upload a file to AWS s3
