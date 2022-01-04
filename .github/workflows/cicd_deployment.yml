@@ -41,9 +41,11 @@ jobs:
         
         
         - name: Get project properties file
-          uses: actions/checkout@v1
+          uses: actions/checkout@v2
           with:
-            name: pallcorporation/beer-project-properties
+            repository: pallcorporation/beer-project-properties
+            token: ${{ github.token }}
+            
 
 
         - name: Branch name
