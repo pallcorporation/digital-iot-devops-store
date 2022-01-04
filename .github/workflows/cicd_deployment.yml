@@ -38,12 +38,20 @@ jobs:
         
         - name: Git clone the repository
           uses: actions/checkout@v1
+        
+        
+        - name: Get project properties file
+          uses: actions/checkout@v1
+          with:
+            name: pallcorporation/beer-project-properties
+            ref: refs/heads/
 
         - name: Branch name
           id: get_branch_name
           run: |
             echo "##[set-output name=branch_name;]$(echo ${{inputs.branch_name}})"
             echo ${{ steps.get_branch_name.outputs.branch}}
+            ls
         
         - name: Deploy to S3
           id: get_deployment_type
