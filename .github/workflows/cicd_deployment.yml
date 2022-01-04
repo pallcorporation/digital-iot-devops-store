@@ -45,8 +45,6 @@ jobs:
           with:
             repository: pallcorporation/beer-project-properties
             ref: main
-            permissions:
-              contents: read # Explicitly add this.
             
 
 
