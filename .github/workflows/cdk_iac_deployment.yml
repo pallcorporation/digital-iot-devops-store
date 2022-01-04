@@ -37,7 +37,7 @@ jobs:
         - name: Branch name
           id: get_branch_name
           run: |
-            echo "##[set-output name=branch_name;]$(echo ${inputs.branch_name})"
+            echo "##[set-output name=branch_name;]$(echo ${{inputs.branch_name}})"
             echo ${{ steps.get_branch_name.outputs.branch}}
             
         - name: Grant permissions to all files
