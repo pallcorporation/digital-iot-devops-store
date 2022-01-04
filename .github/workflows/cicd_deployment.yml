@@ -144,7 +144,7 @@ jobs:
 
 
         - name: Npm install & npm build
-          if: ${{steps.skip_npm.outputs.bypass_npm !='true'}}
+          if: ${{steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'true'}}
           run: |
             npm install
             npm run build
