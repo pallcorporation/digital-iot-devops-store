@@ -167,9 +167,10 @@ jobs:
         #  run: aws s3 cp ./index.html s3://${{ env.BUCKET_NAME }}-${{steps.get_branch_name.outputs.branch_name}}/
           run: |
             echo "Deploying image"
-            docker build . -t ${{ github.event.repository.name }}:1.0.0
+            IMAGE_NAME=${{ github.event.repository.name }}:1.0.0
+            docker build . -t $IMAGE_NAME
             echo "${{secrets.GITHUB_TOKEN}}" | docker login https://ghcr.io -u ${{github.actor}} --password-stdin
-            IMAGE_ID=ghcr.io/${{github.repository_owner}}/${{ github.event.repository.name }}:${{github.run_id}}
+            IMAGE_ID=ghcr.io/${{github.repository_owner}}/$IMAGE_NAME:${{github.run_id}}
             docker push $IMAGE_ID
 
     outputs:
