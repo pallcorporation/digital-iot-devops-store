@@ -13,6 +13,10 @@ on:
       branch_name:
         required: true
         type: string
+      
+      deploy_to_s3:
+        required: true
+        type: boolean
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -34,11 +38,18 @@ jobs:
         
         - name: Git clone the repository
           uses: actions/checkout@v1
+
         - name: Branch name
           id: get_branch_name
           run: |
             echo "##[set-output name=branch_name;]$(echo ${{inputs.branch_name}})"
             echo ${{ steps.get_branch_name.outputs.branch}}
+        
+        - name: Deploy to S3
+          id: get_deployment_type
+          run: |
+            echo "##[set-output name=is_s3_deployment;]$(echo ${{inputs.deploy_to_s3}})"
+            echo ${{ steps.get_deployment_type.outputs.is_s3_deployment}}
             
         - name: Grant permissions to all files
           run: chmod -R 755 ./
