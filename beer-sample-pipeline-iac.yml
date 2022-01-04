@@ -1,6 +1,4 @@
 name: Beer Frontend IAC
-
-
 on:
   push:
     branches:
