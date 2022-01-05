@@ -170,11 +170,12 @@ jobs:
             echo "Deploying image"
             IMAGE_NAME=${{ github.event.repository.name }}:1.0.0
             docker build . -t $IMAGE_NAME      
-            IMAGE_ID=ghcr.io/${{github.repository_owner}}/$IMAGE_NAME
+            IMAGE_ID=ghcr.io/${{github.repository_owner}}/${{ github.event.repository.name }}/$IMAGE_NAME
 
             echo "::set-output name=image_id::$IMAGE_ID"
             echo "::set-output name=image_name::$IMAGE_NAME"
-            docker push ghcr.io/pallcorporation/$IMAGE_NAME:latest
+      #      docker push ghcr.io/pallcorporation/$IMAGE_NAME:latest
+            docker push $IMAGE_ID
             
 
           #:${{github.run_id}}
