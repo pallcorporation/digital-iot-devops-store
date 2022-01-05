@@ -33,6 +33,9 @@ permissions:
 jobs:  
   CommitAutomation:
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
     #needs: FindAWSAccount
     steps:
         
@@ -172,24 +175,22 @@ jobs:
               
             IMAGE_ID=ghcr.io/${{github.repository_owner}}/${{ github.event.repository.name }}/$IMAGE_NAME
             docker build . -t $IMAGE_ID    
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{github.actor}} --password-stdin
             echo "::set-output name=image_id::$IMAGE_ID"
             echo "::set-output name=image_name::$IMAGE_NAME"
-            docker push $IMAGE_ID
       #      docker push $IMAGE_ID            
   
-        #- name: Login to docker
-        #  if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false'}}
-        #  uses: docker/login-action@v1
-        #  with:
-        #    registry: ghcr.io
-        #    username: ${{github.actor}}
-        #    password: ${{ secrets.GITHUB_TOKEN }}
-          
+        - name: Login to docker
+          if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false'}}
+          uses: docker/login-action@v1
+          with:
+            registry: ghcr.io
+            username: ${{github.actor}}
+            password: ${{ secrets.GITHUB_TOKEN }}
+            
         
-      #  - name: Push docker image test
-      #    if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false'}}
-      #    run: docker push ${{ steps.docker_image_info.outputs.image_id}}
+        - name: Push docker image test
+          if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false'}}
+          run: docker push ${{ steps.docker_image_info.outputs.image_id}}
      #      docker push ghcr.io/pallcorporation/${{ steps.docker_image_info.outputs.image_name}}
 
 
