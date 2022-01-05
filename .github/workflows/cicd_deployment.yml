@@ -137,8 +137,7 @@ jobs:
         - name: Destroying stack if required
           if: ${{steps.check_cdk.outputs.cdk_found == 'true' && steps.project_constants.outputs.cdk_destroy_stack == 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
           run: |
-            
-            yes | cdk destroy --all --require-approval never --role-arn ${{ steps.project_constants.outputs.cdk_deploy }}
+            yes | cdk destroy --all --require-approval never --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
           working-directory: cdk
         
         - name: Setup node.js environment
@@ -162,7 +161,7 @@ jobs:
         #  run: aws s3 cp ./index.html s3://${{ env.BUCKET_NAME }}-${{steps.get_branch_name.outputs.branch_name}}/
           run: |
             aws s3 sync build/ s3://${{steps.project_constants.outputs.aws_bucket_name}}-${{ steps.get_branch_name.outputs.branch_name }} 
-        
+            aws cloudfront create-invalidation --distribution-id E3OHLZRK2JR8FV --paths '/*'
         # Build & deploy docker image
         - name:  Build image and deploy to registry
           id: docker_image_info
