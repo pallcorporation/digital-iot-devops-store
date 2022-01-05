@@ -171,10 +171,13 @@ jobs:
           run: |
             echo "Deploying image"
             IMAGE_VERSION=1.0.1
-            IMAGE_ID=ghcr.io/${{github.repository_owner}}/${{ github.event.repository.name }}:$IMAGE_VERSION
-            docker build . -t $IMAGE_ID    
-            echo "::set-output name=image_id::$IMAGE_ID"
-      #      docker push $IMAGE_ID            
+            GHCR_IMAGE_ID=ghcr.io/${{github.repository_owner}}/${{ github.event.repository.name }}:$IMAGE_VERSION
+            docker build . -t $GHCR_IMAGE_ID    
+            echo "::set-output name=ghcr_image_id::$GHCR_IMAGE_ID"
+
+            LOCAL_IMAGE_ID=${{ github.event.repository.name }}:$IMAGE_VERSION
+            docker build . -t $LOCAL_IMAGE_ID
+            echo "::set-output name=local_image_id::$LOCAL_IMAGE_ID"   
   
         - name: Login to docker
           if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false'}}
@@ -185,10 +188,15 @@ jobs:
             password: ${{ secrets.GITHUB_TOKEN }}
             
         
-        - name: Push docker image test
+        #- name: Push docker image to GHCR
+        #  if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false'}}
+        #  run: docker push ${{ steps.docker_image_info.outputs.ghcr_image_id}}
+        
+        - name: Update function with new image built
           if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false'}}
-          run: docker push ${{ steps.docker_image_info.outputs.image_id}}
-     #      docker push ghcr.io/pallcorporation/${{ steps.docker_image_info.outputs.image_name}}
+          run: |
+            echo "Deploying ${{ steps.docker_image_info.outputs.local_image_id}}"
+      #      aws lambda update-function-code --region us-east-1 --function-name my-function --image-uri ${{ steps.docker_image_info.outputs.ghcr_image_id}}
 
 
             
