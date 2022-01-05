@@ -163,7 +163,7 @@ jobs:
           run: |
             aws s3 sync build/ s3://${{steps.project_constants.outputs.aws_bucket_name}}-${{ steps.get_branch_name.outputs.branch_name }} 
         
-        # Upload a file to AWS s3
+        # Build & deploy docker image
         - name:  Build image and deploy to registry
           id: docker_image_info
           if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false'}}
