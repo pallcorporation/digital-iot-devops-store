@@ -170,7 +170,7 @@ jobs:
         #  run: aws s3 cp ./index.html s3://${{ env.BUCKET_NAME }}-${{steps.get_branch_name.outputs.branch_name}}/
           run: |
             echo "Deploying image"
-            IMAGE_VERSION=1.0.0
+            IMAGE_VERSION=1.0.1
             IMAGE_ID=ghcr.io/${{github.repository_owner}}/${{ github.event.repository.name }}:$IMAGE_VERSION
             docker build . -t $IMAGE_ID    
             echo "::set-output name=image_id::$IMAGE_ID"
