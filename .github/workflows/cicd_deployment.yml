@@ -174,7 +174,7 @@ jobs:
 
             echo "::set-output name=image_id::$IMAGE_ID"
             echo "::set-output name=image_name::$IMAGE_NAME"
-            docker push $IMAGE_ID            
+      #      docker push $IMAGE_ID            
   
         - name: Login to docker
           if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false'}}
@@ -184,11 +184,11 @@ jobs:
             username: ${{github.actor}}
             password: ${{ secrets.GITHUB_TOKEN }}
         
-        #- name: Push docker image test
-        #  if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false'}}
-        #  run: |
-        #    echo "pushing docker image ${{ steps.docker_image_info.outputs.image_id}}"
-        #    docker push ghcr.io/pallcorporation/${{ steps.docker_image_info.outputs.image_name}}
+        - name: Push docker image test
+          if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false'}}
+          run: |
+        #    echo "${{ steps.docker_image_info.outputs.image_id}}"
+     #      docker push ghcr.io/pallcorporation/${{ steps.docker_image_info.outputs.image_name}}
 
 
             
