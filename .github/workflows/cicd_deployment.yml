@@ -186,8 +186,7 @@ jobs:
         
         - name: Push docker image test
           if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false'}}
-          run: |
-        #    echo "${{ steps.docker_image_info.outputs.image_id}}"
+          run: echo ${{ steps.docker_image_info.outputs.image_id}} where am i
      #      docker push ghcr.io/pallcorporation/${{ steps.docker_image_info.outputs.image_name}}
 
 
