@@ -18,6 +18,9 @@ on:
         required: true
         type: boolean
 
+      testing_cdk:
+        type: boolean
+
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -53,6 +56,12 @@ jobs:
           run: |
             echo "##[set-output name=is_s3_deployment;]$(echo ${{inputs.deploy_to_s3}})"
             echo ${{ steps.get_deployment_type.outputs.is_s3_deployment}}
+
+        - name: Testing CDK
+          id: skip_everything
+          run: |
+            echo "##[set-output name=skip_everything1;]$(echo ${{inputs.testing_cdk}})"
+            echo ${{ steps.skip_everything.outputs.skip_everything1}}
             
         - name: Grant permissions to all files
           run: chmod -R 755 ./
@@ -155,7 +164,7 @@ jobs:
 
 
         - name: Npm install & npm build
-          if: ${{steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'true' && steps.project_constants.outputs.cdk_destroy_stack != 'true'}}
+          if: ${{steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'true' && steps.project_constants.outputs.cdk_destroy_stack != 'true'}}
           run: |
             npm install
             npm run build
@@ -167,20 +176,20 @@ jobs:
      
         # Upload a file to AWS s3
         - name:  Deploy to S3 - Copy Build folder to s3
-          if: ${{ steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'true' && steps.project_constants.outputs.cdk_destroy_stack != 'true' }}
+          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'true' && steps.project_constants.outputs.cdk_destroy_stack != 'true' }}
         #  run: aws s3 cp ./index.html s3://${{ env.BUCKET_NAME }}-${{steps.get_branch_name.outputs.branch_name}}/
           run: |
             aws s3 sync build/ s3://${{steps.project_constants.outputs.aws_bucket_name}}-${{ steps.get_branch_name.outputs.branch_name }} 
       #     aws cloudfront create-invalidation --distribution-id E3OHLZRK2JR8FV --paths '/*'
         # Build & deploy docker image
         - name: Invalidate cloudfront cache
-          if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'true' && steps.project_constants.outputs.cdk_destroy_stack != 'true' }}
+          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.is_s3_deployment == 'true' && steps.project_constants.outputs.cdk_destroy_stack != 'true' }}
           run: |
             aws cloudfront create-invalidation --distribution-id ${{steps.project_constants.outputs.aws_cloud_front_id}}  --paths '/*'
 
         - name:  Build image and deploy to registry
           id: docker_image_info
-          if: ${{ steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'false' && steps.project_constants.outputs.cdk_destroy_stack != 'true'}}
+          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'false' && steps.project_constants.outputs.cdk_destroy_stack != 'true'}}
 
           run: |
             echo "Deploying image"
@@ -194,7 +203,7 @@ jobs:
             echo "::set-output name=local_image_id::$LOCAL_IMAGE_ID"   
   
         - name: Login to docker
-          if: ${{ steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'false' && steps.project_constants.outputs.cdk_destroy_stack != 'true'}}
+          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'false' && steps.project_constants.outputs.cdk_destroy_stack != 'true'}}
           uses: docker/login-action@v1
           with:
             registry: ghcr.io
@@ -207,7 +216,7 @@ jobs:
         #  run: docker push ${{ steps.docker_image_info.outputs.ghcr_image_id}}
         
         - name: Update function with new image built
-          if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false' && steps.project_constants.outputs.cdk_destroy_stack != 'true'}}
+          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.is_s3_deployment == 'false' && steps.project_constants.outputs.cdk_destroy_stack != 'true'}}
           run: |
             echo "Deploying ${{ steps.docker_image_info.outputs.local_image_id}}"
       #      aws lambda update-function-code --region us-east-1 --function-name my-function --image-uri ${{ steps.docker_image_info.outputs.ghcr_image_id}}
