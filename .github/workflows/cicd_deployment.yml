@@ -64,7 +64,7 @@ jobs:
             echo "We will skip cdk execution"
             echo "::set-output name=bypass_cdk::true"
         
-        - name: Read if to skip cdk deployment based on commit message
+        - name: Read if to skip npm build & deployment based on commit message
           id: skip_npm
           if: "contains(github.event.head_commit.message, '+npm-skip')"
           run: |
