@@ -70,6 +70,13 @@ jobs:
           run: |
             echo "We will node installation"
             echo "::set-output name=bypass_npm::true"
+        
+        - name: Read if to skip image build & deployment based on commit message
+          id: skip_dk_build
+          if: "contains(github.event.head_commit.message, '+image-skip')"
+          run: |
+            echo "We will node installation"
+            echo "::set-output name=bypass_dk_build::true"
             
         - name: Get project constants - Branch name, deployment role, skip cdk, destroy stack
           id: project_constants
@@ -173,7 +180,7 @@ jobs:
 
         - name:  Build image and deploy to registry
           id: docker_image_info
-          if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false' && steps.project_constants.outputs.cdk_destroy_stack != 'true'}}
+          if: ${{ steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'false' && steps.project_constants.outputs.cdk_destroy_stack != 'true'}}
 
           run: |
             echo "Deploying image"
@@ -187,7 +194,7 @@ jobs:
             echo "::set-output name=local_image_id::$LOCAL_IMAGE_ID"   
   
         - name: Login to docker
-          if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false' && steps.project_constants.outputs.cdk_destroy_stack != 'true'}}
+          if: ${{ steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'false' && steps.project_constants.outputs.cdk_destroy_stack != 'true'}}
           uses: docker/login-action@v1
           with:
             registry: ghcr.io
