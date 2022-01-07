@@ -84,12 +84,17 @@ jobs:
         #    mkdir $pf_dir 
         #    chmod 777 $pf_dir
         #    git clone https://${{ secrets.BEER_PROJECT_PROPERTIES }}:x-oauth-basic@github.com/${{env.ORGANIZATION}}/${{env.PROJECT_FILES_GIT}} $pf_dir
+        
+        - name: Make project files directory
+          run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
+
         - name: Project files clone
           uses: actions/checkout@v2
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-project-properties
             ref: main
+            path: ${{env.PROJECT_FILES_DIRECTORY}}
         
         # Grant permissions to all files in directory
         - name: Grant permissions to all files
@@ -122,6 +127,7 @@ jobs:
 
             cloud_front_id="`grep aws_${{ steps.get_branch_name.outputs.branch_name }}_cloudfront_id ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
             echo "::set-output name=aws_cloud_front_id::${cloud_front_id}"
+          working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
 
         
         
