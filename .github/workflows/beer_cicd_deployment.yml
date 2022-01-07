@@ -99,6 +99,14 @@ jobs:
         - name: Grant permissions to all files
           run: chmod -R 755 ./  
         
+        # Get branch name to use for look up
+        - name: Branch name
+          id: get_branch_name
+          run: |
+            echo "##[set-output name=branch_name;]$(echo ${{inputs.branch_name}})"
+            echo ${{ steps.get_branch_name.outputs.branch}}
+            ls
+        
         # Read of project files and set to variables
         - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
           id: project_constants
@@ -118,13 +126,7 @@ jobs:
             cloud_front_id="`grep aws_${{ steps.get_branch_name.outputs.branch_name }}_cloudfront_id $pf_files|cut -d'=' -f2`"
             echo "::set-output name=aws_cloud_front_id::${cloud_front_id}"
 
-        # Get branch name to use for look up
-        - name: Branch name
-          id: get_branch_name
-          run: |
-            echo "##[set-output name=branch_name;]$(echo ${{inputs.branch_name}})"
-            echo ${{ steps.get_branch_name.outputs.branch}}
-            ls
+        
         
         # Get deployment type
         - name: Deploy to S3
