@@ -82,7 +82,7 @@ jobs:
             mkdir $pf_dir 
             chmod 777 $pf_dir
             git clone https://${{ secrets.BEER_PROJECT_PROPERTIES }}:x-oauth-basic@github.com/${{env.ORGANIZATION}}/${{env.PROJECT_FILES_GIT}} $pf_dir
-
+            
         # Grant permissions to all files in directory
         - name: Grant permissions to all files
           run: chmod -R 755 ./  
