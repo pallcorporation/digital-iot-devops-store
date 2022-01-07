@@ -22,6 +22,7 @@ on:
       
       destroy_stack:
         type: boolean
+        default: false
 
       deployment_type:
         type: string
@@ -201,20 +202,19 @@ jobs:
               echo "Installing config files in ${DIR}..."
               echo "::set-output name=cdk_found::true"
             fi
+        # Node installation (if required)
+        - name: Setup node.js environment
+          uses: actions/setup-node@v2.1.2
 
         # If CDK found flag is true, install AWS cdk & requirements.txt
         - name: Install CDK if found to exist
           if: ${{steps.check_cdk.outputs.cdk_found == 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
+          #sudo apt update -y
+          # sudo apt install nodejs npm -y
           run: | 
             chmod -R 755 cdk
-            sudo apt update -y
-            sudo apt install nodejs npm -y
             sudo npm install -g aws-cdk
             pip3 install -r cdk/requirements.txt
-        
-        # Node installation (if required)
-        - name: Setup node.js environment
-          uses: actions/setup-node@v2.1.2
         
         # Installing npm
         - name: Npm install & npm build
@@ -228,10 +228,7 @@ jobs:
         
         # Destroy AWS IAC cdk stack if advised
         - name: Destroying stack if required
-          if: | 
-            ${{steps.check_cdk.outputs.cdk_found == 'true' && 
-            steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack == 'true' && 
-            steps.skip_cdk.outputs.bypass_cdk !='true'}}
+          if: ${{steps.check_cdk.outputs.cdk_found == 'true' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack == 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
           run: |
             yes | cdk destroy --all --require-approval never --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
           working-directory: cdk
@@ -267,10 +264,7 @@ jobs:
 
         # Upload a file to AWS s3
         - name:  Deploy to S3 - Copy Build folder to s3
-          if: |
-            ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && 
-            steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'true' && 
-            steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
+          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'true' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
           run: |
             aws s3 sync build/ s3://${{steps.project_constants.outputs.aws_bucket_name}}-${{ steps.get_branch_name.outputs.branch_name }} 
       #     aws cloudfront create-invalidation --distribution-id E3OHLZRK2JR8FV --paths '/*'
@@ -282,11 +276,7 @@ jobs:
 
         - name:  Build image and deploy to registry
           id: docker_image_info
-          if: |
-            ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && 
-            steps.skip_dk_build.outputs.bypass_dk_build !='true' && 
-            steps.get_deployment_type.outputs.is_s3_deployment == 'false' && 
-            steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
+          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'false' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
 
           run: |
             echo "Deploying image"
