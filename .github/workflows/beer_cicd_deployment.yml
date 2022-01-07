@@ -122,6 +122,7 @@ jobs:
             
             aws_bucket="`grep aws_frontend_bucket $pf_files|cut -d'=' -f2`"
             echo "::set-output name=aws_bucket_name::${aws_bucket}"
+            echo $aws_bucket
 
             cloud_front_id="`grep aws_${{ steps.get_branch_name.outputs.branch_name }}_cloudfront_id $pf_files|cut -d'=' -f2`"
             echo "::set-output name=aws_cloud_front_id::${cloud_front_id}"
