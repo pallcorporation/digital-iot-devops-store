@@ -215,6 +215,7 @@ jobs:
             chmod -R 755 cdk
             sudo npm install -g aws-cdk
             pip3 install -r cdk/requirements.txt
+            cp ${{env.PROJECT_FILES_DIRECTORY}}/${{env.PROJECT_FILES_NAME}} .
         
         # Installing npm
         - name: Npm install & npm build
