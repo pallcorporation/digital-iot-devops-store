@@ -8,7 +8,7 @@ on:
 
 jobs:
   cicd-deployment:
-    uses: pallcorporation/digital-iot-devops-store/.github/workflows/cicd_deployment.yml@main
+    uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_cicd_deployment.yml@main
     with:
       branch_name: ${GITHUB_REF#refs/heads/}
       deploy_to_s3: false
