@@ -1,4 +1,3 @@
-# This is a basic workflow to help you get started with Actions
 name: CI
 
 # Controls when the workflow will run
@@ -20,6 +19,12 @@ on:
 
       testing_cdk:
         type: boolean
+      
+      destroy_stack:
+        type: boolean
+
+      deployment_type:
+        type: string
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -27,6 +32,14 @@ on:
 env:
   #BUCKET_NAME : "github-oidc-test-mitch"
   AWS_REGION : "us-east-1"
+  PROJECT_FILES_GIT : "beer-project-properties.git"
+  ORGANIZATION: "pallcorporation"
+  PROJECT_FILES_NAME: "project.properties"
+  PROJECT_FILES_DIRECTORY: "project_file"
+  IMAGE_REGISTRY: "ghcr.io"
+  IMAGE_REGISTRY_USERNAME: ${{github.actor}}
+  IMAGE_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
 
 permissions:
       id-token: write
@@ -40,10 +53,60 @@ jobs:
       
     #needs: FindAWSAccount
     steps:
+        # Get current time stamp to use as reference elsewhere
+        - name: Get current date
+          id: date
+          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+
+        - name: Login to docker
+          if: |
+            ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && 
+            steps.skip_dk_build.outputs.bypass_dk_build !='true' && 
+            steps.get_deployment_type.outputs.is_s3_deployment == 'false' && 
+            steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
+          uses: docker/login-action@v1
+          with:
+            registry: ${{env.IMAGE_REGISTRY}}
+            username: ${{env.IMAGE_REGISTRY_USERNAME}}
+            password: ${{env.IMAGE_REGISTRY_TOKEN}}
         
+        # Clone repositories prior to work
         - name: Git clone the repository
           uses: actions/checkout@v1
+        
+        # Get project files
+        - name: Project files fetch
+          run: |
+            export pf_dir=${{env.PROJECT_FILES_DIRECTORY}}
+            export pf_files=$pf_dir/${{env.PROJECT_FILES_NAME}}
+            mkdir $pf_dir 
+            chmod 777 $pf_dir
+            git clone https://${{ secrets.BEER_PROJECT_PROPERTIES }}:x-oauth-basic@github.com/${{env.ORGANIZATION}}/${{env.PROJECT_FILES_GIT}} $pf_dir
 
+        # Grant permissions to all files in directory
+        - name: Grant permissions to all files
+          run: chmod -R 755 ./  
+        
+        # Read of project files and set to variables
+        - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
+          id: project_constants
+          run: |
+            account_id="`grep aws_${{ steps.get_branch_name.outputs.branch_name }}_account $pf_files|cut -d'=' -f2`"
+            echo "::set-output name=env_id::${account_id}"
+            
+            oidc_role_name="`grep aws_${{ steps.get_branch_name.outputs.branch_name }}_oidc_role_name $pf_files|cut -d'=' -f2`"
+            echo "::set-output name=oidc_role::${oidc_role_name}"
+
+            cdk_deploy_role_arn="`grep aws_${{ steps.get_branch_name.outputs.branch_name }}_cdk_deployment_role $pf_files|cut -d'=' -f2`"
+            echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
+            
+            aws_bucket="`grep aws_frontend_bucket $pf_files|cut -d'=' -f2`"
+            echo "::set-output name=aws_bucket_name::${aws_bucket}"
+
+            cloud_front_id="`grep aws_${{ steps.get_branch_name.outputs.branch_name }}_cloudfront_id $pf_files|cut -d'=' -f2`"
+            echo "::set-output name=aws_cloud_front_id::${cloud_front_id}"
+
+        # Get branch name to use for look up
         - name: Branch name
           id: get_branch_name
           run: |
@@ -51,21 +114,22 @@ jobs:
             echo ${{ steps.get_branch_name.outputs.branch}}
             ls
         
+        # Get deployment type
         - name: Deploy to S3
           id: get_deployment_type
           run: |
             echo "##[set-output name=is_s3_deployment;]$(echo ${{inputs.deploy_to_s3}})"
             echo ${{ steps.get_deployment_type.outputs.is_s3_deployment}}
-
-        - name: Testing CDK
-          id: skip_everything
+        
+        # Read if to destroy stack from input
+        - name: Destroy CDK Stack
+          id: get_cdk_destroy_stack
           run: |
-            echo "##[set-output name=skip_everything1;]$(echo ${{inputs.testing_cdk}})"
-            echo ${{ steps.skip_everything.outputs.skip_everything1}}
-            
-        - name: Grant permissions to all files
-          run: chmod -R 755 ./
-
+            echo "##[set-output name=cdk_destroy_stack;]$(echo ${{inputs.destroy_stack}})"
+            echo ${{ steps.get_cdk_destroy_stack.outputs.branch}}
+            ls
+        
+        # Read commit message and determine if to skip cdk work
         - name: Read if to skip cdk deployment based on commit message
           id: skip_cdk
           if: "contains(github.event.head_commit.message, '+cdk-skip')"
@@ -73,6 +137,7 @@ jobs:
             echo "We will skip cdk execution"
             echo "::set-output name=bypass_cdk::true"
         
+        # Read commit message and determine if to skip npm work
         - name: Read if to skip npm build & deployment based on commit message
           id: skip_npm
           if: "contains(github.event.head_commit.message, '+npm-skip')"
@@ -80,39 +145,35 @@ jobs:
             echo "We will node installation"
             echo "::set-output name=bypass_npm::true"
         
+        # Read commit message and determine if to skip docker work
         - name: Read if to skip image build & deployment based on commit message
           id: skip_dk_build
           if: "contains(github.event.head_commit.message, '+image-skip')"
           run: |
             echo "We will node installation"
             echo "::set-output name=bypass_dk_build::true"
-            
-        - name: Get project constants - Branch name, deployment role, skip cdk, destroy stack
-          id: project_constants
+        
+        # ***JUST FOR TESTING MITCH***
+        - name: Testing CDK
+          id: skip_everything
           run: |
-            account_id="`grep aws_${{ steps.get_branch_name.outputs.branch_name }}_account project.properties|cut -d'=' -f2`"
-            echo "::set-output name=env_id::${account_id}"
-            
-            oidc_role_name="`grep aws_${{ steps.get_branch_name.outputs.branch_name }}_oidc_role_name project.properties|cut -d'=' -f2`"
-            echo "::set-output name=oidc_role::${oidc_role_name}"
+            echo "##[set-output name=skip_everything1;]$(echo ${{inputs.testing_cdk}})"
+            echo ${{ steps.skip_everything.outputs.skip_everything1}}
 
-            cdk_deploy_role_arn="`grep aws_${{ steps.get_branch_name.outputs.branch_name }}_cdk_deployment_role project.properties|cut -d'=' -f2`"
-            echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
-
-            destroy_stack_var="`grep cdk_destroy_stack project.properties|cut -d'=' -f2`"
-            echo "::set-output name=cdk_destroy_stack::${destroy_stack_var}"
-            
-            aws_bucket="`grep aws_frontend_bucket project.properties|cut -d'=' -f2`"
-            echo "::set-output name=aws_bucket_name::${aws_bucket}"
-
-            cloud_front_id="`grep aws_${{ steps.get_branch_name.outputs.branch_name }}_cloudfront_id project.properties|cut -d'=' -f2`"
-            echo "::set-output name=aws_cloud_front_id::${cloud_front_id}"
-                        
+        # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
         - name: Arn to use
           id: aws_assume_role
           run: |
             echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
-          
+      
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@master
+          with:
+            role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
+            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            aws-region: ${{ env.AWS_REGION }}
+        
+        # Check if CDK directory exists, if Yes, set found flag to true
         - name: Check if CDK exists
           id: check_cdk
           run: |
@@ -124,22 +185,50 @@ jobs:
               echo "::set-output name=cdk_found::true"
             fi
 
-        - name: Configure AWS credentials
-          uses: aws-actions/configure-aws-credentials@master
-          with:
-            role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
-            role-session-name: samplerolesession
-            aws-region: ${{ env.AWS_REGION }}
-
-        - name: Run CDK if found to exist
+        # If CDK found flag is true, install AWS cdk & requirements.txt
+        - name: Install CDK if found to exist
           if: ${{steps.check_cdk.outputs.cdk_found == 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
           run: | 
-            echo "Value of cdk found is ${{steps.check_cdk.outputs.cdk_found}}"
             chmod -R 755 cdk
-            cdk/cdk_installation.sh
+            sudo apt update -y ^ sudo apt install nodejs npm -y
+            sudo npm install -g aws-cdk
+            pip3 install -r cdk/requirements.txt
+        
+        # Node installation (if required)
+        - name: Setup node.js environment
+          uses: actions/setup-node@v2.1.2
+        
+        # Installing npm
+        - name: Npm install & npm build
+          if: | 
+            ${{steps.skip_everything.outputs.skip_everything1 != 'true' && 
+            steps.skip_npm.outputs.bypass_npm !='true' && 
+            steps.get_deployment_type.outputs.is_s3_deployment == 'true' && 
+            steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
+          run: |
+            npm install
+        
+        # Destroy AWS IAC cdk stack if advised
+        - name: Destroying stack if required
+          if: | 
+            ${{steps.check_cdk.outputs.cdk_found == 'true' && 
+            steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack == 'true' && 
+            steps.skip_cdk.outputs.bypass_cdk !='true'}}
+          run: |
+            yes | cdk destroy --all --require-approval never --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
+          working-directory: cdk
 
-        - name: Running cdk synth && deploy
-          if: ${{steps.check_cdk.outputs.cdk_found == 'true' && steps.project_constants.outputs.cdk_destroy_stack != 'true' && steps.skip_cdk.outputs.bypass_cdk !='true' }}
+        
+        
+        # *****************PROJECT SPECIFIC ELEMENTS*****************
+
+        # AWS IAC cdk deployment
+        # Role to deploy as in defined in project.properties file
+        - name: Running cdk deploy
+          if: |
+            ${{steps.check_cdk.outputs.cdk_found == 'true' && 
+            steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && 
+            steps.skip_cdk.outputs.bypass_cdk !='true' }}
           run: |
             echo "We will run cdk deploy --all --require-approval never --role-arn ${{ steps.project_constants.outputs.cdk_deploy }}"
             cdk deploy \
@@ -147,49 +236,39 @@ jobs:
             --require-approval never \
             --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
           working-directory: cdk
-        
-        - name: Deployment bucket
-          id: deployment_bucket
+    
+        # Building npm ahead of deployment
+        - name: NPM build prior to deployment
+          if: | 
+            ${{steps.skip_everything.outputs.skip_everything1 != 'true' && 
+            steps.skip_npm.outputs.bypass_npm !='true' && 
+            steps.get_deployment_type.outputs.is_s3_deployment == 'true' && 
+            steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
           run: |
-            echo "${{steps.project_constants.outputs.aws_bucket_name}} is the name of the bucket"
-        
-        - name: Destroying stack if required
-          if: ${{steps.check_cdk.outputs.cdk_found == 'true' && steps.project_constants.outputs.cdk_destroy_stack == 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
-          run: |
-            yes | cdk destroy --all --require-approval never --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
-          working-directory: cdk
-        
-        - name: Setup node.js environment
-          uses: actions/setup-node@v2.1.2
-
-
-        - name: Npm install & npm build
-          if: ${{steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'true' && steps.project_constants.outputs.cdk_destroy_stack != 'true'}}
-          run: |
-            npm install
             npm run build
 
-        - name: Deployment information
-          run:
-            echo If "deploy to s3" flag is set to true, then the artifact will be built and deployed to S3 bucket, else an image will be built and pushed to registry.
-        
-     
         # Upload a file to AWS s3
         - name:  Deploy to S3 - Copy Build folder to s3
-          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'true' && steps.project_constants.outputs.cdk_destroy_stack != 'true' }}
-        #  run: aws s3 cp ./index.html s3://${{ env.BUCKET_NAME }}-${{steps.get_branch_name.outputs.branch_name}}/
+          if: |
+            ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && 
+            steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'true' && 
+            steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
           run: |
             aws s3 sync build/ s3://${{steps.project_constants.outputs.aws_bucket_name}}-${{ steps.get_branch_name.outputs.branch_name }} 
       #     aws cloudfront create-invalidation --distribution-id E3OHLZRK2JR8FV --paths '/*'
         # Build & deploy docker image
         - name: Invalidate cloudfront cache
-          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.is_s3_deployment == 'true' && steps.project_constants.outputs.cdk_destroy_stack != 'true' }}
+          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.is_s3_deployment == 'true' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
           run: |
             aws cloudfront create-invalidation --distribution-id ${{steps.project_constants.outputs.aws_cloud_front_id}}  --paths '/*'
 
         - name:  Build image and deploy to registry
           id: docker_image_info
-          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'false' && steps.project_constants.outputs.cdk_destroy_stack != 'true'}}
+          if: |
+            ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && 
+            steps.skip_dk_build.outputs.bypass_dk_build !='true' && 
+            steps.get_deployment_type.outputs.is_s3_deployment == 'false' && 
+            steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
 
           run: |
             echo "Deploying image"
@@ -202,13 +281,7 @@ jobs:
             docker build . -t $LOCAL_IMAGE_ID
             echo "::set-output name=local_image_id::$LOCAL_IMAGE_ID"   
   
-        - name: Login to docker
-          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'false' && steps.project_constants.outputs.cdk_destroy_stack != 'true'}}
-          uses: docker/login-action@v1
-          with:
-            registry: ghcr.io
-            username: ${{github.actor}}
-            password: ${{ secrets.GITHUB_TOKEN }}
+        
             
         
         #- name: Push docker image to GHCR
@@ -216,23 +289,7 @@ jobs:
         #  run: docker push ${{ steps.docker_image_info.outputs.ghcr_image_id}}
         
         - name: Update function with new image built
-          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.is_s3_deployment == 'false' && steps.project_constants.outputs.cdk_destroy_stack != 'true'}}
+          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.is_s3_deployment == 'false' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
           run: |
             echo "Deploying ${{ steps.docker_image_info.outputs.local_image_id}}"
       #      aws lambda update-function-code --region us-east-1 --function-name my-function --image-uri ${{ steps.docker_image_info.outputs.ghcr_image_id}}
-
-
-            
-
-    outputs:
-      #env_name: ${{ steps.branch_check.outputs.env_id }}tt
-      #role_arn: ${{ steps.aws_assume_role.outputs.role_arn1}}
-      cdk_check: ${{ steps.check_cdk.outputs.cdk_found}}
-      env_name: ${{ steps.project_constants.outputs.env_id }}
-      oidc_role: ${{ steps.project_constants.outputs.oidc_role}}
-      skip_cdk: ${{ steps.skip_cdk.outputs.bypass_cdk}}
-      cdk_deploy_name: ${{ steps.project_constants.outputs.cdk_deploy}}
-      cdk_destroy_stack_bool: ${{ steps.project_constants.outputs.cdk_destroy_stack}}
-      role_arn: ${{ steps.aws_assume_role.outputs.role_arn1}}
-      branch_name: ${{ steps.get_branch_name.outputs.branch_name}}
-      aws_upload_bucket: ${{steps.project_constants.outputs.aws_bucket_name}}
