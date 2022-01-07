@@ -270,10 +270,10 @@ jobs:
             aws s3 sync build/ s3://${{steps.project_constants.outputs.aws_bucket_name}}-${{ steps.get_branch_name.outputs.branch_name }} 
       #     aws cloudfront create-invalidation --distribution-id E3OHLZRK2JR8FV --paths '/*'
         # Build & deploy docker image
-        - name: Invalidate cloudfront cache
-          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.is_s3_deployment == 'true' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
-          run: |
-            aws cloudfront create-invalidation --distribution-id ${{steps.project_constants.outputs.aws_cloud_front_id}}  --paths '/*'
+        #- name: Invalidate cloudfront cache
+        #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.is_s3_deployment == 'true' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
+        #  run: |
+        #    aws cloudfront create-invalidation --distribution-id ${{steps.project_constants.outputs.aws_cloud_front_id}}  --paths '/*'
 
         - name:  Build image and deploy to registry
           id: docker_image_info
