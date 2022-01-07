@@ -308,15 +308,15 @@ jobs:
           run: |
             echo "Deploying ${{ steps.docker_image_info.outputs.local_image_id}}"
       #      aws lambda update-function-code --region us-east-1 --function-name my-function --image-uri ${{ steps.docker_image_info.outputs.ghcr_image_id}}
-      outputs:
-        #env_name: ${{ steps.branch_check.outputs.env_id }}tt
-        #role_arn: ${{ steps.aws_assume_role.outputs.role_arn1}}
-        cdk_check: ${{ steps.check_cdk.outputs.cdk_found}}
-        env_name: ${{ steps.project_constants.outputs.env_id }}
-        oidc_role: ${{ steps.project_constants.outputs.oidc_role}}
-        skip_cdk: ${{ steps.skip_cdk.outputs.bypass_cdk}}
-        cdk_deploy_name: ${{ steps.project_constants.outputs.cdk_deploy}}
-        cdk_destroy_stack_bool: ${{ steps.project_constants.outputs.cdk_destroy_stack}}
-        role_arn: ${{ steps.aws_assume_role.outputs.role_arn1}}
-        branch_name: ${{ steps.get_branch_name.outputs.branch_name}}
-        aws_upload_bucket: ${{steps.project_constants.outputs.aws_bucket_name}} 
+    outputs:
+      #env_name: ${{ steps.branch_check.outputs.env_id }}tt
+      #role_arn: ${{ steps.aws_assume_role.outputs.role_arn1}}
+      cdk_check: ${{ steps.check_cdk.outputs.cdk_found}}
+      env_name: ${{ steps.project_constants.outputs.env_id }}
+      oidc_role: ${{ steps.project_constants.outputs.oidc_role}}
+      skip_cdk: ${{ steps.skip_cdk.outputs.bypass_cdk}}
+      cdk_deploy_name: ${{ steps.project_constants.outputs.cdk_deploy}}
+      cdk_destroy_stack_bool: ${{ steps.project_constants.outputs.cdk_destroy_stack}}
+      role_arn: ${{ steps.aws_assume_role.outputs.role_arn1}}
+      branch_name: ${{ steps.get_branch_name.outputs.branch_name}}
+      aws_upload_bucket: ${{steps.project_constants.outputs.aws_bucket_name}} 
