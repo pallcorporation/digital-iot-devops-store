@@ -11,4 +11,7 @@ jobs:
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_cicd_deployment.yml@main
     with:
       branch_name: ${GITHUB_REF#refs/heads/}
-      deploy_to_s3: false
+      deploy_to_s3: true
+      destroy_stack: false
+    secrets:
+      envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
