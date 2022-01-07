@@ -26,6 +26,9 @@ on:
       deployment_type:
         type: string
 
+      clone_secret:
+        type: secret
+
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -39,6 +42,7 @@ env:
   IMAGE_REGISTRY: "ghcr.io"
   IMAGE_REGISTRY_USERNAME: ${{github.actor}}
   IMAGE_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GIT_CLONE_SECRET: ${{inputs.clone_secret}}
   
 
 permissions:
@@ -75,13 +79,13 @@ jobs:
           uses: actions/checkout@v1
         
         # Get project files
-      #  - name: Project files fetch
-      #    run: |
-      #      export pf_dir=${{env.PROJECT_FILES_DIRECTORY}}
-      #      export pf_files=$pf_dir/${{env.PROJECT_FILES_NAME}}
-      #      mkdir $pf_dir 
-      #      chmod 777 $pf_dir
-      #      git clone https://${{ secrets.BEER_PROJECT_PROPERTIES }}:x-oauth-basic@github.com/${{env.ORGANIZATION}}/${{env.PROJECT_FILES_GIT}} $pf_dir
+        - name: Project files fetch
+          run: |
+            export pf_dir=${{env.PROJECT_FILES_DIRECTORY}}
+            export pf_files=$pf_dir/${{env.PROJECT_FILES_NAME}}
+            mkdir $pf_dir 
+            chmod 777 $pf_dir
+            git clone https://${{env.GIT_CLONE_SECRET}}:x-oauth-basic@github.com/${{env.ORGANIZATION}}/${{env.PROJECT_FILES_GIT}} $pf_dir
             
         # Grant permissions to all files in directory
         - name: Grant permissions to all files
