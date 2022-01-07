@@ -207,7 +207,8 @@ jobs:
           if: ${{steps.check_cdk.outputs.cdk_found == 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
           run: | 
             chmod -R 755 cdk
-            sudo apt update -y ^ sudo apt install nodejs npm -y
+            sudo apt update -y
+            sudo apt install nodejs npm -y
             sudo npm install -g aws-cdk
             pip3 install -r cdk/requirements.txt
         
