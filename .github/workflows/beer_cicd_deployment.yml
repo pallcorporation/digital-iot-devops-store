@@ -219,12 +219,8 @@ jobs:
             cp ${{env.PROJECT_FILES_DIRECTORY}}/${{env.PROJECT_FILES_NAME}} .
         
         # Installing npm
-        - name: Npm install & npm build
-          if: | 
-            ${{steps.skip_everything.outputs.skip_everything1 != 'true' && 
-            steps.skip_npm.outputs.bypass_npm !='true' && 
-            steps.get_deployment_type.outputs.is_s3_deployment == 'true' && 
-            steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
+        - name: Npm install
+          if: ${{steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'true' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
           run: |
             npm install
         
@@ -256,11 +252,7 @@ jobs:
     
         # Building npm ahead of deployment
         - name: NPM build prior to deployment
-          if: | 
-            ${{steps.skip_everything.outputs.skip_everything1 != 'true' && 
-            steps.skip_npm.outputs.bypass_npm !='true' && 
-            steps.get_deployment_type.outputs.is_s3_deployment == 'true' && 
-            steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
+          if: ${{steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'true' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
           run: |
             npm run build
 
