@@ -215,6 +215,9 @@ jobs:
             chmod -R 755 cdk
             sudo npm install -g aws-cdk
             pip3 install -r cdk/requirements.txt
+        
+        - name: Remove existing project if commited, replace with master version
+          run: |
             rm -f -- ${{env.PROJECT_FILES_NAME}}
             cp ${{env.PROJECT_FILES_DIRECTORY}}/${{env.PROJECT_FILES_NAME}} .
         
