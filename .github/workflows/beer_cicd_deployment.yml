@@ -13,13 +13,6 @@ on:
         required: true
         type: string
       
-      deploy_to_s3:
-        required: true
-        type: boolean
-
-      testing_cdk:
-        type: boolean
-      
       destroy_stack:
         type: boolean
         default: false
@@ -63,10 +56,7 @@ jobs:
 
         - name: Login to docker
           if: |
-            ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && 
-            steps.skip_dk_build.outputs.bypass_dk_build !='true' && 
-            steps.get_deployment_type.outputs.is_s3_deployment == 'false' && 
-            steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
+            ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.get_deployment_type.outputs.deployment_type == 'image' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
           uses: docker/login-action@v1
           with:
             registry: ${{env.IMAGE_REGISTRY}}
@@ -133,11 +123,11 @@ jobs:
         
         
         # Get deployment type
-        - name: Deploy to S3
+        - name: Get deployment type
           id: get_deployment_type
           run: |
-            echo "##[set-output name=is_s3_deployment;]$(echo ${{inputs.deploy_to_s3}})"
-            echo ${{ steps.get_deployment_type.outputs.is_s3_deployment}}
+            echo "##[set-output name=deployment_type;]$(echo ${{inputs.deployment_type}})"
+            echo ${{ steps.get_deployment_type.outputs.deployment_type}}
         
         # Read if to destroy stack from input
         - name: Destroy CDK Stack
@@ -172,11 +162,14 @@ jobs:
             echo "::set-output name=bypass_dk_build::true"
         
         # ***JUST FOR TESTING MITCH***
+
         - name: Testing CDK
           id: skip_everything
+          if: ${{inputs.testing_cdk}} == 0
           run: |
-            echo "##[set-output name=skip_everything1;]$(echo ${{inputs.testing_cdk}})"
-            echo ${{ steps.skip_everything.outputs.skip_everything1}}
+#            echo "##[set-output name=skip_everything1;]$(echo true)"
+            echo "::set-output name=skip_everything1::true"
+
 
         # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
         - name: Arn to use
@@ -229,7 +222,7 @@ jobs:
             ls
         # Installing npm
         - name: Npm install
-          if: ${{steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'true' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
+          if: ${{steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
           run: |
             npm install
         
@@ -258,25 +251,25 @@ jobs:
     
         # Building npm ahead of deployment
         - name: NPM build prior to deployment
-          if: ${{steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'true' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
+          if: ${{steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
           run: |
             npm run build
 
         # Upload a file to AWS s3
         - name:  Deploy to S3 - Copy Build folder to s3
-          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'true' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
+          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
           run: |
             aws s3 sync build/ s3://${{steps.project_constants.outputs.aws_bucket_name}}-${{ steps.get_branch_name.outputs.branch_name }} 
       #     aws cloudfront create-invalidation --distribution-id E3OHLZRK2JR8FV --paths '/*'
         # Build & deploy docker image
         - name: Invalidate cloudfront cache
-          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.is_s3_deployment == 'true' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
+          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
           run: |
             aws cloudfront create-invalidation --distribution-id ${{steps.project_constants.outputs.aws_cloud_front_id}}  --paths '/*'
 
         - name:  Build image and deploy to registry
           id: docker_image_info
-          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.get_deployment_type.outputs.is_s3_deployment == 'false' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
+          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.get_deployment_type.outputs.deployment_type == 'image' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
 
           run: |
             echo "Deploying image"
@@ -293,11 +286,11 @@ jobs:
             
         
         #- name: Push docker image to GHCR
-        #  if: ${{ steps.get_deployment_type.outputs.is_s3_deployment == 'false'}}
+        #  if: ${{ steps.get_deployment_type.outputs.deployment_type == 'image'}}
         #  run: docker push ${{ steps.docker_image_info.outputs.ghcr_image_id}}
         
         - name: Update function with new image built
-          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.is_s3_deployment == 'false' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
+          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'image' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
           run: |
             echo "Deploying ${{ steps.docker_image_info.outputs.local_image_id}}"
       #      aws lambda update-function-code --region us-east-1 --function-name my-function --image-uri ${{ steps.docker_image_info.outputs.ghcr_image_id}}
