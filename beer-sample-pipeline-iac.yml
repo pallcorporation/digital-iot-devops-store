@@ -15,3 +15,5 @@ jobs:
       destroy_stack: false
     secrets:
       envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+  
+  
