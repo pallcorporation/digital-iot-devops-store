@@ -215,6 +215,9 @@ jobs:
             chmod -R 755 cdk
             sudo npm install -g aws-cdk
             pip3 install -r cdk/requirements.txt
+        - name: Install yaml
+          run: |
+            pip install pyyaml
         
         - name: Remove existing project if commited, replace with master version
           run: |
