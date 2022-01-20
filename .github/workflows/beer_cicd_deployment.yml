@@ -167,7 +167,6 @@ jobs:
           id: skip_everything
           if: ${{inputs.testing_cdk}} == 0
           run: |
-#            echo "##[set-output name=skip_everything1;]$(echo true)"
             echo "::set-output name=skip_everything1::true"
 
 
