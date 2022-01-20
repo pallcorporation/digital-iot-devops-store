@@ -7,9 +7,6 @@ on:
   #  branches:
   #    - dev
   #    - integration
-  pull_request:
-    branches:
-      - main
   workflow_call:
     secrets:
       envPAT:
@@ -27,9 +24,11 @@ jobs:
   create-release-tag:
     runs-on: ubuntu-latest      
     steps:
+
     # https://github.com/marketplace/actions/github-tag-with-semantic-versioning
       - uses: actions/checkout@master
       - name: Github Tag with semantic versioning
+        if: github.event_name == 'pull_request'
         uses: hennejg/github-tag-action@v4.3.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
