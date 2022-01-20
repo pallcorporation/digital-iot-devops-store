@@ -1,19 +1,26 @@
-name: Beer Frontend IAC
+name: Beer Backend company service API
 on:
   push:
     branches:
       - dev
       - integration
+      - main
   workflow_dispatch:
 
 jobs:
   cicd-deployment:
+    if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/integration'
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_cicd_deployment.yml@main
     with:
       branch_name: ${GITHUB_REF#refs/heads/}
-      deploy_to_s3: true
+      deploy_to_s3: false
       destroy_stack: false
+      testing_cdk: false
     secrets:
       envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
   
-  
+  create-tag:
+    if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '+tag-skip') != true
+    uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_semantic_tagging.yml@main
+    secrets:
+      envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
