@@ -165,7 +165,7 @@ jobs:
 
         - name: Testing CDK
           id: skip_everything
-          if: ${{inputs.testing_cdk}} == 0
+          if: ${{inputs.deployment_type}} == 0
           run: |
             echo "::set-output name=skip_everything1::true"
 
