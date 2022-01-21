@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 env:
-  deployment_type : web
+  DEPLOYMENT_TYPE: web
 
 jobs:
   cicd-deployment:
@@ -17,14 +17,14 @@ jobs:
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_cicd_deployment.yml@main
     with:
       branch_name: ${GITHUB_REF#refs/heads/}
-      deployment_type: ${{env.deployment_type}}
+      deployment_type: web
       destroy_stack: false
     secrets:
       envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
   
   build-main-branch:
-    uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_main_build.yml
+    uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_main_build.yml@main
     with:
-      deployment_type: ${{env.deployment_type}}
+      deployment_type: web
     secrets:
       envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
