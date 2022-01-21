@@ -49,9 +49,9 @@ jobs:
       - name: Setup node.js environment
         uses: actions/setup-node@v2.1.2
 
-      - name: Npm install
-        run: |
-          npm install
+      #- name: Npm install
+      #  run: |
+      #    npm install
 
       - name: NX Build
         id: build_nx
