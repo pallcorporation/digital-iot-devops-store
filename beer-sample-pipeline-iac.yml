@@ -8,18 +8,23 @@ on:
 
   workflow_dispatch:
 
+env:
+  deployment_type : web
+
 jobs:
   cicd-deployment:
     if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/integration' #&& github.event_name != 'pull_request' && github.event.action != 'closed' && github.event.pull_request.merged != true
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_cicd_deployment.yml@main
     with:
       branch_name: ${GITHUB_REF#refs/heads/}
-      deployment_type:
+      deployment_type: ${{env.deployment_type}}
       destroy_stack: false
     secrets:
       envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
   
-  create-tag:
-    uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_semantic_tagging.yml@main
+  build-main-branch:
+    uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_main_build.yml
+    with:
+      deployment_type: ${{env.deployment_type}}
     secrets:
       envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
