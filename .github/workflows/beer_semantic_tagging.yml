@@ -22,7 +22,8 @@ permissions:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:  
   create-release-tag:
-    if: github.event_name == 'pull_request'
+    #if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest      
     steps:
     # https://github.com/marketplace/actions/github-tag-with-semantic-versioning
