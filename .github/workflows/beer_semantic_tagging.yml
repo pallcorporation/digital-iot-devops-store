@@ -3,10 +3,10 @@ name: Release Tagging
 # Controls when the workflow will run
 on:
   # Triggers the workflow on push or pull request events but only for the main branch
-  #push:
-  #  branches:
-  #    - dev
-  #    - integration
+  push:
+    branches:
+      - main
+
   workflow_call:
     secrets:
       envPAT:
@@ -22,8 +22,7 @@ permissions:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:  
   create-release-tag:
-    #if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
-    #if: github.ref == 'refs/heads/main' && github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '+tag-skip') != true
     runs-on: ubuntu-latest      
     steps:
     # https://github.com/marketplace/actions/github-tag-with-semantic-versioning
@@ -36,4 +35,6 @@ jobs:
           default_bump: minor
           tag_prefix: v
           release_branches: main
+
+      
         
