@@ -45,15 +45,32 @@ jobs:
           echo "${{ steps.version_number.outputs.new_version }} is the new version"
           echo "TAG_VERSION=${{ steps.version_number.outputs.new_version }}" >> $GITHUB_ENV
       
-      - name: Build artifact
-        id: build_artifact
+      # Installing npm
+      - name: Setup node.js environment
+        uses: actions/setup-node@v2.1.2
+
+      - name: Npm install
         run: |
-          echo $TAG_VERSION is the image to be built!
+          npm install
+
+      - name: NX Build
+        id: build_nx
+        if: ${{inputs.deployment_type}} == nx
+        run: |
+          echo "Building NX... $TAG_VERSION"
       
-      - name: Build Type
-        id: build_type
+      - name: Web Build
+        id: build_web
+        if: ${{inputs.deployment_type}} == web
         run: |
-          echo ${{inputs.deployment_type}}
+          echo "Building Web... $TAG_VERSION"
+      
+      - name: Docker image build
+        id: build_docker
+        if: ${{inputs.deployment_type}} == image
+        run: |
+          echo "Building NX... $TAG_VERSION"
+
           
       
         
