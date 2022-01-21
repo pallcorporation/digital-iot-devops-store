@@ -5,28 +5,21 @@ on:
       - dev
       - integration
       - main
+
   workflow_dispatch:
 
 jobs:
-  pipeline:
-    runs-on: ubuntu-latest      
-    steps:
-      - name: AWS deployment
-        id: aws_deployment
-        if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/integration'
-        uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_cicd_deployment.yml@main
-        with:
-          branch_name: ${GITHUB_REF#refs/heads/}
-          deployment_type:
-          destroy_stack: false
-        secrets:
-          envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
-    
-#    create-tag:
-      
-      - name: Tag creation
-        id: create_tag
-        if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '+tag-skip') != true
-        uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_semantic_tagging.yml@main
-        secrets:
-          envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+  cicd-deployment:
+    if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/integration' #&& github.event_name != 'pull_request' && github.event.action != 'closed' && github.event.pull_request.merged != true
+    uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_cicd_deployment.yml@main
+    with:
+      branch_name: ${GITHUB_REF#refs/heads/}
+      deployment_type:
+      destroy_stack: false
+    secrets:
+      envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+  
+  create-tag:
+    uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_semantic_tagging.yml@main
+    secrets:
+      envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
