@@ -8,11 +8,16 @@ on:
       - main
 
   workflow_call:
+    inputs:
+      deployment_type:
+        type: string
+    
     secrets:
       envPAT:
         required: true
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+
 
 permissions:
       id-token: write
@@ -21,7 +26,7 @@ permissions:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:  
-  create-release-tag:
+  tag-and-build:
     if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '+tag-skip') != true
     runs-on: ubuntu-latest      
     steps:
@@ -39,6 +44,16 @@ jobs:
         run: |
           echo "${{ steps.version_number.outputs.new_version }} is the new version"
           echo "TAG_VERSION=${{ steps.version_number.outputs.new_version }}" >> $GITHUB_ENV
+      
+      - name: Build artifact
+        id: build_artifact
+        run: |
+          echo $TAG_VERSION is the image to be built!
+      
+      - name: Build Type
+        id: build_type
+        run: |
+          echo ${{inputs.deployment_type}}
           
       
         
