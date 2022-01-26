@@ -41,7 +41,8 @@ permissions:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:  
-  CommitAutomation:
+  build-docker-image:
+    if: ${{inputs.branch_name}} != 'main'
     runs-on: ubuntu-latest
       
     #needs: FindAWSAccount
