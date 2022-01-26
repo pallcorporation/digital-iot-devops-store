@@ -83,7 +83,7 @@ jobs:
         - name: Branch name
           id: get_branch_name
           run: |
-            echo "BRANCH_NAME=$(echo ${{inputs.branch_name}}" >> $GITHUB_ENV
+            echo "BRANCH_NAME=$(echo ${{inputs.branch_name}})" >> $GITHUB_ENV
           
         # Read of project files and set to variables
         - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
