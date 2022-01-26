@@ -176,14 +176,15 @@ jobs:
         - name: ECR Registry
           id: ecr_registry
           run: |
-            DOCKER_TAG_VERSION="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ github.event.repository.name }}:$IMAGE_VERSION"
-            DOCKER_TAG_LATEST="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ github.event.repository.name }}:latest"
+            echo DOCKER_TAG_VERSION="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ github.event.repository.name }}:$IMAGE_VERSION" >> $GITHUB_ENV
+            echo DOCKER_TAG_LATEST="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ github.event.repository.name }}:latest" >> $GITHUB_ENV
+            
         
         - name: Build Docker images
           id: build_images
           run: |
             docker build . -t $DOCKER_TAG_VERSION
-            docker tag $DOCKER_TAG_VERSION $DOCKER_TAG_LATEST
+            docker -t $DOCKER_TAG_VERSION $DOCKER_TAG_LATEST
 
         - name: ECR Login
           id: ecr_login
