@@ -9,10 +9,16 @@ on:
   workflow_dispatch:
 
 env:
-  DEPLOYMENT_TYPE: web
+  DEPLOYMENT_TYPE: image
 
 jobs:
-
+  set-up-workflow:
+    runs-on: ubuntu-latest
+      
+    #needs: FindAWSAccount
+    steps:
+      - name: Setting environment variable to be used
+        run: echo "deployment_type=${{env.DEPLOYMENT_TYPE}}" >> $GITHUB_ENV
   aws-cdk-deployment:
     if: ${{github.repository}} != "digital-iot-devops-store"
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_aws_cdk_deployment.yml@main
@@ -24,7 +30,7 @@ jobs:
   
   docker-image-build:
     needs: aws-cdk-deployment
-    if: github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/dev' && ${{github.repository}} != "digital-iot-devops-store" && ${{env.DEPLOYMENT_TYPE}} == "image"
+    if: github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/dev' && ${{github.repository}} != "digital-iot-devops-store" && $deployment_type == "image"
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_docker_image_builder.yml@main
     with:
       branch_name: ${GITHUB_REF#refs/heads/}
@@ -48,6 +54,6 @@ jobs:
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_main_build.yml@main
     with:
       branch_name: ${GITHUB_REF#refs/heads/}
-      deployment_type: ${{env.DEPLOYMENT_TYPE}}
+      deployment_type: $deployment_type
     secrets:
       envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
