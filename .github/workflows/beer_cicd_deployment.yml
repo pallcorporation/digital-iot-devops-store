@@ -265,22 +265,22 @@ jobs:
           working-directory: cdk
     
         # Building npm ahead of deployment
-        - name: NPM build prior to deployment
-          if: ${{steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
-          run: |
-            npm run build
+        #- name: NPM build prior to deployment
+        #  if: ${{steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
+        #  run: |
+        #    npm run build
 
         # Upload a file to AWS s3
-        - name:  Deploy to S3 - Copy Build folder to s3
-          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
-          run: |
-            aws s3 sync build/ s3://${{steps.project_constants.outputs.aws_bucket_name}}-${{ steps.get_branch_name.outputs.branch_name }} 
+        #- name:  Deploy to S3 - Copy Build folder to s3
+        #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
+        #  run: |
+        #    aws s3 sync build/ s3://${{steps.project_constants.outputs.aws_bucket_name}}-${{ steps.get_branch_name.outputs.branch_name }} 
       #     aws cloudfront create-invalidation --distribution-id E3OHLZRK2JR8FV --paths '/*'
         # Build & deploy docker image
-        - name: Invalidate cloudfront cache
-          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
-          run: |
-            aws cloudfront create-invalidation --distribution-id ${{steps.project_constants.outputs.aws_cloud_front_id}}  --paths '/*'
+        #- name: Invalidate cloudfront cache
+        #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
+        #  run: |
+        #    aws cloudfront create-invalidation --distribution-id ${{steps.project_constants.outputs.aws_cloud_front_id}}  --paths '/*'
 
         - name:  Build image and deploy to registry
           id: docker_image_info
