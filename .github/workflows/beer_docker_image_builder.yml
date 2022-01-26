@@ -194,8 +194,7 @@ jobs:
         - name: Update function with new image built
         #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'image' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
           run: |
-            echo "Deploying ${{ steps.docker_image_info.outputs.ghcr_image_id}} to ${{inputs.lambd_function_name}}"
-        # aws lambda update-function-code --region us-east-1 --function-name ${{inputs.lambd_function_name}} --image-uri ${{ steps.docker_image_info.outputs.ghcr_image_id}}
+            aws lambda update-function-code --region us-east-1 --function-name ${{inputs.lambd_function_name}} --image-uri ${{ steps.docker_image_info.outputs.ghcr_image_id}} --publish true
     outputs:
       #env_name: ${{ steps.branch_check.outputs.env_id }}tt
       #role_arn: ${{ steps.aws_assume_role.outputs.role_arn1}}
