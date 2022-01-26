@@ -85,7 +85,7 @@ jobs:
       - name: Project files clone
         uses: actions/checkout@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.envPAT }}
           repository: pallcorporation/beer-project-properties
           ref: main
           path: ${{env.PROJECT_FILES_DIRECTORY}}
