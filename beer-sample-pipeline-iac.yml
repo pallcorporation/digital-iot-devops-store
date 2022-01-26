@@ -12,8 +12,17 @@ env:
   DEPLOYMENT_TYPE: web
 
 jobs:
+
+  aws-cdk-deployment:
+    uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_cdk_deployment.yml@main
+    with:
+      branch_name: ${GITHUB_REF#refs/heads/}
+      destroy_stack: false
+    secrets:
+      envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+
   cicd-deployment:
-    #if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/integration' #&& github.event_name != 'pull_request' && github.event.action != 'closed' && github.event.pull_request.merged != true
+    if: github.ref == 'refs/heads/test1234' #|| github.ref == 'refs/heads/integration' #&& github.event_name != 'pull_request' && github.event.action != 'closed' && github.event.pull_request.merged != true
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_cicd_deployment.yml@main
     with:
       branch_name: ${GITHUB_REF#refs/heads/}
@@ -22,7 +31,9 @@ jobs:
     secrets:
       envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
   
+  
   build-main-branch:
+    if: github.ref == 'refs/heads/test1234'
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_main_build.yml@main
     with:
       branch_name: ${GITHUB_REF#refs/heads/}
