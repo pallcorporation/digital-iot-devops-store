@@ -230,10 +230,10 @@ jobs:
             echo "done moving file to current directory.."
             ls
         # Installing npm
-        - name: Npm install
-          if: ${{steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
-          run: |
-            npm install
+        #- name: Npm install
+        #  if: ${{steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
+        #  run: |
+        #    npm install
         
         # Destroy AWS IAC cdk stack if advised
         - name: Destroying stack if required
