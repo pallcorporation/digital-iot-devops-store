@@ -66,6 +66,9 @@ jobs:
         # Clone repositories prior to work
         - name: Git clone the repository
           uses: actions/checkout@v1
+
+        - name: Make project files directory
+          run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
         
         - name: Project files clone
           uses: actions/checkout@v2
@@ -75,10 +78,6 @@ jobs:
             ref: main
             path: ${{env.PROJECT_FILES_DIRECTORY}}
 
-        
-        
-        - name: Make project files directory
-          run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
         
         # Grant permissions to all files in directory
         - name: Grant permissions to all files
@@ -177,7 +176,7 @@ jobs:
             role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
             role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
             aws-region: ${{ env.AWS_REGION }}
-            
+
         - name: Github Tag with semantic versioning
           if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '+tag-skip') != true
           id: version_number
