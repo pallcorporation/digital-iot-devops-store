@@ -20,7 +20,7 @@ jobs:
       - name: Setting environment variable to be used
         run: echo "deployment_type=${{env.DEPLOYMENT_TYPE}}" >> $GITHUB_ENV
   aws-cdk-deployment:
-    if: ${{github.repository}} != "digital-iot-devops-store"
+    if: ${{github.repository}} != "digital-iot-devops-store" && github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/dev' && ${{github.repository}}
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_aws_cdk_deployment.yml@main
     with:
       branch_name: ${GITHUB_REF#refs/heads/}
