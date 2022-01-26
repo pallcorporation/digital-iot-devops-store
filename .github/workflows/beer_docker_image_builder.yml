@@ -176,7 +176,7 @@ jobs:
         - name: ECR Registry
           id: ecr_registry
           run: |
-            echo DOCKER_TAG_VERSION="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ github.event.repository.name }}:$IMAGE_VERSION" >> $GITHUB_ENV
+            echo DOCKER_TAG_VERSION="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ github.event.repository.name }}:$TAG_VERSION" >> $GITHUB_ENV
             echo DOCKER_TAG_LATEST="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ github.event.repository.name }}:latest" >> $GITHUB_ENV
             
         
