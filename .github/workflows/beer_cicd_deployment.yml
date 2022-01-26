@@ -67,15 +67,14 @@ jobs:
         - name: Git clone the repository
           uses: actions/checkout@v1
         
-        # Get project files
-        #- name: Project files fetch
-        #  run: |
-        #    export pf_dir=${{env.PROJECT_FILES_DIRECTORY}}
-        #    export pf_files=$pf_dir/${{env.PROJECT_FILES_NAME}}
-        #    mkdir $pf_dir 
-        #    chmod 777 $pf_dir
-        #    git clone https://${{ secrets.BEER_PROJECT_PROPERTIES }}:x-oauth-basic@github.com/${{env.ORGANIZATION}}/${{env.PROJECT_FILES_GIT}} $pf_dir
-        
+        - name: Project files clone
+          uses: actions/checkout@v2
+          with:
+            token: ${{ secrets.envPAT }}
+            repository: pallcorporation/beer-project-properties
+            ref: main
+            path: ${{env.PROJECT_FILES_DIRECTORY}}
+
         - name: Github Tag with semantic versioning
           if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '+tag-skip') != true
           id: version_number
@@ -94,14 +93,6 @@ jobs:
         
         - name: Make project files directory
           run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
-
-        - name: Project files clone
-          uses: actions/checkout@v2
-          with:
-            token: ${{ secrets.envPAT }}
-            repository: pallcorporation/beer-project-properties
-            ref: main
-            path: ${{env.PROJECT_FILES_DIRECTORY}}
         
         # Grant permissions to all files in directory
         - name: Grant permissions to all files
