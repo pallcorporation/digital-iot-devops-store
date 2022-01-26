@@ -183,7 +183,7 @@ jobs:
           id: build_images
           run: |
             docker build . -t $DOCKER_TAG_VERSION
-            docker -t $DOCKER_TAG_VERSION $DOCKER_TAG_LATEST
+            docker tag $DOCKER_TAG_VERSION $DOCKER_TAG_LATEST
 
         - name: ECR Login
           id: ecr_login
