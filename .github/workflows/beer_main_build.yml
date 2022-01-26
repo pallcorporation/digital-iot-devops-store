@@ -157,9 +157,7 @@ jobs:
           run: |
             aws ecr describe-repositories --repository-names ${{ github.event.repository.name }} || aws ecr create-repository --repository-name ${{ github.event.repository.name }}
             aws ecr get-login-password --region ${{ env.AWS_REGION }}| docker login --username AWS --password-stdin ${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
-        
-          run: docker push $GHCR_IMAGE_ID
-        
+                
         - name: Push docker images to ECR & GHCR
           if: ${{inputs.deployment_type}} == image
           run: |
