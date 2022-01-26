@@ -93,6 +93,7 @@ jobs:
           run: |
             account_id="`grep aws_dev_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
             echo "::set-output name=env_id::${account_id}"
+            echo $account_id is the account id
             echo "AWS_ACCOUNT=${account_id}" >> $GITHUB_ENV
             
 
