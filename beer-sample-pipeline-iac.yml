@@ -1,4 +1,4 @@
-name: Beer Backend company service API
+name: Beer Backend IAC
 on:
   push:
     branches:
@@ -14,26 +14,38 @@ env:
 jobs:
 
   aws-cdk-deployment:
-    uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_cdk_deployment.yml@main
+    if: ${{github.repository}} != "digital-iot-devops-store"
+    uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_aws_cdk_deployment.yml@main
     with:
       branch_name: ${GITHUB_REF#refs/heads/}
       destroy_stack: false
+    secrets:
+      envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+  
+  docker-image-build:
+    if: ${{github.repository}} != "digital-iot-devops-store"
+    needs: aws-cdk-deployment
+    if: github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/dev'
+    uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_docker_image_builder.yml@main
+    with:
+      branch_name: ${GITHUB_REF#refs/heads/}
+      lambd_function_name: beer-image-from-ghcr-dev
     secrets:
       envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
 
-  cicd-deployment:
-    if: github.ref == 'refs/heads/test1234' #|| github.ref == 'refs/heads/integration' #&& github.event_name != 'pull_request' && github.event.action != 'closed' && github.event.pull_request.merged != true
-    uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_cicd_deployment.yml@main
-    with:
-      branch_name: ${GITHUB_REF#refs/heads/}
-      deployment_type: web
-      destroy_stack: false
-    secrets:
-      envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+  #cicd-deployment:
+  #  if: github.ref == 'refs/heads/test1234' #|| github.ref == 'refs/heads/integration' #&& github.event_name != 'pull_request' && github.event.action != 'closed' && github.event.pull_request.merged != true
+  #  uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_cicd_deployment.yml@main
+  #  with:
+  #    branch_name: ${GITHUB_REF#refs/heads/}
+  #    deployment_type: web
+  #    destroy_stack: false
+  #  secrets:
+  #    envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
   
   
   build-main-branch:
-    if: github.ref == 'refs/heads/test1234'
+    if: github.ref == 'refs/heads/test1234' && ${{github.repository}} != "digital-iot-devops-store"
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_main_build.yml@main
     with:
       branch_name: ${GITHUB_REF#refs/heads/}
