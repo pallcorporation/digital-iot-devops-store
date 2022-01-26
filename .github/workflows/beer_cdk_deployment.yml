@@ -56,6 +56,9 @@ jobs:
         - name: Git clone the repository
           uses: actions/checkout@v1
         
+        - name: Make project files directory
+          run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
+        
         - name: Project files clone
           uses: actions/checkout@v2
           with:
@@ -63,9 +66,6 @@ jobs:
             repository: pallcorporation/beer-project-properties
             ref: main
             path: ${{env.PROJECT_FILES_DIRECTORY}}
-        
-        - name: Make project files directory
-          run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
         
         # Grant permissions to all files in directory
         - name: Grant permissions to all files
