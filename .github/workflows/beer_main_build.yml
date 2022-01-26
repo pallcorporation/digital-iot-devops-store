@@ -125,7 +125,7 @@ jobs:
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@master
           with:
-            role-to-assume: $AWS_ACCESS_ROLE
+            role-to-assume: ${{env.AWS_ACCESS_ROLE}}
             role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
             aws-region: ${{ env.AWS_REGION }}
       
