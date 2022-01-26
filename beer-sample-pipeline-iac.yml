@@ -18,42 +18,37 @@ jobs:
     #needs: FindAWSAccount
     steps:
       - name: Setting environment variable to be used
-        run: echo "deployment_type=${{env.DEPLOYMENT_TYPE}}" >> $GITHUB_ENV
+        run: |
+          BRANCH_NAME=${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          
+          echo "$BRANCH_NAME is the branch and ${{env.DEPLOYMENT_TYPE}} is the deployment type."
   aws-cdk-deployment:
-    if: ${{github.repository}} != "digital-iot-devops-store" && github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/dev' && ${{github.repository}}
+    needs: set-up-workflow
+    if: (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/integration')
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_aws_cdk_deployment.yml@main
     with:
-      branch_name: ${GITHUB_REF#refs/heads/}
+      branch_name: ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
       destroy_stack: false
     secrets:
       envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
   
   docker-image-build:
-    needs: aws-cdk-deployment
-    if: github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/dev' && ${{github.repository}} != "digital-iot-devops-store" && $deployment_type == "image"
+    needs: aws-cdk-deployment 
+    if: (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/integration')
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_docker_image_builder.yml@main
     with:
-      branch_name: ${GITHUB_REF#refs/heads/}
+      branch_name: ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
       lambd_function_name: beer-image-from-ghcr-dev
     secrets:
       envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
-
-  #cicd-deployment:
-  #  if: github.ref == 'refs/heads/test1234' #|| github.ref == 'refs/heads/integration' #&& github.event_name != 'pull_request' && github.event.action != 'closed' && github.event.pull_request.merged != true
-  #  uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_cicd_deployment.yml@main
-  #  with:
-  #    branch_name: ${GITHUB_REF#refs/heads/}
-  #    deployment_type: web
-  #    destroy_stack: false
-  #  secrets:
-  #    envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }} test 
-  
   
   build-main-branch:
-    if: github.ref == 'refs/heads/main' && ${{github.repository}} != "digital-iot-devops-store"
+    needs: set-up-workflow
+    if: ${{github.ref}} == 'refs/heads/main'
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_main_build.yml@main
     with:
-      branch_name: ${GITHUB_REF#refs/heads/}
-      deployment_type: $deployment_type
+      branch_name: ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
+      deployment_type: $DEPLOYMENT_TYPE
     secrets:
       envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
