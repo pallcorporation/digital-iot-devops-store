@@ -167,9 +167,9 @@ jobs:
             echo "done moving file to current directory.."
             ls
         # Installing npm
-        - name: Npm install
-          run: |
-            npm install
+        #- name: Npm install
+        #  run: |
+        #    npm install
         
         # Destroy AWS IAC cdk stack if advised
         - name: Destroying stack if required
