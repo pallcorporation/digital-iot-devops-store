@@ -25,6 +25,7 @@ jobs:
   build-main-branch:
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_main_build.yml@main
     with:
+      branch_name: ${GITHUB_REF#refs/heads/}
       deployment_type: web
     secrets:
       envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
