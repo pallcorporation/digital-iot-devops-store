@@ -24,7 +24,7 @@ jobs:
   
   docker-image-build:
     needs: aws-cdk-deployment
-    if: github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/dev' && ${{github.repository}} != "digital-iot-devops-store"
+    if: github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/dev' && ${{github.repository}} != "digital-iot-devops-store" && ${{env.DEPLOYMENT_TYPE}} == "image"
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_docker_image_builder.yml@main
     with:
       branch_name: ${GITHUB_REF#refs/heads/}
