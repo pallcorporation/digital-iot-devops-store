@@ -40,14 +40,14 @@ jobs:
   #    deployment_type: web
   #    destroy_stack: false
   #  secrets:
-  #    envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }} test
+  #    envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }} test 
   
   
   build-main-branch:
-    if: github.ref == 'refs/heads/test1234' && ${{github.repository}} != "digital-iot-devops-store"
+    if: github.ref == 'refs/heads/main' && ${{github.repository}} != "digital-iot-devops-store"
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_main_build.yml@main
     with:
       branch_name: ${GITHUB_REF#refs/heads/}
-      deployment_type: web
+      deployment_type: ${{env.DEPLOYMENT_TYPE}}
     secrets:
       envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
