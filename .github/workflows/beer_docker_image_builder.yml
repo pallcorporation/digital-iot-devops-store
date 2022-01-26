@@ -173,28 +173,49 @@ jobs:
             cp ${{env.PROJECT_FILES_DIRECTORY}}/${{env.PROJECT_FILES_NAME}} .
             echo "done moving file to current directory.."
             ls
-        
-        - name:  Build image and deploy to registry
-          id: docker_image_info
+        - name: ECR Registry
+          id: ecr_registry
           run: |
-            echo "Deploying image"
-            IMAGE_VERSION=$TAG_VERSION
-            GHCR_IMAGE_ID=ghcr.io/${{github.repository_owner}}/${{ github.event.repository.name }}:$IMAGE_VERSION
-            docker build . -t $GHCR_IMAGE_ID    
-            echo "::set-output name=ghcr_image_id::$GHCR_IMAGE_ID"
+            DOCKER_TAG_VERSION="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ github.event.repository.name }}:$IMAGE_VERSION"
+            DOCKER_TAG_LATEST="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ github.event.repository.name }}:latest"
+        
+        - name: Build Docker images
+          id: build_images
+          run: |
+            docker build . -t $DOCKER_TAG_VERSION
+            docker -t $DOCKER_TAG_VERSION $DOCKER_TAG_LATEST
+
+        - name: ECR Login
+          id: ecr_login
+          run: |
+            aws ecr describe-repositories --repository-names ${{ github.event.repository.name }} || aws ecr create-repository --repository-name ${{ github.event.repository.name }}
+            aws ecr get-login-password --region ${{ env.AWS_REGION }}| docker login --username AWS --password-stdin ${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+
+        #- name:  Build image and deploy to registry
+        #  id: docker_image_info
+        #  run: |
+        #    echo "Deploying image"
+        #    IMAGE_VERSION=$TAG_VERSION
+        #    GHCR_IMAGE_ID=ghcr.io/${{github.repository_owner}}/${{ github.event.repository.name }}:$IMAGE_VERSION
+        #    docker build . -t $GHCR_IMAGE_ID    
+        #    echo "::set-output name=ghcr_image_id::$GHCR_IMAGE_ID"
 
     #        LOCAL_IMAGE_ID=${{ github.event.repository.name }}:$IMAGE_VERSION
     #        docker build . -t $LOCAL_IMAGE_ID
     #        echo "::set-output name=local_image_id::$LOCAL_IMAGE_ID"   
   
-        - name: Push docker image to GHCR
+        #- name: Push docker image to GHCR
         #  if: ${{ steps.get_deployment_type.outputs.deployment_type == 'image'}}
-          run: docker push ${{ steps.docker_image_info.outputs.ghcr_image_id}}
-        
+          #run: docker push ${{ steps.docker_image_info.outputs.ghcr_image_id}}
+        - name: Push docker image to ECR
+          run: |
+            docker push $DOCKER_TAG_VERSION
+            docker push $DOCKER_TAG_LATEST
+
         - name: Update function with new image built
         #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'image' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
           run: |
-            aws lambda update-function-code --region us-east-1 --function-name ${{inputs.lambd_function_name}} --image-uri ${{ steps.docker_image_info.outputs.ghcr_image_id}} --publish true
+            aws lambda update-function-code --region ${{ env.AWS_REGION }} --function-name ${{inputs.lambd_function_name}} --image-uri $DOCKER_TAG_VERSION
     outputs:
       #env_name: ${{ steps.branch_check.outputs.env_id }}tt
       #role_arn: ${{ steps.aws_assume_role.outputs.role_arn1}}
