@@ -23,9 +23,8 @@ jobs:
       envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
   
   docker-image-build:
-    if: ${{github.repository}} != "digital-iot-devops-store"
     needs: aws-cdk-deployment
-    if: github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/dev' && ${{github.repository}} != "digital-iot-devops-store"
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_docker_image_builder.yml@main
     with:
       branch_name: ${GITHUB_REF#refs/heads/}
@@ -41,7 +40,7 @@ jobs:
   #    deployment_type: web
   #    destroy_stack: false
   #  secrets:
-  #    envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+  #    envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }} test
   
   
   build-main-branch:
