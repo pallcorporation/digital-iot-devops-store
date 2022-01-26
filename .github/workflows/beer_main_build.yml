@@ -83,9 +83,7 @@ jobs:
         - name: Branch name
           id: get_branch_name
           run: |
-            echo "##[set-output name=branch_name;]$(echo ${{inputs.branch_name}})"
-            echo ${{ steps.get_branch_name.outputs.branch}}
-            ls
+            echo "BRANCH_NAME=$(echo ${{inputs.branch_name}}" >> $GITHUB_ENV
           
         # Read of project files and set to variables
         - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
@@ -97,17 +95,17 @@ jobs:
             echo "AWS_ACCOUNT=${account_id}" >> $GITHUB_ENV
             
 
-            oidc_role_name="`grep aws_${{ steps.get_branch_name.outputs.branch_name }}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
             echo "::set-output name=oidc_role::${oidc_role_name}"
 
-            cdk_deploy_role_arn="`grep aws_${{ steps.get_branch_name.outputs.branch_name }}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            cdk_deploy_role_arn="`grep aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
             echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
             
             aws_bucket="`grep aws_frontend_bucket ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
             echo "::set-output name=aws_bucket_name::${aws_bucket}"
             echo $aws_bucket
 
-            cloud_front_id="`grep aws_${{ steps.get_branch_name.outputs.branch_name }}_cloudfront_id ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            cloud_front_id="`grep aws_${BRANCH_NAME}_cloudfront_id ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
             echo "::set-output name=aws_cloud_front_id::${cloud_front_id}"
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
 
