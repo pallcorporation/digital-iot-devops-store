@@ -136,13 +136,41 @@ jobs:
             echo "${{ steps.version_number.outputs.new_version }} is the new version"
             echo "TAG_VERSION=${{ steps.version_number.outputs.new_version }}" >> $GITHUB_ENV
         
+        - name: Create image tags
+          if: ${{inputs.deployment_type}} == image
+          run: |
+            echo DOCKER_TAG_VERSION="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ github.event.repository.name }}:$TAG_VERSION" >> $GITHUB_ENV
+            echo DOCKER_TAG_LATEST="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ github.event.repository.name }}:latest" >> $GITHUB_ENV
+            echo GHCR_IMAGE_ID="ghcr.io/${{github.repository_owner}}/${{ github.event.repository.name }}:$TAG_VERSION" >> $GITHUB_ENV
+  
+        - name: Build Docker images
+          if: ${{inputs.deployment_type}} == image
+          id: build_images
+          run: |
+            docker build -t $DOCKER_TAG_VERSION .
+            docker tag $DOCKER_TAG_VERSION $DOCKER_TAG_LATEST
+            docker tag $DOCKER_TAG_VERSION $GHCR_IMAGE_ID
+
+        - name: ECR Login
+          if: ${{inputs.deployment_type}} == image
+          id: ecr_login
+          run: |
+            aws ecr describe-repositories --repository-names ${{ github.event.repository.name }} || aws ecr create-repository --repository-name ${{ github.event.repository.name }}
+            aws ecr get-login-password --region ${{ env.AWS_REGION }}| docker login --username AWS --password-stdin ${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+        
+          run: docker push $GHCR_IMAGE_ID
+        
+        - name: Push docker images to ECR & GHCR
+          if: ${{inputs.deployment_type}} == image
+          run: |
+            docker push $DOCKER_TAG_VERSION
+            docker push $DOCKER_TAG_LATEST
+            docker push $GHCR_IMAGE_ID
+
+        
         # Installing npm
         - name: Setup node.js environment
           uses: actions/setup-node@v2.1.2
-
-        - name: Npm install
-          run: |
-            npm install
 
         - name: NX Build
           id: build_nx
