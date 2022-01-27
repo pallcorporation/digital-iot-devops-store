@@ -195,6 +195,12 @@ jobs:
           if: ${{inputs.deployment_type}} == image
           run: |
             echo "Building NX... $TAG_VERSION"
+        
+        - name: Build Changelog
+          id: github_release
+          uses: mikepenz/release-changelog-builder-action@v1
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
           
       
