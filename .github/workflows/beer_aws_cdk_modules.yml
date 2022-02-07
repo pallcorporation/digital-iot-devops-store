@@ -121,6 +121,12 @@ jobs:
             echo "::set-output name=aws_cloud_front_id::${cloud_front_id}"
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
         
+        # Read if to destroy stack from input
+        - name: Destroy CDK Stack
+          id: get_cdk_destroy_stack
+          run: |
+            echo "##[set-output name=cdk_destroy_stack;]$(echo ${{inputs.destroy_stack}})"
+        
         - name: Copy cdk config files
           run: |
             cp -a ${{inputs.config_files_directory}}/. ${{env.CDK_MODULE}}/cdk_config/
@@ -156,7 +162,7 @@ jobs:
         
         # Destroy AWS IAC cdk stack if advised
         - name: Destroying stack if required
-          if: ${{steps.check_cdk.outputs.cdk_found == 'true' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack == 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
+          if: ${{steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack == 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
           run: |
             yes | cdk destroy --all --require-approval never --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
           working-directory: ${{env.CDK_MODULE}}
@@ -168,7 +174,6 @@ jobs:
         # AWS IAC cdk deployment
         # Role to deploy as in defined in project.properties file
         - name: Running cdk deploy
-          if: ${{steps.check_cdk.outputs.cdk_found == 'true' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.skip_cdk.outputs.bypass_cdk !='true' }}
           run: |
             echo "We will run cdk deploy --all --require-approval never --role-arn ${{ steps.project_constants.outputs.cdk_deploy }}"
             cdk deploy \
