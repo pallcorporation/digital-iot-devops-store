@@ -23,6 +23,7 @@ jobs:
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
           
           echo "$BRANCH_NAME is the branch and ${{env.DEPLOYMENT_TYPE}} is the deployment type."
+          
   aws-cdk-deployment:
     needs: set-up-workflow
     if: (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/integration')
@@ -30,6 +31,17 @@ jobs:
     with:
       branch_name: ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
       destroy_stack: false
+    secrets:
+      envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+  
+  aws-cdk-deployment-modules:
+    needs: set-up-workflow
+    if: (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/integration')
+    uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_aws_cdk_modules.yml@main
+    with:
+      branch_name: ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
+      destroy_stack: false
+      config_files_directory: cdk_config_files
     secrets:
       envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
   
