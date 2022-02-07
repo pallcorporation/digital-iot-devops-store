@@ -57,6 +57,19 @@ jobs:
           id: date
           run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
         
+        # Get branch name to use for look up
+        - name: Branch name
+          id: get_branch_name
+          run: |
+            if [[ ${{inputs.branch_name}} == 'main' ]]
+            then
+              echo "BRANCH_NAME=production" >> $GITHUB_ENV
+            else
+              echo "BRANCH_NAME=$(echo ${{inputs.branch_name}})" >> $GITHUB_ENV
+            fi
+
+            echo "$BRANCH_NAME is the name"
+        
         # Clone repositories prior to work
         - name: Git clone the repository
           uses: actions/checkout@v1
