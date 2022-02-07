@@ -110,8 +110,8 @@ jobs:
         
         - name: Copy cdk config files
           run: |
-            cp -a /${{inputs.config_files_directory}}/. ${{env.CDK_MODULE}}/cdk_config/
-            cp -a /${{env.PROJECT_FILES_DIRECTORY}}/. ${{env.CDK_MODULE}}/
+            cp -a ${{inputs.config_files_directory}}/. ${{env.CDK_MODULE}}/cdk_config/
+            cp -a ${{env.PROJECT_FILES_DIRECTORY}}/. ${{env.CDK_MODULE}}/
         
         
         
