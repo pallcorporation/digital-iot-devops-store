@@ -141,7 +141,15 @@ jobs:
             role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
             aws-region: ${{ env.AWS_REGION }}
         
+        - name: Install CDK
+          run: | 
+            chmod -R 755 ${{env.CDK_MODULE}}
+            sudo npm install -g aws-cdk
+            pip3 install -r  ${{env.CDK_MODULE}}/requirements.txt
+        - name: Install yaml
+          run: |
+            pip install pyyaml
+
         - name: Test cdk synth works
           run: cdk synth
-            
           working-directory: ${{env.CDK_MODULE}}
