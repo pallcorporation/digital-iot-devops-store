@@ -19,6 +19,9 @@ on:
 
       deployment_type:
         type: string
+      config_files_directory:
+        required: true
+        type: string
     secrets:
       envPAT:
         required: true
@@ -107,7 +110,7 @@ jobs:
         
         - name: Copy cdk config files
           run: |
-            cp -a /cdk_config/. ${{env.CDK_MODULE}}/cdk_config/
+            cp -a /${{inputs.config_files_directory}}/. ${{env.CDK_MODULE}}/cdk_config/
             cp -a /${{env.PROJECT_FILES_DIRECTORY}}/. ${{env.CDK_MODULE}}/
         
         
