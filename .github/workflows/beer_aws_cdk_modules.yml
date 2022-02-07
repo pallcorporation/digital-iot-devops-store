@@ -153,3 +153,26 @@ jobs:
         - name: Test cdk synth works
           run: cdk synth
           working-directory: ${{env.CDK_MODULE}}
+        
+        # Destroy AWS IAC cdk stack if advised
+        - name: Destroying stack if required
+          if: ${{steps.check_cdk.outputs.cdk_found == 'true' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack == 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
+          run: |
+            yes | cdk destroy --all --require-approval never --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
+          working-directory: ${{env.CDK_MODULE}}
+
+        
+        
+        # *****************PROJECT SPECIFIC ELEMENTS*****************
+
+        # AWS IAC cdk deployment
+        # Role to deploy as in defined in project.properties file
+        - name: Running cdk deploy
+          if: ${{steps.check_cdk.outputs.cdk_found == 'true' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.skip_cdk.outputs.bypass_cdk !='true' }}
+          run: |
+            echo "We will run cdk deploy --all --require-approval never --role-arn ${{ steps.project_constants.outputs.cdk_deploy }}"
+            cdk deploy \
+            --all \
+            --require-approval never \
+            --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
+          working-directory: ${{env.CDK_MODULE}}
