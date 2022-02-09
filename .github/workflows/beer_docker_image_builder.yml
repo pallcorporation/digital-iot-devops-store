@@ -217,7 +217,7 @@ jobs:
             else            
               echo "::set-output name=repo_created::false"
             fi
-            done
+
             echo "REPO_CREATED=${{steps.read_repo_created.outputs.repo_created}}" >> $GITHUB_ENV
             echo "$REPO_CREATED is the value"
 
