@@ -54,7 +54,7 @@ jobs:
 
         - name: Login to docker
           if: |
-            ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.get_deployment_type.outputs.deployment_type == 'image' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
+            ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
           uses: docker/login-action@v1
           with:
             registry: ${{env.IMAGE_REGISTRY}}
@@ -113,11 +113,11 @@ jobs:
         
         
         # Get deployment type
-        - name: Get deployment type
-          id: get_deployment_type
-          run: |
-            echo "##[set-output name=deployment_type;]$(echo ${{inputs.deployment_type}})"
-            echo ${{ steps.get_deployment_type.outputs.deployment_type}}
+        #- name: Get deployment type
+        #  id: get_deployment_type
+        #  run: |
+        #    echo "##[set-output name=deployment_type;]$(echo ${{inputs.deployment_type}})"
+        #    echo ${{ steps.get_deployment_type.outputs.deployment_type}}
 
         
         # Read commit message and determine if to skip docker work
@@ -141,16 +141,6 @@ jobs:
             role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
             role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
             aws-region: ${{ env.AWS_REGION }}
-
-        #- name: Github Tag with semantic versioning
-        #  if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '+tag-skip') != true
-        #  id: version_number
-        #  uses: hennejg/github-tag-action@v4.3.1
-        #  with:
-        #    github_token: ${{ secrets.GITHUB_TOKEN }}
-        #    default_bump: minor
-        #    tag_prefix: v
-        #    release_branches: main
 
         - name: Version number
           #if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '+tag-skip') != true
@@ -193,33 +183,17 @@ jobs:
             (aws ecr describe-repositories --repository-names ${{ github.event.repository.name }} && echo "::set-output name=repo_created::false" ) || ( aws ecr create-repository --repository-name ${{ github.event.repository.name }} && echo "::set-output name=repo_created::true" )
             aws ecr get-login-password --region ${{ env.AWS_REGION }}| docker login --username AWS --password-stdin ${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
-        #- name:  Build image and deploy to registry
-        #  id: docker_image_info
-        #  run: |
-        #    echo "Deploying image"
-        #    IMAGE_VERSION=$TAG_VERSION
-        #    GHCR_IMAGE_ID=ghcr.io/${{github.repository_owner}}/${{ github.event.repository.name }}:$IMAGE_VERSION
-        #    docker build . -t $GHCR_IMAGE_ID    
-        #    echo "::set-output name=ghcr_image_id::$GHCR_IMAGE_ID"
-
-    #        LOCAL_IMAGE_ID=${{ github.event.repository.name }}:$IMAGE_VERSION
-    #        docker build . -t $LOCAL_IMAGE_ID
-    #        echo "::set-output name=local_image_id::$LOCAL_IMAGE_ID"   
-  
-        #- name: Push docker image to GHCR
-        #  if: ${{ steps.get_deployment_type.outputs.deployment_type == 'image'}}
-          #run: docker push ${{ steps.docker_image_info.outputs.ghcr_image_id}}
         - name: created repo
-          #if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '+tag-skip') != true
           run: |
             echo "${{ steps.ecr_login.outputs.repo_created }} did we create repo"
+
         - name: Push docker image to ECR
           run: |
             docker push $DOCKER_TAG_VERSION
             docker push $DOCKER_TAG_LATEST
 
         - name: Update function with new image built
-          if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'image' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.ecr_login.outputs.repo_created !='true'}}
+          if: ${{ steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.ecr_login.outputs.repo_created =='false'}}
           run: |
             aws lambda update-function-code --region ${{ env.AWS_REGION }} --function-name ${{inputs.lambd_function_name}}-${{ steps.get_branch_name.outputs.branch_name }} --image-uri $DOCKER_TAG_VERSION
     outputs:
