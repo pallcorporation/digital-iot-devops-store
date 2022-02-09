@@ -34,26 +34,27 @@ jobs:
     secrets:
       envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
   
-  aws-cdk-deployment-modules:
+   docker-image-build:
     needs: set-up-workflow
+    if: (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/integration')
+    uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_docker_image_builder.yml@main
+    with:
+      branch_name: ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
+      lambd_function_name: beer-membranes
+    secrets:
+      envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+  
+  aws-cdk-deployment-modules:
+    needs: docker-image-build
     if: (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/integration')
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_aws_cdk_modules.yml@main
     with:
       branch_name: ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
       destroy_stack: false
-      config_files_directory: cdk_config_files
+      config_files_directory: cdk_config
     secrets:
       envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
-  
-  docker-image-build:
-    needs: aws-cdk-deployment 
-    if: (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/integration')
-    uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_docker_image_builder.yml@main
-    with:
-      branch_name: ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
-      lambd_function_name: beer-image-from-ghcr-dev
-    secrets:
-      envPAT: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+      #testt
   
   build-main-branch:
     needs: set-up-workflow
