@@ -210,14 +210,15 @@ jobs:
         #  if: ${{ steps.get_deployment_type.outputs.deployment_type == 'image'}}
           #run: docker push ${{ steps.docker_image_info.outputs.ghcr_image_id}}
         - name: Was repo created
+          id: read_repo_created
           run: |
             if [[ $REPO -ne 0 ]]; then
-              echo "REPO_CREATED=true" >> $GITHUB_ENV
+              echo "::set-output name=repo_created::true"
             else            
-              echo "REPO_CREATED=false" >> $GITHUB_ENV
+              echo "::set-output name=repo_created::false"
             fi
             done
-
+            echo "REPO_CREATED=${{steps.read_repo_created.outputs.repo_created}}" >> $GITHUB_ENV
             echo "$REPO_CREATED is the value"
 
         - name: Push docker image to ECR
