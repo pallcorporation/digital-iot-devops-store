@@ -190,7 +190,7 @@ jobs:
         - name: ECR Login
           id: ecr_login
           run: |
-            aws ecr describe-repositories --repository-names ${{ github.event.repository.name }} || aws ecr create-repository --repository-name ${{ github.event.repository.name }}
+            aws ecr describe-repositories --repository-names ${{ github.event.repository.name }} || ( aws ecr create-repository --repository-name ${{ github.event.repository.name }} && echo "REPO_CREATED=1" >> $GITHUB_ENV )
             aws ecr get-login-password --region ${{ env.AWS_REGION }}| docker login --username AWS --password-stdin ${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
         #- name:  Build image and deploy to registry
@@ -209,15 +209,19 @@ jobs:
         #- name: Push docker image to GHCR
         #  if: ${{ steps.get_deployment_type.outputs.deployment_type == 'image'}}
           #run: docker push ${{ steps.docker_image_info.outputs.ghcr_image_id}}
+        - name: Was repo created
+          run: |
+            echo $REPO_CREATED is the value
+            
         - name: Push docker image to ECR
           run: |
             docker push $DOCKER_TAG_VERSION
             docker push $DOCKER_TAG_LATEST
 
-        - name: Update function with new image built
+        #- name: Update function with new image built
         #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'image' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
-          run: |
-            aws lambda update-function-code --region ${{ env.AWS_REGION }} --function-name ${{inputs.lambd_function_name}}-${{ steps.get_branch_name.outputs.branch_name }} --image-uri $DOCKER_TAG_VERSION
+        #  run: |
+        #    aws lambda update-function-code --region ${{ env.AWS_REGION }} --function-name ${{inputs.lambd_function_name}}-${{ steps.get_branch_name.outputs.branch_name }} --image-uri $DOCKER_TAG_VERSION
     outputs:
       #env_name: ${{ steps.branch_check.outputs.env_id }}tt
       #role_arn: ${{ steps.aws_assume_role.outputs.role_arn1}}
