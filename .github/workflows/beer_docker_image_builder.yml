@@ -190,7 +190,7 @@ jobs:
         - name: ECR Login
           id: ecr_login
           run: |
-            aws ecr describe-repositories --repository-names ${{ github.event.repository.name }} || ( aws ecr create-repository --repository-name ${{ github.event.repository.name }} && echo "::set-output name=repo_created::true" )
+            (aws ecr describe-repositories --repository-names ${{ github.event.repository.name }} && echo "::set-output name=repo_created::true" ) || ( aws ecr create-repository --repository-name ${{ github.event.repository.name }} && echo "::set-output name=repo_created::true" )
             aws ecr get-login-password --region ${{ env.AWS_REGION }}| docker login --username AWS --password-stdin ${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
         #- name:  Build image and deploy to registry
