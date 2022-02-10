@@ -99,6 +99,14 @@ jobs:
         # Grant permissions to all files in directory
         - name: Grant permissions to all files
           run: chmod -R 755 ./
+
+        # Read commit message and determine if to skip cdk work
+        - name: Read if to skip cdk deployment based on commit message
+          id: skip_cdk
+          if: "contains(github.event.head_commit.message, '+cdk-skip')"
+          run: |
+            echo "We will skip cdk execution"
+            echo "::set-output name=bypass_cdk::true"
         
         # Read of project files and set to variables
         - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
