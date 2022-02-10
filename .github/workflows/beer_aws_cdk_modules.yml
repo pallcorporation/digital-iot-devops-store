@@ -157,6 +157,7 @@ jobs:
             aws-region: ${{ env.AWS_REGION }}
         
         - name: Install CDK
+          if: ${{ steps.skip_cdk.outputs.bypass_cdk !='true'}}
           run: | 
             chmod -R 755 ${{env.CDK_MODULE}}
             sudo npm install -g aws-cdk
