@@ -137,7 +137,12 @@ jobs:
         
         - name: Copy cdk config files
           run: |
-            mkdir -p ${{env.CDK_MODULE}}/config_files
+            if [[ ! -e ${{env.CDK_MODULE}}/config_files ]]; then
+                mkdir ${{env.CDK_MODULE}}/config_files
+                chmod 777 ${{env.CDK_MODULE}}/config_files
+            elif [[ ! -d ${{env.CDK_MODULE}}/config_files ]]; then
+                echo "${{env.CDK_MODULE}}/config_files already exists but is not a directory" 1>&2
+            fi
             rm -r ${{env.CDK_MODULE}}/config_files/*
             cp -a ${{inputs.config_files_directory}}/. ${{env.CDK_MODULE}}/config_files/
             cp -a ${{env.PROJECT_FILES_DIRECTORY}}/. ${{env.CDK_MODULE}}/
