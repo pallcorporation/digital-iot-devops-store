@@ -144,6 +144,11 @@ jobs:
 
             cloud_front_id="`grep aws_${BRANCH_NAME}_cloudfront_id ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
             echo "::set-output name=aws_cloud_front_id::${cloud_front_id}"
+
+            swagger_cloud_front_id="`grep aws_${BRANCH_NAME}_swagger_cloudfront_id ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=aws_swagger_cloud_front_id::${swagger_cloud_front_id}"
+
+
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
         
         - name: Copy cdk config files
@@ -178,7 +183,7 @@ jobs:
             aws s3 sync ./dist s3://beer-api-swagger-dev
         #    aws cloudfront create-invalidation --distribution-id E11LJKZLIMW93N --paths '/*'
         # Build & deploy docker image
-        - name: Invalidate cloudfront cache
+        #- name: Invalidate cloudfront cache
         #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
-          run: |
-            aws cloudfront create-invalidation --distribution-id E23AUFGHABJNDF --paths '/*'
+        #  run: |
+        #    aws cloudfront create-invalidation --distribution-id ${{steps.project_constants.outputs.aws_swagger_cloud_front_id}} --paths '/*'
