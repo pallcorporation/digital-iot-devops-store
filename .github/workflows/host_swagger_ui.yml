@@ -116,7 +116,7 @@ jobs:
         
         - name: Copy files to swagger_src
           run: |
-            cp swagger.yaml /swagger_src
+            sudo cp -f swagger.yaml /swagger_src/swagger.yaml
         
         - name: Build swagger
           run: |
