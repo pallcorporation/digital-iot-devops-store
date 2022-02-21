@@ -114,9 +114,9 @@ jobs:
         - name: Grant permissions to all files
           run: chmod -R 755 ./
         
-        - name: Copy files to swagger_src
-          run: |
-            sudo cp -f swagger.yaml /swagger_src/swagger.yaml
+        #- name: Copy files to swagger_src
+        #  run: |
+        #    sudo cp -f swagger.yaml /swagger_src/swagger.yaml
         
         - name: Build swagger
           run: |
@@ -174,6 +174,7 @@ jobs:
         - name: Install yaml
           run: |
             pip install pyyaml
+            sudo npm install -g aws-cdk
 
         # Upload a file to AWS s3
         - name:  Deploy to S3 - Copy Build folder to s3
