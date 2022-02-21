@@ -89,11 +89,6 @@ jobs:
             npm install css-loader json-loader style-loader yaml-loader webpack webpack-cli html-webpack-plugin -D
             npm install swagger-ui
         
-        #- name: Make swagger ui directory
-        #  run: mkdir swagger_src
-        
-        
-        
         - name: Project files clone
           uses: actions/checkout@v2
           with:
@@ -183,7 +178,7 @@ jobs:
             aws s3 sync ./dist s3://beer-api-swagger-dev
         #    aws cloudfront create-invalidation --distribution-id E11LJKZLIMW93N --paths '/*'
         # Build & deploy docker image
-        - name: Invalidate cloudfront cache
+        #- name: Invalidate cloudfront cache
         #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
-          run: |
-            aws cloudfront create-invalidation --distribution-id E11LJKZLIMW93N --paths '/*'
+        #  run: |
+        #    aws cloudfront create-invalidation --distribution-id E11LJKZLIMW93N --paths '/*'
