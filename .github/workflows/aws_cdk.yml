@@ -143,7 +143,6 @@ jobs:
           id: build_images
           run: |
             docker build -t $GHCR_IMAGE_ID .
-            docker tag $GHCR_IMAGE_ID $GHCR_IMAGE_ID_LATEST
 
         
         - name: Push docker images to GHCR
