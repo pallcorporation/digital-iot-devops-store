@@ -136,14 +136,12 @@ jobs:
           if: ${{inputs.deployment_type}} == image
           run: |
             echo GHCR_IMAGE_ID="ghcr.io/${{github.repository_owner}}/${{ github.event.repository.name }}:$TAG_VERSION" >> $GITHUB_ENV
-            echo GHCR_IMAGE_ID_LATEST="ghcr.io/${{github.repository_owner}}/${{ github.event.repository.name }}:latest" >> $GITHUB_ENV
   
         - name: Build Docker images
           if: ${{inputs.deployment_type}} == image
           id: build_images
           run: |
             docker build -t $GHCR_IMAGE_ID .
-
         
         - name: Push docker images to GHCR
           if: ${{inputs.deployment_type}} == image
