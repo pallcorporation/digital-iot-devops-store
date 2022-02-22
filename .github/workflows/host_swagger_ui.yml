@@ -39,6 +39,10 @@ env:
   IMAGE_REGISTRY_USERNAME: ${{github.actor}}
   IMAGE_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   CDK_MODULE: "cdk_checkedout"
+  STACK_ID: "beer-s3-0-api-swagger"
+  CLOUDFRONT_OUTPUT: "beers30apiswaggercfoutput"
+  SWAGGER_BUCKET: "beer-api-swagger-dev"
+
   
 
 permissions:
@@ -142,13 +146,6 @@ jobs:
             echo "::set-output name=aws_bucket_name::${aws_bucket}"
             echo $aws_bucket
 
-            cloud_front_id="`grep aws_${BRANCH_NAME}_cloudfront_id ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=aws_cloud_front_id::${cloud_front_id}"
-
-            swagger_cloud_front_id="`grep aws_${BRANCH_NAME}_swagger_cloudfront_id ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=aws_swagger_cloud_front_id::${swagger_cloud_front_id}"
-
-
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
         
         - name: Copy cdk config files
@@ -180,10 +177,11 @@ jobs:
         - name:  Deploy to S3 - Copy Build folder to s3
         #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
           run: |
-            aws s3 sync ./dist s3://beer-api-swagger-dev
+            aws s3 sync ./dist s3://${{env.SWAGGER_BUCKET}}
         #    aws cloudfront create-invalidation --distribution-id E11LJKZLIMW93N --paths '/*'
         # Build & deploy docker image
         - name: Invalidate cloudfront cache
         #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
           run: |
-            aws cloudfront create-invalidation --distribution-id ${{steps.project_constants.outputs.aws_swagger_cloud_front_id}} --paths '/*'
+            CLOUDFRONT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.CLOUDFRONT_OUTPUT}}`].OutputValue' --output text)
+            aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_ID --paths '/*'
