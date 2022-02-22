@@ -193,6 +193,7 @@ jobs:
           run: |
             DOMAIN_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.CLOUDFRONT_URL_OUTPUT}}`].OutputValue' --output text)
             echo "::set-output name=DOMAIN_URL_OUTPUT::$DOMAIN_URL" 
+            echo "${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}} is the url"
 
     outputs:
       domain_url: ${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}}
