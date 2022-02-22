@@ -42,6 +42,7 @@ env:
   STACK_ID: "beer-s3-0-api-swagger"
   CLOUDFRONT_OUTPUT: "beers30apiswaggercfoutput"
   SWAGGER_BUCKET: "beer-api-swagger-dev"
+  CLOUDFRONT_URL_OUTPUT: "beers30apiswaggercfurloutput"
 
   
 
@@ -185,3 +186,13 @@ jobs:
           run: |
             CLOUDFRONT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.CLOUDFRONT_OUTPUT}}`].OutputValue' --output text)
             aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_ID --paths '/*'
+        
+        - name: Domain url
+          id: domain_url
+        #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
+          run: |
+            DOMAIN_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.CLOUDFRONT_URL_OUTPUT}}`].OutputValue' --output text)
+            echo "::set-output name=DOMAIN_URL_OUTPUT::$DOMAIN_URL" 
+
+    outputs:
+      domain_url: ${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}}
