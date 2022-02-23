@@ -41,7 +41,7 @@ env:
   CDK_MODULE: "cdk_checkedout"
   STACK_ID: "beer-s3-0-api-swagger"
   CLOUDFRONT_OUTPUT: "beers30apiswaggercfoutput"
-  SWAGGER_BUCKET: "beer-api-swagger-dev"
+  SWAGGER_BUCKET: "beer-api-swagger"
   CLOUDFRONT_URL_OUTPUT: "beers30apiswaggercfurloutput"
 
   
@@ -173,12 +173,25 @@ jobs:
           run: |
             pip install pyyaml
             sudo npm install -g aws-cdk
+        
+        - name: AWS function environment suffix
+          id: get_aws_branch_name
+          run: |
+            if [[ ${{inputs.branch_name}} == 'main' ]]
+            then
+              echo "AWS_ENV_NAME=production" >> $GITHUB_ENV
+            elif [[ ${{inputs.branch_name}} == 'integration' ]]
+            then
+              echo "AWS_ENV_NAME=int" >> $GITHUB_ENV
+            else
+              echo "AWS_ENV_NAME=$(echo ${{inputs.branch_name}})" >> $GITHUB_ENV
+            fi
 
         # Upload a file to AWS s3
         - name:  Deploy to S3 - Copy Build folder to s3
         #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
           run: |
-            aws s3 sync ./dist s3://${{env.SWAGGER_BUCKET}}
+            aws s3 sync ./dist s3://${{env.SWAGGER_BUCKET}}-${{env.AWS_ENV_NAME}}
         #    aws cloudfront create-invalidation --distribution-id E11LJKZLIMW93N --paths '/*'
         # Build & deploy docker image
         - name: Invalidate cloudfront cache
