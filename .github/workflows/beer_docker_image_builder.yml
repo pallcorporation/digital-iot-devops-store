@@ -89,6 +89,19 @@ jobs:
             echo ${{ steps.get_branch_name.outputs.branch}}
             ls
         
+        - name: Lambda function environment suffix
+          id: get_aws_branch_name
+          run: |
+            if [[ ${{inputs.branch_name}} == 'main' ]]
+            then
+              echo "AWS_ENV_NAME=production" >> $GITHUB_ENV
+            elif [[ ${{inputs.branch_name}} == 'integration' ]]
+            then
+              echo "AWS_ENV_NAME=int" >> $GITHUB_ENV
+            else
+              echo "AWS_ENV_NAME=$(echo ${{inputs.branch_name}})" >> $GITHUB_ENV
+            fi
+        
         # Read of project files and set to variables
         - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
           id: project_constants
@@ -195,7 +208,7 @@ jobs:
         - name: Update function with new image built
           if: ${{ steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.ecr_login.outputs.repo_created =='false'}}
           run: |
-            aws lambda update-function-code --region ${{ env.AWS_REGION }} --function-name ${{inputs.lambd_function_name}}-${{ steps.get_branch_name.outputs.branch_name }} --image-uri $DOCKER_TAG_VERSION
+            aws lambda update-function-code --region ${{ env.AWS_REGION }} --function-name ${{inputs.lambd_function_name}}-${{ env.AWS_ENV_NAME }} --image-uri $DOCKER_TAG_VERSION
     outputs:
       #env_name: ${{ steps.branch_check.outputs.env_id }}tt
       #role_arn: ${{ steps.aws_assume_role.outputs.role_arn1}}
