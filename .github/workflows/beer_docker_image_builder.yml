@@ -97,7 +97,7 @@ jobs:
               echo "AWS_ENV_NAME=production" >> $GITHUB_ENV
             elif [[ ${{inputs.branch_name}} == 'integration' ]]
             then
-              echo "AWS_ENV_NAME=int" >> $GITHUB_ENV
+              echo "AWS_ENV_NAME=integration" >> $GITHUB_ENV
             else
               echo "AWS_ENV_NAME=$(echo ${{inputs.branch_name}})" >> $GITHUB_ENV
             fi
