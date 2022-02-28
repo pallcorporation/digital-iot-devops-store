@@ -150,9 +150,12 @@ jobs:
         #  run: |
         #    sudo cp -f swagger.yaml /swagger_src/swagger.yaml
         
-
+        - name: Build swagger
+          if: ${{inputs.build_project_type == 'swagger'}}
+          run: |
+            npm run build
         - name: Build nx Frontend
-          if: ${{inputs.build_project_type}} == 'nx'
+          if: ${{inputs.build_project_type == 'nx'}}
           run: |
             npm ci
             npx nx build
