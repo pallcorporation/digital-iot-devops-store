@@ -113,8 +113,8 @@ jobs:
           run: |
             echo "BUILD_DIRECTORY=dist/storybook/ui-components" >> $GITHUB_ENV
         
-      - name: Build directory echo
-        run: echo $BUILD_DIRECTORY
+        - name: Build directory echo
+          run: echo $BUILD_DIRECTORY
         # Clone repositories prior to work
         - name: Git clone the repository
           uses: actions/checkout@v1
