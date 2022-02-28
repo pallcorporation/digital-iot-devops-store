@@ -24,24 +24,29 @@ on:
         type: string
 
       build_project_type:
-        type: string
         required: true
+        type: string
+        
 
       hosting_bucket:
-        type: string
         required: true
+        type: string
+        
       
       in_stack_id:
-        type: string
         required: true
+        type: string
+        
       
       in_cloudfront_url_output_to_query:
-        type: string
         required: true
+        type: string
+        
       
       in_cloudfront_output:
-        type: string
         required: true
+        type: string
+        
 
     secrets:
       envPAT:
