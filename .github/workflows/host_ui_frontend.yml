@@ -98,27 +98,23 @@ jobs:
 
             echo "$BRANCH_NAME is the name"
         
-        - name: Build directory
-          id: get_build_directory
+        - name: Build directory swagger
+          if: ${{inputs.build_project_type == 'swagger' }}
           run: |
-            if [[ ${{inputs.build_project_type}} == 'swagger' ]]
-            then
-              echo "BUILD_DIRECTORY=dist" >> $GITHUB_ENV
-            elif [[ ${{inputs.buildproject_type }} == 'storybook']]
-            then
-              echo "BUILD_DIRECTORY=dist/storybook/ui-components" >> $GITHUB_ENV
-            elif [[ ${{inputs.buildproject_type }} == 'nx']]
-            then
-              echo "BUILD_DIRECTORY=dist/apps/beeriot-web" >> $GITHUB_ENV
-            else
-              echo "BUILD_DIRECTORY=" >> $GITHUB_ENV
-            fi
+            echo "BUILD_DIRECTORY=dist" >> $GITHUB_ENV
 
-
-        - name: Echo
+        - name: Build directory nx
+          if: ${{inputs.build_project_type == 'nx' }}
           run: |
-            echo "$BUILD_DIRECTORY is the build directory"
+            echo "BUILD_DIRECTORY=dist/apps/beeriot-web" >> $GITHUB_ENV
 
+        - name: Build directory storybook
+          if: ${{inputs.build_project_type == 'storybook' }}
+          run: |
+            echo "BUILD_DIRECTORY=dist/storybook/ui-components" >> $GITHUB_ENV
+        
+      - name: Build directory echo
+        run: echo $BUILD_DIRECTORY
         # Clone repositories prior to work
         - name: Git clone the repository
           uses: actions/checkout@v1
