@@ -121,7 +121,7 @@ jobs:
           run: mkdir ${{env.CDK_MODULE}}
         
         - name: Swagger install
-          if: ${{inputs.build_project_type}} == 'swagger'
+          if: ${{inputs.build_project_type == 'swagger' }}
           run: |
             npm install css-loader json-loader style-loader yaml-loader webpack webpack-cli html-webpack-plugin -D
             npm install swagger-ui
