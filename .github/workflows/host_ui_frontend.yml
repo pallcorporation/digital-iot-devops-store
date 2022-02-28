@@ -98,6 +98,18 @@ jobs:
 
             echo "$BRANCH_NAME is the name"
         
+        - name: Build directory
+          id: get_build_directory
+          run: |
+            if [[ ${{inputs.build_project_type}} == 'swagger' ]]
+            then
+              echo "BUILD_DIRECTORY=dist" >> $GITHUB_ENV
+            else
+              echo "BUILD_DIRECTORY=dist/apps/beeriot-web" >> $GITHUB_ENV
+            fi
+
+            echo "$BRANCH_NAME is the name"
+        
         # Clone repositories prior to work
         - name: Git clone the repository
           uses: actions/checkout@v1
@@ -142,6 +154,11 @@ jobs:
           if: ${{inputs.build_project_type}} == swagger
           run: |
             npm run build
+        - name: Build nx Frontend
+          if: ${inputs.build_project_type} == nx
+          run: |
+            npm ci
+            npx nx build
 
         # Read commit message and determine if to skip cdk work
         - name: Read if to skip cdk deployment based on commit message
@@ -212,7 +229,7 @@ jobs:
         - name:  Deploy to S3 - Copy Build folder to s3
         #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
           run: |
-            aws s3 sync ./dist s3://${{inputs.hosting_bucket}}-${{env.AWS_ENV_NAME}}
+            aws s3 sync ./$BUILD_DIRECTORY s3://${{inputs.hosting_bucket}}-${{env.AWS_ENV_NAME}}
         #    aws cloudfront create-invalidation --distribution-id E11LJKZLIMW93N --paths '/*'
         # Build & deploy docker image
         - name: Invalidate cloudfront cache
