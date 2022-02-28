@@ -61,6 +61,7 @@ env:
   ORGANIZATION: "pallcorporation"
   PROJECT_FILES_NAME: "project.properties"
   PROJECT_FILES_DIRECTORY: "project_file"
+  CDK_MODULE: "cdk_checkedout"
 
   
 
