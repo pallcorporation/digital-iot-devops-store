@@ -108,7 +108,7 @@ jobs:
               echo "BUILD_DIRECTORY=dist/apps/beeriot-web" >> $GITHUB_ENV
             fi
 
-            echo "$BRANCH_NAME is the name"
+            echo "$BUILD_DIRECTORY is the name"
         
         # Clone repositories prior to work
         - name: Git clone the repository
@@ -121,7 +121,7 @@ jobs:
           run: mkdir ${{env.CDK_MODULE}}
         
         - name: Swagger install
-          if: ${{inputs.build_project_type}} == swagger
+          if: ${{inputs.build_project_type}} == 'swagger'
           run: |
             npm install css-loader json-loader style-loader yaml-loader webpack webpack-cli html-webpack-plugin -D
             npm install swagger-ui
@@ -151,11 +151,11 @@ jobs:
         #    sudo cp -f swagger.yaml /swagger_src/swagger.yaml
         
         - name: Build swagger
-          if: ${{inputs.build_project_type}} == swagger
+          if: ${{inputs.build_project_type}} == 'swagger'
           run: |
             npm run build
         - name: Build nx Frontend
-          if: ${{inputs.build_project_type}} == nx
+          if: ${{inputs.build_project_type}} == 'nx'
           run: |
             npm ci
             npx nx build
