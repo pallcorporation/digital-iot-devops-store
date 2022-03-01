@@ -258,11 +258,7 @@ jobs:
             
         - name: Echo Domain URL
           run: |
-            echo "${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}} is the url"
-            echo "::group::Group name"
-            echo "Log entry"
-            echo "::warning::${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}}"
-            echo "::endgroup::"
+            echo "::warning::${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}} is the cloudfront url"
 
 
     outputs:
