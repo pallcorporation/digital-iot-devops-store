@@ -39,6 +39,8 @@ env:
   IMAGE_REGISTRY_USERNAME: ${{github.actor}}
   IMAGE_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   CDK_MODULE: "cdk_checkedout"
+  API_GATEWAY_STACK_ID: beer-apigateway-0-iot-apigw
+  API_GATEWAY_OUPUT_LOOKUP: beerapigateway0iotapigwurloutput
   
 
 permissions:
@@ -192,3 +194,14 @@ jobs:
             --require-approval never \
             --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
           working-directory: ${{env.CDK_MODULE}}
+        
+        - name: API Gateway url
+          id: get_api_url
+          run: |
+
+            API_DOMAIN_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.API_GATEWAY_OUPUT_LOOKUP}}`].OutputValue' --output text)
+            echo "::set-output name=API_DOMAIN_URL_OUTPUT::$API_DOMAIN_URL" 
+        - name: API Gateway URL echo
+          run: |
+            echo "${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}} is the url"
+            echo "API_GATEWAY_URL=${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}}" >> $GITHUB_ENV
