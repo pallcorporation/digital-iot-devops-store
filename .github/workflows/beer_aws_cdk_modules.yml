@@ -199,7 +199,7 @@ jobs:
           id: get_api_url
           run: |
 
-            API_DOMAIN_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.API_GATEWAY_OUPUT_LOOKUP}}`].OutputValue' --output text)
+            API_DOMAIN_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.API_GATEWAY_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.API_GATEWAY_OUPUT_LOOKUP}}`].OutputValue' --output text)
             echo "::set-output name=API_DOMAIN_URL_OUTPUT::$API_DOMAIN_URL" 
         - name: API Gateway URL echo
           run: |
