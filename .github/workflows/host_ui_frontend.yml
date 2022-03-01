@@ -255,7 +255,15 @@ jobs:
           run: |
             DOMAIN_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{inputs.in_stack_id}} --query 'Stacks[0].Outputs[?OutputKey==`${{inputs.in_cloudfront_url_output_to_query}}`].OutputValue' --output text)
             echo "::set-output name=DOMAIN_URL_OUTPUT::$DOMAIN_URL" 
+            
+        - name: Echo Domain URL
+          run: |
             echo "${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}} is the url"
+            echo "::group::Group name"
+            echo "Log entry"
+            echo "::warning::${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}}"
+            echo "::endgroup::"
+
 
     outputs:
       domain_url: ${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}}
