@@ -1,0 +1,197 @@
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  #push:
+  #  branches:
+  #    - dev
+  #    - integration
+  workflow_call:
+    inputs:
+      branch_name:
+        required: true
+        type: string
+      
+      destroy_stack:
+        type: boolean
+        default: false
+
+      deployment_type:
+        type: string
+      config_files_directory:
+        required: true
+        type: string
+        
+
+      hosting_bucket:
+        required: true
+        type: string
+        
+      
+      in_stack_id:
+        required: true
+        type: string
+        
+      
+      in_cloudfront_url_output_to_query:
+        required: true
+        type: string
+        
+      
+      in_cloudfront_output:
+        required: true
+        type: string
+        
+
+    secrets:
+      envPAT:
+        required: true
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+env:
+  #BUCKET_NAME : "github-oidc-test-mitch"
+  AWS_REGION : "us-east-1"
+  PROJECT_FILES_GIT : "beer-project-properties.git"
+  ORGANIZATION: "pallcorporation"
+  PROJECT_FILES_NAME: "project.properties"
+  PROJECT_FILES_DIRECTORY: "project_file"
+  CDK_MODULE: "cdk_checkedout"
+  DEVOPS_STORE: "devops_store"
+
+  
+
+permissions:
+      id-token: write
+      contents: read    # This is required for actions/checkout@v1
+      packages: write
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:  
+  AWS-CDK-Deployment:
+    runs-on: ubuntu-latest
+      
+    steps:
+        # Get current time stamp to use as reference elsewhere
+        - name: Get current date
+          id: date
+          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+        
+        # Get branch name to use for look up
+        - name: Branch name
+          id: get_branch_name
+          run: |
+            if [[ ${{inputs.branch_name}} == 'main' ]]
+            then
+              echo "BRANCH_NAME=production" >> $GITHUB_ENV
+            else
+              echo "BRANCH_NAME=$(echo ${{inputs.branch_name}})" >> $GITHUB_ENV
+            fi
+
+            echo "$BRANCH_NAME is the name"
+        
+        - name: Git clone the repository
+          uses: actions/checkout@v1
+        
+        - name: Make project files directory
+          run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
+        
+        - name: Make cdk directory
+          run: mkdir ${{env.CDK_MODULE}}
+        
+        - name: CDK Modules clone
+          uses: actions/checkout@v2
+          with:
+            token: ${{ secrets.envPAT }}
+            repository: pallcorporation/digital-iot-devops-cdk-modules
+            ref: main
+            path: ${{env.CDK_MODULE}}
+        
+        # Grant permissions to all files in directory
+        - name: Grant permissions to all files
+          run: chmod -R 755 ./
+  
+        # Read of project files and set to variables
+        - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
+          id: project_constants
+          run: |
+            account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=env_id::${account_id}"
+            
+            oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=oidc_role::${oidc_role_name}"
+
+            cdk_deploy_role_arn="`grep aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
+            
+            aws_bucket="`grep aws_frontend_bucket ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=aws_bucket_name::${aws_bucket}"
+            echo $aws_bucket
+
+          working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
+        
+        - name: Copy cdk config files
+          run: |
+            rm -r ${{env.CDK_MODULE}}/config_files/*
+            cp -a ${{inputs.config_files_directory}}/. ${{env.CDK_MODULE}}/config_files/
+            cp -a ${{env.PROJECT_FILES_DIRECTORY}}/. ${{env.CDK_MODULE}}/
+        
+        # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
+        - name: Arn to use
+          id: aws_assume_role
+          run: |
+            echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
+      
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@master
+          with:
+            role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
+            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            aws-region: ${{ env.AWS_REGION }}
+        
+        - name: Install yaml
+          run: |
+            pip install pyyaml
+            sudo npm install -g aws-cdk
+        
+        - name: AWS function environment suffix
+          id: get_aws_branch_name
+          run: |
+            if [[ ${{inputs.branch_name}} == 'main' ]]
+            then
+              echo "AWS_ENV_NAME=production" >> $GITHUB_ENV
+            elif [[ ${{inputs.branch_name}} == 'integration' ]]
+            then
+              echo "AWS_ENV_NAME=int" >> $GITHUB_ENV
+            else
+              echo "AWS_ENV_NAME=$(echo ${{inputs.branch_name}})" >> $GITHUB_ENV
+            fi
+
+        # Upload a file to AWS s3
+        - name:  Deploy to S3 - Copy Build folder to s3
+        #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
+          run: |
+            aws s3 sync ./ s3://${{inputs.hosting_bucket}}-${{env.AWS_ENV_NAME}}
+        #    aws cloudfront create-invalidation --distribution-id E11LJKZLIMW93N --paths '/*'
+        # Build & deploy docker image
+        - name: Invalidate cloudfront cache
+        #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
+          run: |
+            CLOUDFRONT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{inputs.in_stack_id}} --query 'Stacks[0].Outputs[?OutputKey==`${{inputs.in_cloudfront_output}}`].OutputValue' --output text)
+            aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_ID --paths '/*'
+        
+        - name: Domain url
+          id: domain_url
+        #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
+          run: |
+            DOMAIN_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{inputs.in_stack_id}} --query 'Stacks[0].Outputs[?OutputKey==`${{inputs.in_cloudfront_url_output_to_query}}`].OutputValue' --output text)
+            echo "::set-output name=DOMAIN_URL_OUTPUT::$DOMAIN_URL" 
+            
+        - name: Echo Domain URL
+          run: |
+            echo "::warning::${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}} is the cloudfront url"
+
+
+    outputs:
+      domain_url: ${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}}
