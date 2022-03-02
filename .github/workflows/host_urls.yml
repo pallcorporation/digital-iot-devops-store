@@ -82,8 +82,14 @@ jobs:
         - name: Branch name
           id: get_branch_name
           run: |
-            BRANCH_NAME=${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
-            echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+            if [[ ${{inputs.branch_name}} == 'main' ]]
+            then
+              echo "BRANCH_NAME=production" >> $GITHUB_ENV
+            else
+              echo "BRANCH_NAME=$(echo ${{inputs.branch_name}})" >> $GITHUB_ENV
+            fi
+
+            echo "$BRANCH_NAME is the name"
         
         - name: Git clone the repository
           uses: actions/checkout@v1
@@ -101,6 +107,13 @@ jobs:
             repository: pallcorporation/digital-iot-devops-cdk-modules
             ref: main
             path: ${{env.CDK_MODULE}}
+        - name: Project files clone
+          uses: actions/checkout@v2
+          with:
+            token: ${{ secrets.envPAT }}
+            repository: pallcorporation/beer-project-properties
+            ref: main
+            path: ${{env.PROJECT_FILES_DIRECTORY}}
         
         # Grant permissions to all files in directory
         - name: Grant permissions to all files
