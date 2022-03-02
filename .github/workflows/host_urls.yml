@@ -82,14 +82,8 @@ jobs:
         - name: Branch name
           id: get_branch_name
           run: |
-            if [[ ${{inputs.branch_name}} == 'main' ]]
-            then
-              echo "BRANCH_NAME=production" >> $GITHUB_ENV
-            else
-              echo "BRANCH_NAME=$(echo ${{inputs.branch_name}})" >> $GITHUB_ENV
-            fi
-
-            echo "$BRANCH_NAME is the name"
+            BRANCH_NAME=${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
+            echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
         
         - name: Git clone the repository
           uses: actions/checkout@v1
