@@ -62,6 +62,7 @@ env:
   PROJECT_FILES_NAME: "project.properties"
   PROJECT_FILES_DIRECTORY: "project_file"
   CDK_MODULE: "cdk_checkedout"
+  DEVOPS_STORE: "devops_store"
 
   
 
@@ -125,11 +126,19 @@ jobs:
         - name: Make cdk directory
           run: mkdir ${{env.CDK_MODULE}}
         
+        - name: Make devops store directory
+          run: mkdir ${{env.DEVOPS_STORE}}
+        
         - name: Swagger install
           if: ${{inputs.build_project_type == 'swagger' }}
           run: |
-            npm install css-loader json-loader style-loader yaml-loader webpack webpack-cli html-webpack-plugin -D
             npm install swagger-ui
+
+        - name: Swagger install dependencies
+          if: ${{inputs.build_project_type == 'swagger1' }}
+          run: |
+            npm install css-loader json-loader style-loader yaml-loader webpack webpack-cli html-webpack-plugin -D
+            
         
         - name: Project files clone
           uses: actions/checkout@v2
@@ -146,6 +155,14 @@ jobs:
             repository: pallcorporation/digital-iot-devops-cdk-modules
             ref: main
             path: ${{env.CDK_MODULE}}
+
+        - name: Node Modules clone
+          uses: actions/checkout@v2
+          with:
+            token: ${{ secrets.envPAT }}
+            repository: pallcorporation/digital-iot-devops-store
+            ref: main
+            path: ${{env.DEVOPS_STORE}}
         
         # Grant permissions to all files in directory
         - name: Grant permissions to all files
@@ -155,6 +172,9 @@ jobs:
         #  run: |
         #    sudo cp -f swagger.yaml /swagger_src/swagger.yaml
         
+        - name: Move node modules directory
+          run: cp -a ${{env.DEVOPS_STORE}}/swagger_modules/. .
+
         - name: Build swagger
           if: ${{inputs.build_project_type == 'swagger'}}
           run: |
