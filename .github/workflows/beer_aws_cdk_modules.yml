@@ -198,10 +198,9 @@ jobs:
         - name: API Gateway url
           id: get_api_url
           run: |
-
             API_DOMAIN_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.API_GATEWAY_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.API_GATEWAY_OUPUT_LOOKUP}}`].OutputValue' --output text)
             echo "::set-output name=API_DOMAIN_URL_OUTPUT::$API_DOMAIN_URL" 
         - name: API Gateway URL echo
           run: |
-            echo "${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}} is the url"
+            echo "${{ steps.get_api_url.outputs.API_DOMAIN_URL_OUTPUT}} is the url"
             echo "API_GATEWAY_URL=${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}}" >> $GITHUB_ENV
