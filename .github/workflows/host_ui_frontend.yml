@@ -185,10 +185,9 @@ jobs:
             npm ci
             npx nx build
         
-        - name: Build Storybok
+        - name: Build Storybok #npm ci
           if: ${{inputs.build_project_type == 'storybook'}}
           run: |
-            npm ci
             NODE_ENV=production nx build-storybook ui-components
             
 
