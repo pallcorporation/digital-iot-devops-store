@@ -189,7 +189,8 @@ jobs:
           if: ${{inputs.build_project_type == 'storybook'}}
           run: |
             npm ci
-            npx nx build-storybook ui-components
+            NODE_ENV=production nx build-storybook ui-components
+            
 
         # Read commit message and determine if to skip cdk work
         - name: Read if to skip cdk deployment based on commit message
