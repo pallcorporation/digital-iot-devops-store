@@ -188,7 +188,7 @@ jobs:
         - name: Build Storybok
           if: ${{inputs.build_project_type == 'storybook'}}
           run: |
-            NODE_ENV=production
+            NODE_ENV=development
             npm ci 
             npx nx build-storybook ui-components
 
