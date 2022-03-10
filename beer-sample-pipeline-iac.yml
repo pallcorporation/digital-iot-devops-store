@@ -26,7 +26,7 @@ jobs:
           
   aws-cdk-deployment:
     needs: set-up-workflow
-    if: (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/integration')
+    if: (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/integration' && github.event.repository.name != "digital-iot-devops-store")
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_aws_cdk_deployment.yml@main
     with:
       branch_name: ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
@@ -36,7 +36,7 @@ jobs:
   
    docker-image-build:
     needs: set-up-workflow
-    if: (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/integration')
+    if: (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/integration' && github.event.repository.name != "digital-iot-devops-store")
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_docker_image_builder.yml@main
     with:
       branch_name: ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
@@ -46,7 +46,7 @@ jobs:
   
   aws-cdk-deployment-modules:
     needs: docker-image-build
-    if: (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/integration')
+    if: (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/integration' && github.event.repository.name != "digital-iot-devops-store")
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_aws_cdk_modules.yml@main
     with:
       branch_name: ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
