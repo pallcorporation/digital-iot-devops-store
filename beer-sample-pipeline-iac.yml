@@ -58,7 +58,7 @@ jobs:
   
   build-main-branch:
     needs: set-up-workflow
-    if: ${{github.ref}} == 'refs/heads/main'
+    if: ${{github.ref}} == 'refs/heads/main' && ${{ github.event.repository.name != "digital-iot-devops-store" }}
     uses: pallcorporation/digital-iot-devops-store/.github/workflows/beer_main_build.yml@main
     with:
       branch_name: ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
