@@ -15,7 +15,7 @@ jobs:
   set-up-workflow:
     runs-on: ubuntu-latest
       
-    #needs: FindAWSAccount
+    #needs: FindAWSAccount!
     steps:
       - name: Setting environment variable to be used
         run: |
