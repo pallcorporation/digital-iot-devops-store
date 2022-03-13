@@ -100,6 +100,21 @@ jobs:
           run: |
             npm install -g newman
         
-        - name: run newman
+        - name: Check if postman collections exists
+          id: postman_collections
           run: |
-            newman run ./postman/collection.json -e ./${{env.POSTMAN_COLLECTION_DIRECTORY}}/dev_env_var.json
+            DIR="postman_collections/"
+            ls
+            if [ -d "$DIR" ]; then
+              # Take action if $DIR exists. #
+              echo "Installing config files in ${DIR}..."
+              echo "::set-output name=postman_collections_found::true"
+            fi
+        - name: Collections found
+          run: |
+            echo ${{steps.postman_collections.outputs.postman_collections_found}}
+            
+        - name: run newman
+          if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
+          run: |
+            newman run ./postman/collection.json -e ./${{env.POSTMAN_COLLECTION_DIRECTORY}}/dev_env_var.json --bail
