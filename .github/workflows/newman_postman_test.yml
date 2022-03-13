@@ -1,0 +1,105 @@
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  #push:
+  #  branches:
+  #    - dev
+  #    - integration
+  workflow_call:
+    inputs:
+      branch_name:
+        required: true
+        type: string
+      
+      destroy_stack:
+        type: boolean
+        default: false
+
+      deployment_type:
+        type: string
+      config_files_directory:
+        required: true
+        type: string
+    secrets:
+      envPAT:
+        required: true
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+env:
+  #BUCKET_NAME : "github-oidc-test-mitch"
+  AWS_REGION : "us-east-1"
+  PROJECT_FILES_GIT : "beer-project-properties.git"
+  ORGANIZATION: "pallcorporation"
+  PROJECT_FILES_NAME: "project.properties"
+  PROJECT_FILES_DIRECTORY: "project_file"
+  IMAGE_REGISTRY: "ghcr.io"
+  IMAGE_REGISTRY_USERNAME: ${{github.actor}}
+  IMAGE_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  CDK_MODULE: "cdk_checkedout"
+  API_GATEWAY_STACK_ID: beer-apigateway-0-iot-apigw
+  API_GATEWAY_OUPUT_LOOKUP: beerapigateway0iotapigwurloutput
+  POSTMAN_COLLECTION_DIRECTORY: "newman_collection"
+  
+
+permissions:
+      id-token: write
+      contents: read    # This is required for actions/checkout@v1
+      packages: write
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:  
+  AWS-CDK-Deployment:
+    runs-on: ubuntu-latest
+      
+    steps:
+        # Get current time stamp to use as reference elsewhere
+        - name: Get current date
+          id: date
+          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+        
+        # Get branch name to use for look up
+        - name: Branch name
+          id: get_branch_name
+          run: |
+            if [[ ${{inputs.branch_name}} == 'main' ]]
+            then
+              echo "BRANCH_NAME=production" >> $GITHUB_ENV
+            else
+              echo "BRANCH_NAME=$(echo ${{inputs.branch_name}})" >> $GITHUB_ENV
+            fi
+
+            echo "$BRANCH_NAME is the name"
+        
+        # Clone repositories prior to work
+        - name: Git clone the repository
+          uses: actions/checkout@v1
+        
+        - name: Make Newman directory
+          run: mkdir ${{env.POSTMAN_COLLECTION_DIRECTORY}}
+        
+        - name: Postman repo clone
+          uses: actions/checkout@v2
+          with:
+            token: ${{ secrets.envPAT }}
+            repository: pallcorporation/beer-ul-postman-env
+            ref: main
+            path: ${{env.POSTMAN_COLLECTION_DIRECTORY}}
+
+        # Grant permissions to all files in directory
+        - name: Grant permissions to all files
+          run: chmod -R 755 ./
+        
+        # Node installation (if required)
+        - name: Setup node.js environment
+          uses: actions/setup-node@v2.1.2
+        
+        - name: Install newman
+          run: |
+            npm install -g newman
+        
+        - name: run newman
+          run: |
+            newman run ./postman/collection.json -e ./${{env.POSTMAN_COLLECTION_DIRECTORY}}/dev_env_var.json
