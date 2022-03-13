@@ -103,7 +103,7 @@ jobs:
         - name: Check if postman collections exists
           id: postman_collections
           run: |
-            DIR="postman_collections/"
+            DIR="postman/"
             ls
             if [ -d "$DIR" ]; then
               # Take action if $DIR exists. #
@@ -113,7 +113,7 @@ jobs:
         - name: Collections found
           run: |
             echo ${{steps.postman_collections.outputs.postman_collections_found}}
-            
+
         - name: run newman
           if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
           run: |
