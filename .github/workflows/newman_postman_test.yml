@@ -89,7 +89,7 @@ jobs:
             path: ${{env.POSTMAN_COLLECTION_DIRECTORY}}
         
         - name: Clone default repository (authorizer test)
-          if: ${{ github.event.repository.name ==beer-be-api-authorizer }}
+          if: ${{ github.event.repository.name }} == "beer-be-api-authorizer"
           uses: actions/checkout@v2
           with:
             token: ${{ secrets.envPAT }}
@@ -98,7 +98,7 @@ jobs:
             path: beer-be-company-service
             
         - name: Move postman files (authorizer test)
-          if: ${{ github.event.repository.name ==beer-be-api-authorizer }}
+          if: ${{ github.event.repository.name }} == "beer-be-api-authorizer"
           run: |
             mkdir postman
             mv beer-be-company-service/postman/* /postman
