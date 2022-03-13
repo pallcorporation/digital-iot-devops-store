@@ -87,6 +87,22 @@ jobs:
             repository: pallcorporation/beer-ul-postman-env
             ref: main
             path: ${{env.POSTMAN_COLLECTION_DIRECTORY}}
+        
+        - name: Clone default repository (authorizer test)
+          if: ${{ github.event.repository.name =="beer-be-api-authorizer" }}
+          uses: actions/checkout@v2
+          with:
+            token: ${{ secrets.envPAT }}
+            repository: pallcorporation/beer-be-company-service
+            ref: ${{env.BRANCH_NAME}}
+            path: beer-be-company-service
+            
+        - name: Move postman files (authorizer test)
+          if: ${{ github.event.repository.name =="beer-be-api-authorizer" }}
+          run: |
+            mkdir postman
+            mv beer-be-company-service/postman/* /postman
+
 
         # Grant permissions to all files in directory
         - name: Grant permissions to all files
@@ -110,6 +126,7 @@ jobs:
               echo "Installing config files in ${DIR}..."
               echo "::set-output name=postman_collections_found::true"
             fi
+        
         - name: Collections found
           run: |
             echo ${{steps.postman_collections.outputs.postman_collections_found}}
