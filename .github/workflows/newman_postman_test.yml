@@ -117,4 +117,4 @@ jobs:
         - name: run newman
           if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
           run: |
-            newman run ./postman/collection.json -e ./${{env.POSTMAN_COLLECTION_DIRECTORY}}/dev_env_var.json --bail
+            newman run ./postman/collection.json -e ./${{env.POSTMAN_COLLECTION_DIRECTORY}}/${{env.BRANCH_NAME}}_env_var.json --bail
