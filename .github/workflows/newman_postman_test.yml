@@ -80,6 +80,9 @@ jobs:
         - name: Make Newman directory
           run: mkdir ${{env.POSTMAN_COLLECTION_DIRECTORY}}
         
+        - name: Make Postman directory
+          run: mkdir postman
+        
         - name: Postman repo clone
           uses: actions/checkout@v2
           with:
@@ -96,17 +99,18 @@ jobs:
             repository: pallcorporation/beer-be-company-service
             ref: ${{env.BRANCH_NAME}}
             path: beer-be-company-service
+        
+        # Grant permissions to all files in directory
+        - name: Grant permissions to all files
+          run: chmod -R 755 ./
             
         - name: Move postman files (authorizer test)
           if: ${{ github.event.repository.name }} == "beer-be-api-authorizer"
           run: |
-            mkdir postman
             mv beer-be-company-service/postman/* /postman
 
 
-        # Grant permissions to all files in directory
-        - name: Grant permissions to all files
-          run: chmod -R 755 ./
+        
         
         # Node installation (if required)
         - name: Setup node.js environment
