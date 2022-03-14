@@ -42,7 +42,7 @@ permissions:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:  
   build-docker-image:
-    if: ${{inputs.branch_name}} != 'main'
+    if: ${{inputs.branch_name}} != 'main' && github.repository != 'pallcorporation/digital-iot-devops-store'
     runs-on: ubuntu-latest
       
     #needs: FindAWSAccount

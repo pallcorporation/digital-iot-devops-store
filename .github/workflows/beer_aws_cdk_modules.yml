@@ -54,7 +54,7 @@ permissions:
 jobs:
   
   AWS-CDK-Deployment:
-    if: ${{ github.event.repository.name }} != "digital-iot-devops-store"
+    if: github.repository != 'pallcorporation/digital-iot-devops-store'
     runs-on: ubuntu-latest
     steps:
         # Get current time stamp to use as reference elsewhere
