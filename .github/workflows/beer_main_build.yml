@@ -208,6 +208,6 @@ jobs:
           with:
             github-token: ${{ secrets.envPAT }} # this will use the runner's token.
             ms-teams-webhook-uri: https://danaher.webhook.office.com/webhookb2/c2fc053b-9fff-4154-9bcc-7ab1b2054277@771c9c47-7f24-44dc-958e-34f8713a8394/IncomingWebhook/da8143ec7945408ebe7f33f6615e5b12/d07af951-4b8f-4482-8d30-ee72e5fd59b6
-            notification-summary: "Build Successful Emojify! &#x2705;: v${{ steps.version_number.outputs.new_version }}"
+            notification-summary: "Build Successful &#x2705;: "v$TAG_VERSION
             notification-color: 00FF00
             timezone: America/New_York
