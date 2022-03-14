@@ -25,6 +25,8 @@ on:
     secrets:
       envPAT:
         required: true
+      teams_uri:
+        required: false
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -204,3 +206,23 @@ jobs:
           run: |
             echo "${{ steps.get_api_url.outputs.API_DOMAIN_URL_OUTPUT}} is the url"
             echo "API_GATEWAY_URL=${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}}" >> $GITHUB_ENV
+        
+        - name: Microsoft Teams Notification
+          if: success()
+          uses: jdcargile/ms-teams-notification@v1.3
+          with:
+            github-token: ${{ secrets.envPAT }} # this will use the runner's token.
+            ms-teams-webhook-uri: ${{ secrets.teams_uri }}
+            notification-summary: "AWS CDK Deploy Successful &#x2705;"
+            notification-color: 00FF00
+            timezone: America/New_York
+        
+        - name: Microsoft Teams Notification
+          if: failure()
+          uses: jdcargile/ms-teams-notification@v1.3
+          with:
+            github-token: ${{ secrets.envPAT }} # this will use the runner's token.
+            ms-teams-webhook-uri: ${{ secrets.teams_uri }}
+            notification-summary: "AWS CDK Build Error &#x274C #FF0000; Please check workflow"
+            notification-color: 00FF00
+            timezone: America/New_York

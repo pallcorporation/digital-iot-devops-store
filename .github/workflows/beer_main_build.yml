@@ -215,3 +215,13 @@ jobs:
             notification-summary: "Build Successful &#x2705;: v${{ steps.version_number.outputs.new_version }}"
             notification-color: 00FF00
             timezone: America/New_York
+        
+        - name: Microsoft Teams Notification
+          if: failure()
+          uses: jdcargile/ms-teams-notification@v1.3
+          with:
+            github-token: ${{ secrets.envPAT }} # this will use the runner's token.
+            ms-teams-webhook-uri: ${{ secrets.teams_uri }}
+            notification-summary: "Build Error &#x274C #FF0000; Please check workflow"
+            notification-color: 00FF00
+            timezone: America/New_York
