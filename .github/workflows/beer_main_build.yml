@@ -205,6 +205,9 @@ jobs:
           uses: mikepenz/release-changelog-builder-action@v1
           env:
             GITHUB_TOKEN: ${{ secrets.envPAT }}
+        - name: Print Changelog
+          run: |
+            echo ${{steps.github_release.outputs.changelog}}
         
         - name: Microsoft Teams Notification
           if: success()

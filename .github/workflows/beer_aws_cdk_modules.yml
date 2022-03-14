@@ -51,7 +51,8 @@ permissions:
       packages: write
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
-jobs:  
+jobs:
+  if: ${{ github.event.repository.name }} != "digital-iot-devops-store"
   AWS-CDK-Deployment:
     runs-on: ubuntu-latest
       
