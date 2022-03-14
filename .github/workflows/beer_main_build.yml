@@ -212,6 +212,6 @@ jobs:
           with:
             github-token: ${{ secrets.envPAT }} # this will use the runner's token.
             ms-teams-webhook-uri: ${{ secrets.teams_uri }}
-            notification-summary: "Build Successful &#x2705;: v$TAG_VERSION"
+            notification-summary: "Build Successful &#x2705;: v${{ steps.version_number.outputs.new_version }}"
             notification-color: 00FF00
             timezone: America/New_York
