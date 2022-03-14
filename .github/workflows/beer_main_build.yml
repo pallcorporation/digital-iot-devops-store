@@ -47,9 +47,7 @@ permissions:
 jobs:  
   tag-and-build:
     if: ${{ github.event.repository.name }} != "digital-iot-devops-store"
-    runs-on: ubuntu-latest  
-    if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '+tag-skip') != true
-        
+    runs-on: ubuntu-latest          
     steps:
 
         - name: Get current date
