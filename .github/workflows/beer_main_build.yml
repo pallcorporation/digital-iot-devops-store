@@ -201,3 +201,13 @@ jobs:
           uses: mikepenz/release-changelog-builder-action@v1
           env:
             GITHUB_TOKEN: ${{ secrets.envPAT }}
+        
+        - name: Microsoft Teams Notification
+          if: success()
+          uses: jdcargile/ms-teams-notification@v1.3
+          with:
+            github-token: ${{ secrets.BEER_PROJECT_PROPERTIES }} # this will use the runner's token.
+            ms-teams-webhook-uri: ${{ secrets.BEER_TEAMS_WEBHOOK }}
+            notification-summary: "Build Successful Emojify! &#x2705;: v${{ steps.version_number.outputs.new_version }}"
+            notification-color: 00FF00
+            timezone: America/New_York
