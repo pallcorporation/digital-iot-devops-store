@@ -16,9 +16,13 @@ on:
       deployment_type:
         required: true
         type: string
+
     secrets:
       envPAT:
         required: true
+      teams_uri:
+        required: false
+
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -207,7 +211,7 @@ jobs:
           uses: jdcargile/ms-teams-notification@v1.3
           with:
             github-token: ${{ secrets.envPAT }} # this will use the runner's token.
-            ms-teams-webhook-uri: ${{ secrets.BEER_TEAMS_WEBHOOK }}
-            notification-summary: "Build Successful Emojify! &#x2705;: v${{ steps.version_number.outputs.new_version }}"
+            ms-teams-webhook-uri: ${{ secrets.teams_uri }}
+            notification-summary: "Build Successful &#x2705;: v$TAG_VERSION"
             notification-color: 00FF00
             timezone: America/New_York
