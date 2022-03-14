@@ -46,7 +46,7 @@ permissions:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:  
   tag-and-build:
-    if: ${{ github.event.repository.name }} != "digital-iot-devops-store"
+    if: ${{ github.event.repository.name != "digital-iot-devops-store" }}
     runs-on: ubuntu-latest          
     steps:
 
