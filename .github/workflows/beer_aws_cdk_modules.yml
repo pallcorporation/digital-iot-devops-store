@@ -172,6 +172,7 @@ jobs:
             pip install pyyaml
 
         - name: Test cdk synth works
+          if: ${{ steps.skip_cdk.outputs.bypass_cdk !='true'}}
           run: cdk synth
           working-directory: ${{env.CDK_MODULE}}
         
