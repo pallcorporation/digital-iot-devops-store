@@ -19,8 +19,6 @@ on:
     secrets:
       envPAT:
         required: true
-      teams_uri:
-        required: false
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -211,26 +209,7 @@ jobs:
           if: ${{ steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.ecr_login.outputs.repo_created =='false'}}
           run: |
             aws lambda update-function-code --region ${{ env.AWS_REGION }} --function-name ${{inputs.lambd_function_name}}-${{ env.AWS_ENV_NAME }} --image-uri $DOCKER_TAG_VERSION
-        
-        - name: Microsoft Teams Notification
-          if: success()
-          uses: jdcargile/ms-teams-notification@v1.3
-          with:
-            github-token: ${{ secrets.envPAT }} # this will use the runner's token.
-            ms-teams-webhook-uri: ${{ secrets.teams_uri }}
-            notification-summary: "Image built successfully and deployed to ${{ steps.get_branch_name.outputs.branch_name }} AWS environment &#x2705; : v${{ steps.date.outputs.date }}"
-            notification-color: 00FF00
-            timezone: America/New_York
-        
-        - name: Microsoft Teams Notification
-          if: failure()
-          uses: jdcargile/ms-teams-notification@v1.3
-          with:
-            github-token: ${{ secrets.envPAT }} # this will use the runner's token.
-            ms-teams-webhook-uri: ${{ secrets.teams_uri }}
-            notification-summary: "Image build error &#x274C #FF0000; Please check workflow"
-            notification-color: 00FF00
-            timezone: America/New_York
+
     outputs:
       #env_name: ${{ steps.branch_check.outputs.env_id }}tt
       #role_arn: ${{ steps.aws_assume_role.outputs.role_arn1}}
