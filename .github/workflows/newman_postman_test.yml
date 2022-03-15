@@ -104,14 +104,25 @@ jobs:
         # Grant permissions to all files in directory
         - name: Grant permissions to all files
           run: chmod -R 755 ./
+
+        - name: Copy file to use
+          run: |
+            cp ${{env.POSTMAN_COLLECTION_DIRECTORY}}/${{env.BRANCH_NAME}}_env_var.json env_var.json
+
+        - name: Set environment variables for python
+          run: |
+            echo "POSTMAN_USERNAME=${{secrets.BEER_POSTMAN_USERNAME}}" >> $GITHUB_ENV
+            echo "POSTMAN_PASSWORD=${{secrets.BEER_POSTMAN_PASSWORD}}" >> $GITHUB_ENV
+            echo "COGNITO_USERPOOL_SECRET=${{secrets.BEER_COGNITO_USERPOOL_SECRET}}" >> $GITHUB_ENV
+
+        - name: Run python script
+          run: |
+            python3 ${{env.POSTMAN_COLLECTION_DIRECTORY}}/replace_secrets.py
             
         - name: Move postman files (authorizer test)
           if: ${{ github.event.repository.name }} == "beer-be-api-authorizer"
           run: |
             mv beer-be-company-service/postman/* postman
-
-
-        
         
         # Node installation (if required)
         - name: Setup node.js environment
@@ -139,4 +150,4 @@ jobs:
         - name: run newman
           if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
           run: |
-            newman run ./postman/collection.json -e ./${{env.POSTMAN_COLLECTION_DIRECTORY}}/${{env.BRANCH_NAME}}_env_var.json --bail
+            newman run ./postman/collection.json -e ./${{env.POSTMAN_COLLECTION_DIRECTORY}}/final_env_var.json --bail
