@@ -158,4 +158,4 @@ jobs:
         - name: run newman
           if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
           run: |
-            newman run ./postman/collection.json -e ./final_env_var.json --bail
+            newman run ./postman/collection.json -e ./final_env_var.json
