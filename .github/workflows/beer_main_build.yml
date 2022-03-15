@@ -227,5 +227,3 @@ jobs:
             notification-summary: "Build Error &#x274C; : Please check workflow"
             notification-color: FF0000
             timezone: America/New_York
-
-            [${{ steps.vars.outputs.sha_short }}](https://github.com/pallcorporation/${{ github.event.repository.name }}/commit/${{ github.event.head.sha }})
