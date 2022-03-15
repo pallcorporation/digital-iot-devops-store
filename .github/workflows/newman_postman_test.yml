@@ -81,9 +81,6 @@ jobs:
         - name: Make Newman directory
           run: mkdir ${{env.POSTMAN_COLLECTION_DIRECTORY}}
         
-        - name: Make Postman directory
-          run: mkdir postman
-        
         - name: Postman repo clone
           uses: actions/checkout@v2
           with:
