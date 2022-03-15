@@ -121,6 +121,7 @@ jobs:
         - name: Run python script
           run: |
             python3 ${{env.POSTMAN_COLLECTION_DIRECTORY}}/replace_secrets.py
+            ls
             
         - name: Move postman files (authorizer test)
           if: ${{ github.event.repository.name }} == "beer-be-api-authorizer"
