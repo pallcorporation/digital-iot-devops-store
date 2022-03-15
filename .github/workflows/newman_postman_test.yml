@@ -25,6 +25,12 @@ on:
     secrets:
       envPAT:
         required: true
+      POSTMAN_USERNAME:
+        required: true
+      POSTMAN_PASSWORD:
+        required: true
+      COGNITO_USERPOOL_SECRET:
+        required: true
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
