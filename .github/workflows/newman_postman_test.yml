@@ -48,6 +48,7 @@ env:
   API_GATEWAY_STACK_ID: beer-apigateway-0-iot-apigw
   API_GATEWAY_OUPUT_LOOKUP: beerapigateway0iotapigwurloutput
   POSTMAN_COLLECTION_DIRECTORY: "newman_collection"
+  REPO_NAME: ${{ github.event.repository.name }}
   
 
 permissions:
@@ -137,7 +138,7 @@ jobs:
             ls
             
         - name: Move postman files (authorizer test)
-          if: ${{ github.event.repository.name == beer-be-api-authorizer}}
+          if: ${{env.REPO_NAME == 'beer-be-api-authorizer' }}
           run: |
             mv beer-be-company-service/postman/* postman
         
