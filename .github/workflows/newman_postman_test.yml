@@ -137,7 +137,7 @@ jobs:
             ls
             
         - name: Move postman files (authorizer test)
-          if: ${{ github.event.repository.name }} == "beer-be-api-authorizer"
+          if: ${{ github.event.repository.name == "beer-be-api-authorizer"}}
           run: |
             mv beer-be-company-service/postman/* postman
         
