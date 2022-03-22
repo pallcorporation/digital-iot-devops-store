@@ -51,6 +51,14 @@ jobs:
         - name: Get current date
           id: date
           run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+        
+        # Read commit message and determine if to skip docker work
+        - name: Read if to skip image build & deployment based on commit message
+          id: skip_dk_build
+          if: "contains(github.event.head_commit.message, '+image-skip')"
+          run: |
+            echo "We will node installation"
+            echo "::set-output name=bypass_dk_build::true"
 
         - name: Login to docker
           if: |
@@ -133,13 +141,7 @@ jobs:
         #    echo ${{ steps.get_deployment_type.outputs.deployment_type}}
 
         
-        # Read commit message and determine if to skip docker work
-        - name: Read if to skip image build & deployment based on commit message
-          id: skip_dk_build
-          if: "contains(github.event.head_commit.message, '+image-skip')"
-          run: |
-            echo "We will node installation"
-            echo "::set-output name=bypass_dk_build::true"
+        
 
 
         # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
@@ -185,28 +187,32 @@ jobs:
             
         
         - name: Build Docker images
+          if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true'}}
           id: build_images
           run: |
             docker build -t $DOCKER_TAG_VERSION .
             docker tag $DOCKER_TAG_VERSION $DOCKER_TAG_LATEST
 
         - name: ECR Login
+          if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true'}}
           id: ecr_login
           run: |
             (aws ecr describe-repositories --repository-names ${{ github.event.repository.name }} && echo "::set-output name=repo_created::false" ) || ( aws ecr create-repository --repository-name ${{ github.event.repository.name }} && echo "::set-output name=repo_created::true" )
             aws ecr get-login-password --region ${{ env.AWS_REGION }}| docker login --username AWS --password-stdin ${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
         - name: created repo
+          if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true'}}
           run: |
             echo "${{ steps.ecr_login.outputs.repo_created }} did we create repo"
 
         - name: Push docker image to ECR
+          if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true'}}
           run: |
             docker push $DOCKER_TAG_VERSION
             docker push $DOCKER_TAG_LATEST
 
         - name: Update function with new image built
-          if: ${{ steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.ecr_login.outputs.repo_created =='false'}}
+          if: ${{ steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.ecr_login.outputs.repo_created =='false' && steps.skip_dk_build.outputs.bypass_dk_build !='true'}} 
           run: |
             aws lambda update-function-code --region ${{ env.AWS_REGION }} --function-name ${{inputs.lambd_function_name}}-${{ env.AWS_ENV_NAME }} --image-uri $DOCKER_TAG_VERSION
 
