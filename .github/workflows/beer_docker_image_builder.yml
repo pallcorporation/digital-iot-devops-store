@@ -151,6 +151,7 @@ jobs:
             echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
       
         - name: Configure AWS credentials
+          if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true'}}
           uses: aws-actions/configure-aws-credentials@master
           with:
             role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
@@ -168,6 +169,7 @@ jobs:
           uses: actions/setup-node@v2.1.2
 
         - name: Install yaml
+          if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true'}}
           run: |
             pip install pyyaml
         
