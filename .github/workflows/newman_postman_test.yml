@@ -180,6 +180,7 @@ jobs:
         - name: Set environment variables for python
           #echo "POSTMAN_USERNAME=${{secrets.POSTMAN_USERNAME_SECRET}}" >> $GITHUB_ENV
           run: |
+            echo "POSTMAN_USERNAME=postman.user" >> $GITHUB_ENV
             echo "POSTMAN_PASSWORD=${{secrets.POSTMAN_PASSWORD_SECRET}}" >> $GITHUB_ENV
             echo "COGNITO_USERPOOL_SECRET=${{secrets.COGNITO_USERPOOL_SECRET_PHRASE}}" >> $GITHUB_ENV
         - name: Run python script to seed policy to admins
