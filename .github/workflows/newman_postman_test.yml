@@ -179,9 +179,21 @@ jobs:
 
         - name: Set environment variables for python
           run: |
-            echo "POSTMAN_USERNAME=${{secrets.POSTMAN_USERNAME_SECRET}}" >> $GITHUB_ENV
-            echo "POSTMAN_PASSWORD=${{secrets.POSTMAN_PASSWORD_SECRET}}" >> $GITHUB_ENV
-            echo "COGNITO_USERPOOL_SECRET=${{secrets.COGNITO_USERPOOL_SECRET_PHRASE}}" >> $GITHUB_ENV
+            if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'dev' ]]
+            then
+              echo "POSTMAN_USERNAME=${{secrets.BEER_DEV_POSTMAN_USERNAME}}" >> $GITHUB_ENV
+              echo "POSTMAN_PASSWORD=${{secrets.BEER_DEV_POSTMAN_PASSWORD}}" >> $GITHUB_ENV
+              echo "COGNITO_USERPOOL_SECRET=${{secrets.BEER_DEV_COGNITO_USERPOOL_SECRET}}" >> $GITHUB_ENV
+            elif [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'integration' ]]
+            then
+              echo "POSTMAN_USERNAME=${{secrets.BEER_INTEGRATION_POSTMAN_USERNAME}}" >> $GITHUB_ENV
+              echo "POSTMAN_PASSWORD=${{secrets.BEER_INTEGRATION_POSTMAN_PASSWORD}}" >> $GITHUB_ENV
+              echo "COGNITO_USERPOOL_SECRET=${{secrets.BEER_INTEGRATION_COGNITO_USERPOOL_SECRET}}" >> $GITHUB_ENV
+            else
+              echo "POSTMAN_USERNAME=${{secrets.BEER_DEV_POSTMAN_USERNAME}}" >> $GITHUB_ENV
+              echo "POSTMAN_PASSWORD=${{secrets.BEER_DEV_POSTMAN_PASSWORD}}" >> $GITHUB_ENV
+              echo "COGNITO_USERPOOL_SECRET=${{secrets.BEER_DEV_COGNITO_USERPOOL_SECRET}}" >> $GITHUB_ENV
+            fi
         - name: Run python script to seed policy to admins
           run: |
             pip3 install boto3
