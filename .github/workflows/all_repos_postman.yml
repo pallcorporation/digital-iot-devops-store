@@ -65,7 +65,7 @@ jobs:
       - name: Git clone the repository
         uses: actions/checkout@v1
         with:
-          token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+          token: ${{ secrets.envPAT }}
           repository: pallcorporation/beer-ul-postman-env
           ref: main
           path: ${{env.ADMIN_USERS_POLICY_SEED}}
@@ -73,7 +73,7 @@ jobs:
       - name: Admin users repo clone
         uses: actions/checkout@v2
         with:
-          token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+          token: ${{ secrets.envPAT }}
           repository: pallcorporation/beer-ul-admin-users
           ref: main
           path: ${{env.ADMIN_USERS_POLICY_SEED}}
@@ -81,7 +81,7 @@ jobs:
       - name: Project files clone
         uses: actions/checkout@v2
         with:
-          token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+          token: ${{ secrets.envPAT }}
           repository: pallcorporation/beer-project-properties
           ref: main
           path: ${{env.PROJECT_FILES_DIRECTORY}}
@@ -200,7 +200,7 @@ jobs:
       - name: Check out iac repos
         uses: actions/checkout@v2
         with:
-          token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+          token: ${{ secrets.envPAT }}
           repository: pallcorporation/${{ matrix.iac-repos }}
           ref: dev
           path: ${{ matrix.iac-repos }}
@@ -208,7 +208,7 @@ jobs:
       - name: Project files clone
         uses: actions/checkout@v2
         with:
-          token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+          token: ${{ secrets.envPAT }}
           repository: pallcorporation/beer-project-properties
           ref: main
           path: ${{env.PROJECT_FILES_DIRECTORY}}
