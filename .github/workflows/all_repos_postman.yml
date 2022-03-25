@@ -311,22 +311,32 @@ jobs:
         run: |
           cp ${BRANCH_NAME}_env_var.json env_var.json
       
-      - name: Set environment variables for python
+      - name: Set environment Cognito secret variables for python
         run: |
           if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'dev' ]]
           then
-            echo "POSTMAN_USERNAME=${{secrets.BEER_POSTMAN_USERNAME}}" >> $GITHUB_ENV
-            echo "POSTMAN_PASSWORD=${{secrets.BEER_POSTMAN_PASSWORD}}" >> $GITHUB_ENV
-            echo "COGNITO_USERPOOL_SECRET=${{secrets.BEER_DEV_COGNITO_USERPOOL_SECRET}}" >> $GITHUB_ENV
+            echo "COGNITO_USERPOOL_SECRET=${{secrets.cognito_dev_user_pool_secret}}" >> $GITHUB_ENV
           elif [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'integration' ]]
           then
-            echo "POSTMAN_USERNAME=${{secrets.BEER_POSTMAN_USERNAME}}" >> $GITHUB_ENV
-            echo "POSTMAN_PASSWORD=${{secrets.BEER_POSTMAN_PASSWORD}}" >> $GITHUB_ENV
-            echo "COGNITO_USERPOOL_SECRET=${{secrets.BEER_INTEGRATION_COGNITO_USERPOOL_SECRET}}" >> $GITHUB_ENV
+            echo "COGNITO_USERPOOL_SECRET=${{secrets.cognito_integration_user_pool_secret}}" >> $GITHUB_ENV
           else
-            echo "POSTMAN_USERNAME=${{secrets.BEER_POSTMAN_USERNAME}}" >> $GITHUB_ENV
-            echo "POSTMAN_PASSWORD=${{secrets.BEER_POSTMAN_PASSWORD}}" >> $GITHUB_ENV
-            echo "COGNITO_USERPOOL_SECRET=${{secrets.BEER_DEV_COGNITO_USERPOOL_SECRET}}" >> $GITHUB_ENV
+            echo "COGNITO_USERPOOL_SECRET=${{secrets.cognito_dev_user_pool_secret}}" >> $GITHUB_ENV
+          fi
+
+
+      - name: Set environment Username & Password variables for python
+        run: |
+          if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'dev' ]]
+          then
+            echo "POSTMAN_USERNAME=${{secrets.postman_username}}" >> $GITHUB_ENV
+            echo "POSTMAN_PASSWORD=${{secrets.postman_password}}" >> $GITHUB_ENV
+          elif [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'integration' ]]
+          then
+            echo "POSTMAN_USERNAME=${{secrets.postman_username}}" >> $GITHUB_ENV
+            echo "POSTMAN_PASSWORD=${{secrets.postman_password}}" >> $GITHUB_ENV
+          else
+            echo "POSTMAN_USERNAME=${{secrets.postman_username}}" >> $GITHUB_ENV
+            echo "POSTMAN_PASSWORD=${{secrets.postman_password}}" >> $GITHUB_ENV
           fi
       
       - name: Run python script to replace secrets
