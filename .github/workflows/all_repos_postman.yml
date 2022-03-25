@@ -1,0 +1,323 @@
+name: Beer microservice API automated tests
+on:
+  #push:
+  # branches:
+  #    - dev
+  #    - integration
+  #    - main
+  #schedule:
+  #  - cron: "0 * * * *"
+
+  workflow_dispatch:
+
+env:
+  AWS_REGION : "us-east-1"
+  PROJECT_FILES_GIT : "beer-project-properties.git"
+  ORGANIZATION: "pallcorporation"
+  PROJECT_FILES_NAME: "project.properties"
+  PROJECT_FILES_DIRECTORY: "project_file"
+  IMAGE_REGISTRY: "ghcr.io"
+  IMAGE_REGISTRY_USERNAME: ${{github.actor}}
+  IMAGE_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  CDK_MODULE: cdk
+  POSTMAN_COLLECTION_DIRECTORY: "newman_collection"
+  REPO_NAME: ${{ github.event.repository.name }}
+  ADMIN_USERS_POLICY_SEED: beer-ul-admin-users
+
+permissions:
+      id-token: write
+      contents: read    # This is required for actions/checkout@v1
+      packages: write
+
+
+jobs:
+  Project-Admins:
+    runs-on: ubuntu-latest
+    steps:
+      # Get current time stamp to use as reference elsewhere
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+
+      - name: Branch name
+        id: get_branch_name
+        run: |
+          if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'main' ]]
+          then
+            echo "BRANCH_NAME=dev" >> $GITHUB_ENV
+          elif [ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == '' ]
+          then 
+            echo "BRANCH_NAME=dev" >> $GITHUB_ENV
+          else
+            echo "BRANCH_NAME=$(echo ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}})" >> $GITHUB_ENV
+          fi
+
+      # Clone repositories prior to work
+      - name: Git clone the repository
+        uses: actions/checkout@v1
+        with:
+          token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+          repository: pallcorporation/beer-ul-postman-env
+          ref: main
+          path: ${{env.ADMIN_USERS_POLICY_SEED}}
+      
+      - name: Admin users repo clone
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+          repository: pallcorporation/beer-ul-admin-users
+          ref: main
+          path: ${{env.ADMIN_USERS_POLICY_SEED}}
+      
+      - name: Project files clone
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+          repository: pallcorporation/beer-project-properties
+          ref: main
+          path: ${{env.PROJECT_FILES_DIRECTORY}}
+      
+      - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
+        id: project_constants
+        run: |
+          account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "::set-output name=env_id::${account_id}"
+          echo $account_id is the account id
+          echo "AWS_ACCOUNT=${account_id}" >> $GITHUB_ENV
+          
+
+          oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "::set-output name=oidc_role::${oidc_role_name}"
+
+          cdk_deploy_role_arn="`grep aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
+          
+          aws_bucket="`grep aws_frontend_bucket ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "::set-output name=aws_bucket_name::${aws_bucket}"
+          echo $aws_bucket
+
+          cloud_front_id="`grep aws_${BRANCH_NAME}_cloudfront_id ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "::set-output name=aws_cloud_front_id::${cloud_front_id}"
+        working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
+      
+      # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
+      - name: Arn to use
+        id: aws_assume_role
+        run: |
+          echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
+    
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
+          role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set environment variables for python
+        run: |
+          if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'dev' ]]
+          then
+            echo "POSTMAN_USERNAME=${{secrets.BEER_POSTMAN_USERNAME}}" >> $GITHUB_ENV
+            echo "POSTMAN_PASSWORD=${{secrets.BEER_POSTMAN_PASSWORD}}" >> $GITHUB_ENV
+            echo "COGNITO_USERPOOL_SECRET=${{secrets.BEER_DEV_COGNITO_USERPOOL_SECRET}}" >> $GITHUB_ENV
+          elif [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'integration' ]]
+          then
+            echo "POSTMAN_USERNAME=${{secrets.BEER_POSTMAN_USERNAME}}" >> $GITHUB_ENV
+            echo "POSTMAN_PASSWORD=${{secrets.BEER_POSTMAN_PASSWORD}}" >> $GITHUB_ENV
+            echo "COGNITO_USERPOOL_SECRET=${{secrets.BEER_INTEGRATION_COGNITO_USERPOOL_SECRET}}" >> $GITHUB_ENV
+          else
+            echo "POSTMAN_USERNAME=${{secrets.BEER_POSTMAN_USERNAME}}" >> $GITHUB_ENV
+            echo "POSTMAN_PASSWORD=${{secrets.BEER_POSTMAN_PASSWORD}}" >> $GITHUB_ENV
+            echo "COGNITO_USERPOOL_SECRET=${{secrets.BEER_DEV_COGNITO_USERPOOL_SECRET}}" >> $GITHUB_ENV
+          fi
+
+      - name: Run python script to seed policy to admins
+        run: |
+          pip3 install boto3
+          python3 ${{env.ADMIN_USERS_POLICY_SEED}}/${BRANCH_NAME}_admins.py
+
+  AT:
+    needs: Project-admins
+    
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        iac-repos:
+          - beer-be-block-service
+          - beer-be-company-service
+          - beer-be-consumable-service
+          - beer-be-iam-service
+          - beer-be-permission-service
+          - beer-be-companysite-service
+      fail-fast: false
+    steps:
+      # Get current time stamp to use as reference elsewhere
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+      
+      # Clone repositories prior to work
+      - name: Git clone the repository
+        uses: actions/checkout@v1
+
+      - name: Get branch name
+        id: branch
+        run: |
+          echo "::set-output name=branch::${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}"
+
+      - name: Branch name
+        id: get_branch_name
+        run: |
+          if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'main' ]]
+          then
+            echo "BRANCH_NAME=dev" >> $GITHUB_ENV
+          elif [ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == '' ]
+          then 
+            echo "BRANCH_NAME=dev" >> $GITHUB_ENV
+          else
+            echo "BRANCH_NAME=$(echo ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}})" >> $GITHUB_ENV
+          fi
+        
+      - name: Make IAC repos
+        id: make_iac_directories
+        run: |
+          mkdir ${{ matrix.iac-repos }}
+          mkdir ${{matrix.iac-repos}}/${{env.PROJECT_FILES_DIRECTORY}}
+      #    mkdir ${{matrix.iac-repos}}/postman
+      
+      
+        
+      
+      - name: Check out iac repos
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+          repository: pallcorporation/${{ matrix.iac-repos }}
+          ref: dev
+          path: ${{ matrix.iac-repos }}
+      
+      - name: Project files clone
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+          repository: pallcorporation/beer-project-properties
+          ref: main
+          path: ${{env.PROJECT_FILES_DIRECTORY}}
+
+      - name: Copy Project files
+        run: cp -a ${{env.PROJECT_FILES_DIRECTORY}}/* ${{ matrix.iac-repos }}/${{env.PROJECT_FILES_DIRECTORY}}
+      
+      - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
+        id: project_constants
+        run: |
+          account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "::set-output name=env_id::${account_id}"
+          echo $account_id is the account id
+          echo "AWS_ACCOUNT=${account_id}" >> $GITHUB_ENV
+          
+
+          oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "::set-output name=oidc_role::${oidc_role_name}"
+
+          cdk_deploy_role_arn="`grep aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
+          
+          aws_bucket="`grep aws_frontend_bucket ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "::set-output name=aws_bucket_name::${aws_bucket}"
+          echo $aws_bucket
+
+          cloud_front_id="`grep aws_${BRANCH_NAME}_cloudfront_id ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "::set-output name=aws_cloud_front_id::${cloud_front_id}"
+        working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
+      
+      # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
+      - name: Arn to use
+        id: aws_assume_role
+        run: |
+          echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
+    
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
+          role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Where are we
+        run: |
+          ls
+          
+        working-directory: 
+
+      # Grant permissions to all files in directory
+      - name: Grant permissions to all files
+        run: chmod -R 755 ./
+
+      - name: Check if postman collections exists
+        id: postman_collections
+        run: |
+          DIR="${{ matrix.iac-repos }}/postman/"
+          ls
+          if [ -d "$DIR" ]; then
+            # Take action if $DIR exists. #
+            echo "Installing config files in ${DIR}..."
+            echo "::set-output name=postman_collections_found::true"
+          fi
+
+      #- name: Set environment variables for python
+      #  run: |
+      #    echo "POSTMAN_USERNAME=${{secrets.POSTMAN_USERNAME_SECRET}}" >> $GITHUB_ENV
+      #    echo "POSTMAN_PASSWORD=${{secrets.POSTMAN_PASSWORD_SECRET}}" >> $GITHUB_ENV
+      #    echo "COGNITO_USERPOOL_SECRET=${{secrets.COGNITO_USERPOOL_SECRET_PHRASE}}" >> $GITHUB_ENV
+      
+      #- name: Run python script to replace secrets
+      #  run: |
+      #    python3 replace_secrets.py
+      #    cp final_env_var.json ${{ matrix.iac-repos }}
+      
+
+      # Node installation (if required)
+      - name: Setup node.js environment
+        uses: actions/setup-node@v2.1.2
+      
+      - name: Install newman
+        run: |
+          npm install -g newman
+      - name: Copy file to use
+        if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
+        run: |
+          cp ${BRANCH_NAME}_env_var.json env_var.json
+      
+      - name: Set environment variables for python
+        run: |
+          if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'dev' ]]
+          then
+            echo "POSTMAN_USERNAME=${{secrets.BEER_POSTMAN_USERNAME}}" >> $GITHUB_ENV
+            echo "POSTMAN_PASSWORD=${{secrets.BEER_POSTMAN_PASSWORD}}" >> $GITHUB_ENV
+            echo "COGNITO_USERPOOL_SECRET=${{secrets.BEER_DEV_COGNITO_USERPOOL_SECRET}}" >> $GITHUB_ENV
+          elif [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'integration' ]]
+          then
+            echo "POSTMAN_USERNAME=${{secrets.BEER_POSTMAN_USERNAME}}" >> $GITHUB_ENV
+            echo "POSTMAN_PASSWORD=${{secrets.BEER_POSTMAN_PASSWORD}}" >> $GITHUB_ENV
+            echo "COGNITO_USERPOOL_SECRET=${{secrets.BEER_INTEGRATION_COGNITO_USERPOOL_SECRET}}" >> $GITHUB_ENV
+          else
+            echo "POSTMAN_USERNAME=${{secrets.BEER_POSTMAN_USERNAME}}" >> $GITHUB_ENV
+            echo "POSTMAN_PASSWORD=${{secrets.BEER_POSTMAN_PASSWORD}}" >> $GITHUB_ENV
+            echo "COGNITO_USERPOOL_SECRET=${{secrets.BEER_DEV_COGNITO_USERPOOL_SECRET}}" >> $GITHUB_ENV
+          fi
+      
+      - name: Run python script to replace secrets
+        run: |
+          ls
+          python3 replace_secrets.py
+          echo "after"
+          ls
+          cat final_env_var.json
+      #    cp final_env_var.json ${{ matrix.iac-repos }}
+
+
+      
+      - name: Run automated postman api tests using Newman
+        if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
+        run: |
+          newman run ./${{ matrix.iac-repos }}/postman/collection.json -e ./final_env_var.json
