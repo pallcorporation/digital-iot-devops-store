@@ -70,16 +70,6 @@ jobs:
             echo "BRANCH_NAME=$(echo ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}})" >> $GITHUB_ENV
           fi
 
-      - name: Check if data file exists
-      id: check_data_file
-      run: |
-        FILE=1_data.json
-        if test -f "$FILE"; then
-            echo "::set-output name=data_file_found::true"
-        else
-          echo "::set-output name=data_file_found::false"
-        fi
-
       # Clone repositories prior to work
       - name: Git clone the repository
         uses: actions/checkout@v1
