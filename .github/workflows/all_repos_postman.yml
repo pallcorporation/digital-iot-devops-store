@@ -1,13 +1,5 @@
 name: Beer microservice API automated tests
 on:
-  #push:
-  # branches:
-  #    - dev
-  #    - integration
-  #    - main
-  #schedule:
-  #  - cron: "0 * * * *"
-
   workflow_dispatch:
     inputs:
       branch_name:
