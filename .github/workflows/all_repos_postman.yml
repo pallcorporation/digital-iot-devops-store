@@ -16,6 +16,14 @@ on:
         required: true
       teams_uri:
         required: false
+      postman_username:
+        required: true
+      postman_password:
+        required: true
+      cognito_dev_user_pool_secret:
+        required: true
+      cognito_integration_user_pool_secret:
+        required: true
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -121,23 +129,33 @@ jobs:
           role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
           role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
           aws-region: ${{ env.AWS_REGION }}
-
-      - name: Set environment variables for python
+      
+      - name: Set environment Cognito secret variables for python
         run: |
           if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'dev' ]]
           then
-            echo "POSTMAN_USERNAME=${{secrets.BEER_POSTMAN_USERNAME}}" >> $GITHUB_ENV
-            echo "POSTMAN_PASSWORD=${{secrets.BEER_POSTMAN_PASSWORD}}" >> $GITHUB_ENV
-            echo "COGNITO_USERPOOL_SECRET=${{secrets.BEER_DEV_COGNITO_USERPOOL_SECRET}}" >> $GITHUB_ENV
+            echo "COGNITO_USERPOOL_SECRET=${{secrets.cognito_dev_user_pool_secret}}" >> $GITHUB_ENV
           elif [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'integration' ]]
           then
-            echo "POSTMAN_USERNAME=${{secrets.BEER_POSTMAN_USERNAME}}" >> $GITHUB_ENV
-            echo "POSTMAN_PASSWORD=${{secrets.BEER_POSTMAN_PASSWORD}}" >> $GITHUB_ENV
-            echo "COGNITO_USERPOOL_SECRET=${{secrets.BEER_INTEGRATION_COGNITO_USERPOOL_SECRET}}" >> $GITHUB_ENV
+            echo "COGNITO_USERPOOL_SECRET=${{secrets.cognito_integration_user_pool_secret}}" >> $GITHUB_ENV
           else
-            echo "POSTMAN_USERNAME=${{secrets.BEER_POSTMAN_USERNAME}}" >> $GITHUB_ENV
-            echo "POSTMAN_PASSWORD=${{secrets.BEER_POSTMAN_PASSWORD}}" >> $GITHUB_ENV
-            echo "COGNITO_USERPOOL_SECRET=${{secrets.BEER_DEV_COGNITO_USERPOOL_SECRET}}" >> $GITHUB_ENV
+            echo "COGNITO_USERPOOL_SECRET=${{secrets.cognito_dev_user_pool_secret}}" >> $GITHUB_ENV
+          fi
+
+
+      - name: Set environment Username & Password variables for python
+        run: |
+          if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'dev' ]]
+          then
+            echo "POSTMAN_USERNAME=${{secrets.postman_username}}" >> $GITHUB_ENV
+            echo "POSTMAN_PASSWORD=${{secrets.postman_password}}" >> $GITHUB_ENV
+          elif [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'integration' ]]
+          then
+            echo "POSTMAN_USERNAME=${{secrets.postman_username}}" >> $GITHUB_ENV
+            echo "POSTMAN_PASSWORD=${{secrets.postman_password}}" >> $GITHUB_ENV
+          else
+            echo "POSTMAN_USERNAME=${{secrets.postman_username}}" >> $GITHUB_ENV
+            echo "POSTMAN_PASSWORD=${{secrets.postman_password}}" >> $GITHUB_ENV
           fi
 
       - name: Run python script to seed policy to admins
@@ -192,10 +210,6 @@ jobs:
         run: |
           mkdir ${{ matrix.iac-repos }}
           mkdir ${{matrix.iac-repos}}/${{env.PROJECT_FILES_DIRECTORY}}
-      #    mkdir ${{matrix.iac-repos}}/postman
-      
-      
-        
       
       - name: Check out iac repos
         uses: actions/checkout@v2
