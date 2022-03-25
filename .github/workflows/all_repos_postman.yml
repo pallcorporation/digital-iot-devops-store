@@ -62,12 +62,23 @@ jobs:
           if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'main' ]]
           then
             echo "BRANCH_NAME=dev" >> $GITHUB_ENV
+            
           elif [ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == '' ]
           then 
             echo "BRANCH_NAME=dev" >> $GITHUB_ENV
           else
             echo "BRANCH_NAME=$(echo ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}})" >> $GITHUB_ENV
           fi
+
+      - name: Check if data file exists
+      id: check_data_file
+      run: |
+        FILE=1_data.json
+        if test -f "$FILE"; then
+            echo "::set-output name=data_file_found::true"
+        else
+          echo "::set-output name=data_file_found::false"
+        fi
 
       # Clone repositories prior to work
       - name: Git clone the repository
@@ -131,31 +142,44 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
       
       - name: Set environment Cognito secret variables for python
+        id: cognito_secret
         run: |
           if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'dev' ]]
           then
             echo "COGNITO_USERPOOL_SECRET=${{secrets.cognito_dev_user_pool_secret}}" >> $GITHUB_ENV
+            echo "::set-output name=cognito_secret::${{secrets.cognito_dev_user_pool_secret}}"
+
           elif [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'integration' ]]
           then
             echo "COGNITO_USERPOOL_SECRET=${{secrets.cognito_integration_user_pool_secret}}" >> $GITHUB_ENV
+            echo "::set-output name=cognito_secret::${{secrets.cognito_integration_user_pool_secret}}"
           else
             echo "COGNITO_USERPOOL_SECRET=${{secrets.cognito_dev_user_pool_secret}}" >> $GITHUB_ENV
+            echo "::set-output name=cognito_secret::${{secrets.cognito_dev_user_pool_secret}}"
           fi
 
 
       - name: Set environment Username & Password variables for python
+        id: postman_credentials
         run: |
           if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'dev' ]]
           then
             echo "POSTMAN_USERNAME=${{secrets.postman_username}}" >> $GITHUB_ENV
             echo "POSTMAN_PASSWORD=${{secrets.postman_password}}" >> $GITHUB_ENV
+            echo "::set-output name=postman_user::${{secrets.postman_username}}"
+            echo "::set-output name=postman_password::${{secrets.postman_password}}"
+
           elif [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'integration' ]]
           then
             echo "POSTMAN_USERNAME=${{secrets.postman_username}}" >> $GITHUB_ENV
             echo "POSTMAN_PASSWORD=${{secrets.postman_password}}" >> $GITHUB_ENV
+            echo "::set-output name=postman_user::${{secrets.postman_username}}"
+            echo "::set-output name=postman_password::${{secrets.postman_password}}"
           else
             echo "POSTMAN_USERNAME=${{secrets.postman_username}}" >> $GITHUB_ENV
             echo "POSTMAN_PASSWORD=${{secrets.postman_password}}" >> $GITHUB_ENV
+            echo "::set-output name=postman_user::${{secrets.postman_username}}"
+            echo "::set-output name=postman_password::${{secrets.postman_password}}"
           fi
 
       - name: Run python script to seed policy to admins
@@ -165,7 +189,6 @@ jobs:
 
   AT:
     needs: Project-admins
-    
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -287,18 +310,6 @@ jobs:
             echo "::set-output name=postman_collections_found::true"
           fi
 
-      #- name: Set environment variables for python
-      #  run: |
-      #    echo "POSTMAN_USERNAME=${{secrets.POSTMAN_USERNAME_SECRET}}" >> $GITHUB_ENV
-      #    echo "POSTMAN_PASSWORD=${{secrets.POSTMAN_PASSWORD_SECRET}}" >> $GITHUB_ENV
-      #    echo "COGNITO_USERPOOL_SECRET=${{secrets.COGNITO_USERPOOL_SECRET_PHRASE}}" >> $GITHUB_ENV
-      
-      #- name: Run python script to replace secrets
-      #  run: |
-      #    python3 replace_secrets.py
-      #    cp final_env_var.json ${{ matrix.iac-repos }}
-      
-
       # Node installation (if required)
       - name: Setup node.js environment
         uses: actions/setup-node@v2.1.2
@@ -306,38 +317,17 @@ jobs:
       - name: Install newman
         run: |
           npm install -g newman
+          
       - name: Copy file to use
         if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
         run: |
           cp ${BRANCH_NAME}_env_var.json env_var.json
-      
-      - name: Set environment Cognito secret variables for python
-        run: |
-          if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'dev' ]]
-          then
-            echo "COGNITO_USERPOOL_SECRET=${{secrets.cognito_dev_user_pool_secret}}" >> $GITHUB_ENV
-          elif [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'integration' ]]
-          then
-            echo "COGNITO_USERPOOL_SECRET=${{secrets.cognito_integration_user_pool_secret}}" >> $GITHUB_ENV
-          else
-            echo "COGNITO_USERPOOL_SECRET=${{secrets.cognito_dev_user_pool_secret}}" >> $GITHUB_ENV
-          fi
 
-
-      - name: Set environment Username & Password variables for python
+      - name: Set environment variables for python (again)
         run: |
-          if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'dev' ]]
-          then
-            echo "POSTMAN_USERNAME=${{secrets.postman_username}}" >> $GITHUB_ENV
-            echo "POSTMAN_PASSWORD=${{secrets.postman_password}}" >> $GITHUB_ENV
-          elif [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'integration' ]]
-          then
-            echo "POSTMAN_USERNAME=${{secrets.postman_username}}" >> $GITHUB_ENV
-            echo "POSTMAN_PASSWORD=${{secrets.postman_password}}" >> $GITHUB_ENV
-          else
-            echo "POSTMAN_USERNAME=${{secrets.postman_username}}" >> $GITHUB_ENV
-            echo "POSTMAN_PASSWORD=${{secrets.postman_password}}" >> $GITHUB_ENV
-          fi
+          echo "POSTMAN_USERNAME=${{needs.Project-admins.outputs.postman_credentials.postman_user)}" >> $GITHUB_ENV
+          echo "POSTMAN_PASSWORD=${{needs.Project-admins.outputs.postman_credentials.postman_password)}" >> $GITHUB_ENV
+          echo "COGNITO_USERPOOL_SECRET=${{needs.Project-admins.outputs.cognito_secret.cognito_secret)}" >> $GITHUB_ENV       
       
       - name: Run python script to replace secrets
         run: |
