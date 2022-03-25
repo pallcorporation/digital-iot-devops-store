@@ -50,6 +50,10 @@ permissions:
 jobs:
   Project-Admins:
     runs-on: ubuntu-latest
+    outputs:
+      postman_username: ${{ steps.postman_username.outputs.postman_username }}
+      postman_password: ${{ steps.postman_password.outputs.postman_password }}
+      cognito_secret: ${{ steps.cognito_secret.outputs.cognito_secret }}
     steps:
       # Get current time stamp to use as reference elsewhere
       - name: Get current date
@@ -324,9 +328,9 @@ jobs:
 
       - name: Set environment variables for python (again)
         run: |
-          echo "POSTMAN_USERNAME=${{needs.Project-admins.outputs.postman_username.postman_username}}" >> $GITHUB_ENV
-          echo "POSTMAN_PASSWORD=${{needs.Project-admins.outputs.postman_password.postman_password}}" >> $GITHUB_ENV
-          echo "COGNITO_USERPOOL_SECRET=${{needs.Project-admins.outputs.cognito_secret.cognito_secret}}" >> $GITHUB_ENV       
+          echo "POSTMAN_USERNAME=${{needs.Project-admins.outputs.postman_username}" >> $GITHUB_ENV
+          echo "POSTMAN_PASSWORD=${{needs.Project-admins.outputs.postman_password}}" >> $GITHUB_ENV
+          echo "COGNITO_USERPOOL_SECRET=${{needs.Project-admins.outputs.cognito_secret}}" >> $GITHUB_ENV       
       
       - name: Run python script to replace secrets
         run: |
