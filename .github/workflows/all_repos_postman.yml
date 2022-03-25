@@ -326,11 +326,55 @@ jobs:
         run: |
           cp ${BRANCH_NAME}_env_var.json env_var.json
 
-      - name: Set environment variables for python (again)
+      - name: Set environment Cognito secret variables for python
+        id: cognito_secret
         run: |
-          echo "POSTMAN_USERNAME=${{needs.Project-admins.outputs.postman_username1}" >> $GITHUB_ENV
-          echo "POSTMAN_PASSWORD=${{needs.Project-admins.outputs.postman_password1}}" >> $GITHUB_ENV
-          echo "COGNITO_USERPOOL_SECRET=${{needs.Project-admins.outputs.cognito_secret1}}" >> $GITHUB_ENV       
+          if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'dev' ]]
+          then
+            echo "COGNITO_USERPOOL_SECRET=${{secrets.cognito_dev_user_pool_secret}}" >> $GITHUB_ENV
+            echo "::set-output name=cognito_secret::${{secrets.cognito_dev_user_pool_secret}}"
+
+          elif [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'integration' ]]
+          then
+            echo "COGNITO_USERPOOL_SECRET=${{secrets.cognito_integration_user_pool_secret}}" >> $GITHUB_ENV
+            echo "::set-output name=cognito_secret::${{secrets.cognito_integration_user_pool_secret}}"
+          else
+            echo "COGNITO_USERPOOL_SECRET=${{secrets.cognito_dev_user_pool_secret}}" >> $GITHUB_ENV
+            echo "::set-output name=cognito_secret::${{secrets.cognito_dev_user_pool_secret}}"
+          fi
+      
+      - name: Set environment Cognito secret variables for python
+        id: postman_username
+        run: |
+          if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'dev' ]]
+          then
+            echo "POSTMAN_USERNAME=${{secrets.postman_username}}" >> $GITHUB_ENV
+            echo "::set-output name=postman_username::${{secrets.postman_username}}"
+
+          elif [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'integration' ]]
+          then
+            echo "POSTMAN_USERNAME=${{secrets.postman_username}}" >> $GITHUB_ENV
+            echo "::set-output name=postman_username::${{secrets.postman_username}}"
+          else
+            echo "POSTMAN_USERNAME=${{secrets.postman_username}}" >> $GITHUB_ENV
+            echo "::set-output name=postman_username::${{secrets.postman_username}}"
+          fi
+      - name: Set environment Cognito secret variables for python
+        id: postman_password
+        run: |
+          if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'dev' ]]
+          then
+            echo "POSTMAN_PASSWORD=${{secrets.postman_password}}" >> $GITHUB_ENV
+            echo "::set-output name=postman_password::${{secrets.postman_password}}"
+
+          elif [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'integration' ]]
+          then
+            echo "POSTMAN_PASSWORD=${{secrets.postman_password}}" >> $GITHUB_ENV
+            echo "::set-output name=postman_password::${{secrets.postman_password}}"
+          else
+            echo "POSTMAN_PASSWORD=${{secrets.postman_password}}" >> $GITHUB_ENV
+            echo "::set-output name=postman_password::${{secrets.postman_password}}"
+          fi  
       
       - name: Run python script to replace secrets
         run: |
