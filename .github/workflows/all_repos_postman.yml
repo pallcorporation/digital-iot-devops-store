@@ -60,19 +60,24 @@ jobs:
         id: date
         run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
 
-      - name: Branch name
-        id: get_branch_name
-        run: |
-          if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'main' ]]
-          then
-            echo "BRANCH_NAME=dev" >> $GITHUB_ENV
-            
-          elif [ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == '' ]
-          then 
-            echo "BRANCH_NAME=dev" >> $GITHUB_ENV
-          else
-            echo "BRANCH_NAME=$(echo ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}})" >> $GITHUB_ENV
-          fi
+        - name: Branch name
+          id: get_branch_name
+          run: |
+            echo "BRANCH_NAME=${{inputs.branch_name}}" >> $GITHUB_ENV
+
+    #  - name: Branch name
+    #    id: get_branch_name
+    #    run: |
+    #      if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'main' ]]
+    #      then
+    #        echo "BRANCH_NAME=dev" >> $GITHUB_ENV
+    #        
+    #      elif [ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == '' ]
+    #      then 
+    #        echo "BRANCH_NAME=dev" >> $GITHUB_ENV
+    #      else
+    #        echo "BRANCH_NAME=$(echo ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}})" >> $GITHUB_ENV
+    #      fi
 
       # Clone repositories prior to work
       - name: Git clone the repository
@@ -217,19 +222,24 @@ jobs:
         id: branch
         run: |
           echo "::set-output name=branch::${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}"
-
+      
       - name: Branch name
         id: get_branch_name
         run: |
-          if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'main' ]]
-          then
-            echo "BRANCH_NAME=dev" >> $GITHUB_ENV
-          elif [ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == '' ]
-          then 
-            echo "BRANCH_NAME=dev" >> $GITHUB_ENV
-          else
-            echo "BRANCH_NAME=$(echo ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}})" >> $GITHUB_ENV
-          fi
+          echo "BRANCH_NAME=${{inputs.branch_name}}" >> $GITHUB_ENV
+
+    #  - name: Branch name
+    #    id: get_branch_name
+    #    run: |
+    #      if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'main' ]]
+    #      then
+    #        echo "BRANCH_NAME=dev" >> $GITHUB_ENV
+    #      elif [ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == '' ]
+    #      then 
+    #        echo "BRANCH_NAME=dev" >> $GITHUB_ENV
+    #      else
+    #        echo "BRANCH_NAME=$(echo ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}})" >> $GITHUB_ENV
+    #      fi
         
       - name: Make IAC repos
         id: make_iac_directories
