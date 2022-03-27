@@ -193,7 +193,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        iac-repos:
+        microservice-repos:
           - beer-be-block-service
           - beer-be-company-service
           - beer-be-consumable-service
@@ -229,19 +229,19 @@ jobs:
     #        echo "BRANCH_NAME=$(echo ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}})" >> $GITHUB_ENV
     #      fi
         
-      - name: Make IAC repos
-        id: make_iac_directories
+      - name: Make ${{ matrix.microservice-repos }} directories
+        id: make_directories
         run: |
-          mkdir ${{ matrix.iac-repos }}
-          mkdir ${{matrix.iac-repos}}/${{env.PROJECT_FILES_DIRECTORY}}
+          mkdir ${{ matrix.microservice-repos }}
+          mkdir ${{matrix.microservice-repos}}/${{env.PROJECT_FILES_DIRECTORY}}
       
-      - name: Check out iac repos
+      - name: Check out Repos
         uses: actions/checkout@v2
         with:
           token: ${{ secrets.envPAT }}
-          repository: pallcorporation/${{ matrix.iac-repos }}
-          ref: dev
-          path: ${{ matrix.iac-repos }}
+          repository: pallcorporation/${{ matrix.microservice-repos }}
+          ref: ${BRANCH_NAME}
+          path: ${{ matrix.microservice-repos }}
       
       - name: Project files clone
         uses: actions/checkout@v2
@@ -252,7 +252,7 @@ jobs:
           path: ${{env.PROJECT_FILES_DIRECTORY}}
 
       - name: Copy Project files
-        run: cp -a ${{env.PROJECT_FILES_DIRECTORY}}/* ${{ matrix.iac-repos }}/${{env.PROJECT_FILES_DIRECTORY}}
+        run: cp -a ${{env.PROJECT_FILES_DIRECTORY}}/* ${{ matrix.microservice-repos }}/${{env.PROJECT_FILES_DIRECTORY}}
       
       - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
         id: project_constants
@@ -303,7 +303,7 @@ jobs:
       - name: Check if postman collections exists
         id: postman_collections
         run: |
-          DIR="${{ matrix.iac-repos }}/postman/"
+          DIR="${{ matrix.microservice-repos }}/postman/"
           ls
           if [ -d "$DIR" ]; then
             # Take action if $DIR exists. #
@@ -371,11 +371,9 @@ jobs:
           echo "after"
           ls
           cat final_env_var.json
-      #    cp final_env_var.json ${{ matrix.iac-repos }}
-
 
       
       - name: Run automated postman api tests using Newman
         if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
         run: |
-          newman run ./${{ matrix.iac-repos }}/postman/collection.json -e ./final_env_var.json
+          newman run ./${{ matrix.microservice-repos }}/postman/collection.json -e ./final_env_var.json
