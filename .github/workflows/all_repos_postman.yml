@@ -240,7 +240,7 @@ jobs:
         with:
           token: ${{ secrets.envPAT }}
           repository: pallcorporation/${{ matrix.microservice-repos }}
-          ref: ${BRANCH_NAME}
+          ref: ${{inputs.branch_name}}
           path: ${{ matrix.microservice-repos }}
       
       - name: Project files clone
