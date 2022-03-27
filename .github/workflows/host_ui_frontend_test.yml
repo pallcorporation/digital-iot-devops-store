@@ -92,3 +92,14 @@ jobs:
         - name: Action
           run: echo ${{inputs.in_username}} is the user
         
+        - name: github username
+          run: |
+            echo "def clientName():" > "user.py"
+            echo "  username=""\""${{inputs.in_username}}"\"" >> "user.py"
+            echo "  print(username)" >> "user.py"
+            echo "  return username" >> "user.py"
+            echo " " >> "user.py"
+        - name: run python
+          run: |
+            cat user.py
+            python3 user.py
