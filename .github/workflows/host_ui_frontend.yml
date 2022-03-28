@@ -185,7 +185,7 @@ jobs:
           run: |
             npm run build
         - name: Build nx Frontend
-          if: ${{inputs.build_project_type == 'nx'}}
+          if: ${{inputs.build_project_type == 'nx1'}}
           run: |
             npm ci
             npx nx build
