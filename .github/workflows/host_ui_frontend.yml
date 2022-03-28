@@ -90,7 +90,7 @@ jobs:
         - name: Set github username test
           id: github_user
           run: |
-            actor="${github.actor//-/}"
+            actor="${github.actor//-}"
 
             echo $actor
 
