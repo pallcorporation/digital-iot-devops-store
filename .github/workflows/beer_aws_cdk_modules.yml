@@ -115,7 +115,8 @@ jobs:
           if: (github.ref != 'refs/heads/dev' || github.ref != 'refs/heads/integration' || github.ref != 'refs/heads/main')
           run: |
             echo "def user():" > "github_user.py"
-            echo "    return ${{github.actor}}" >> "github_user.py"
+            echo "  user=""\""${{github.actor}}"\"" >> "github_user.py"
+            echo "  return user" >> "github_user.py"
 
             rm ${{env.CDK_MODULE}}/src/github_user.py
             cp github_user.py ${{env.CDK_MODULE}}/src/
