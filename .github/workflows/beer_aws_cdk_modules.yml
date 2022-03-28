@@ -71,8 +71,10 @@ jobs:
             then
               echo "BRANCH_NAME=production" >> $GITHUB_ENV
             elif [[${{inputs.branch_name}} == 'dev']]
+            then
               echo "BRANCH_NAME=dev" >> $GITHUB_ENV
             elif [[${{inputs.branch_name}} == 'integration']]
+            then
               echo "BRANCH_NAME=integration" >> $GITHUB_ENV
             else
               echo "BRANCH_NAME=$(echo dev)" >> $GITHUB_ENV
