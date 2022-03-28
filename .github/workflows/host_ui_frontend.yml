@@ -89,19 +89,24 @@ jobs:
 
         - name: Set github username test
           run: |
-            echo "GITHUB_USER_TEST=$(echo "mitch-pall" | tr "-" "")" >>$GITHUB_ENV
-        
-        - name: Who is the actor TEST
-          run: |
-            echo ${GITHUB_USER_TEST} is the user
-        
-        - name: Set github username
-          run: |
-            echo "GITHUB_USER=$(echo "${{github.actor}}" | tr "-" "")" >>$GITHUB_ENV
-        
+            echo GITHUB_USER1=mitch-palltest
+            echo GITHUB_USER1=${GITHUB_USER1//-}
+            echo "${GITHUB_USER1}" >> $GITHUB_ENV
+            
         - name: Who is the actor
           run: |
             echo ${GITHUB_USER} is the user
+        
+        - name: Set github username
+          run: |
+            echo GITHUB_USER=${{github.actor}}
+            echo GITHUB_USER=${GITHUB_USER//-}
+            echo "${GITHUB_USER}" >> $GITHUB_ENV
+            
+        - name: Who is the actor
+          run: |
+            echo "${GITHUB_USER} is the user"
+            echo "${GITHUB_USER1} is the test user"
 
             
         
