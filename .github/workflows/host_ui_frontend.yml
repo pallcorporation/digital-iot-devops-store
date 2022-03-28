@@ -257,8 +257,11 @@ jobs:
             elif [[ ${{inputs.branch_name}} == 'integration' ]]
             then
               echo "AWS_ENV_NAME=int" >> $GITHUB_ENV
+            elif [[ ${{inputs.branch_name}} == 'dev' ]]
+            then
+              echo "AWS_ENV_NAME=dev" >> $GITHUB_ENV
             else
-              echo "AWS_ENV_NAME=$(echo ${{inputs.branch_name}})" >> $GITHUB_ENV
+              echo "AWS_ENV_NAME=dev)" >> $GITHUB_ENV
             fi
 
         - name: Stack id to query
