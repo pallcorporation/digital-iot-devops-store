@@ -301,12 +301,8 @@ jobs:
           run: |
             echo "CF_URL_OUTPUT=${{inputs.in_cloudfront_url_output_to_query}}${{github.actor}}cfurloutput" >> $GITHUB_ENV
 
-
-
         # Upload a file to AWS s3
         - name:  Deploy to S3 - Copy Build folder to s3
-          if: (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/integration' )
-        #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
           run: |
             aws s3 sync ./$BUILD_DIRECTORY s3://${HOSTING_BUCKET}
         #    aws cloudfront create-invalidation --distribution-id E11LJKZLIMW93N --paths '/*'
@@ -328,7 +324,6 @@ jobs:
         - name: Echo Domain URL
           run: |
             echo "::warning::${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}} is the cloudfront url"
-
 
     outputs:
       domain_url: ${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}}
