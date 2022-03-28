@@ -89,9 +89,8 @@ jobs:
 
         - name: Set github username test
           run: |
-            echo GITHUB_USER1=${{github.actor}}
-            echo GITHUB_USER1="${GITHUB_USER1//-/}"
-            echo "${GITHUB_USER1}" >> $GITHUB_ENV
+            echo GITHUB_USER1=mitch-test
+            echo "${GITHUB_USER1//-/}" >> $GITHUB_ENV
             
         - name: Who is the actor
           run: |
@@ -100,8 +99,7 @@ jobs:
         - name: Set github username
           run: |
             echo GITHUB_USER=${{github.actor}}
-            echo GITHUB_USER="${GITHUB_USER//-/}"
-            echo "${GITHUB_USER}" >> $GITHUB_ENV
+            echo "${GITHUB_USER//-/}" >> $GITHUB_ENV
             
         - name: Who is the actor
           run: |
