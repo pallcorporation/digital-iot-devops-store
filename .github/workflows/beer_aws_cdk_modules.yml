@@ -70,11 +70,18 @@ jobs:
             if [[ ${{inputs.branch_name}} == 'main' ]]
             then
               echo "BRANCH_NAME=production" >> $GITHUB_ENV
+            elif [[${{inputs.branch_name}} == 'dev']]
+              echo "BRANCH_NAME=dev" >> $GITHUB_ENV
+            elif [[${{inputs.branch_name}} == 'integration']]
+              echo "BRANCH_NAME=integration" >> $GITHUB_ENV
             else
-              echo "BRANCH_NAME=$(echo ${{inputs.branch_name}})" >> $GITHUB_ENV
+              echo "BRANCH_NAME=$(echo dev)" >> $GITHUB_ENV
             fi
 
-            echo "$BRANCH_NAME is the name"
+            
+        
+        - name: Echo branch
+          run: echo "${BRANCH_NAME} is the branch name to use in lookup"
         
         # Clone repositories prior to work
         - name: Git clone the repository
