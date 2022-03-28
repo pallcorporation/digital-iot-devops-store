@@ -297,7 +297,7 @@ jobs:
           if: contains( github.ref, 'users' )
           run: |
             echo "CF_ID_OUTPUT=${{inputs.in_cloudfront_output}}${{github.actor}}cfoutput" >> $GITHUB_ENV
-            echo "CF_URL_OUTPUT=${CF_ID_OUTPUT//-}" >> $GITHUB_ENV
+            echo "CF_ID_OUTPUT=${CF_ID_OUTPUT//-}" >> $GITHUB_ENV
         
         - name: Cloudfront URL output if users
           if: contains( github.ref, 'users' )
