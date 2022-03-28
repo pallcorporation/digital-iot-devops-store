@@ -94,7 +94,7 @@ jobs:
         
         - name: Who is the actor
           run: |
-            echo "${USER}" IS the github users
+            echo "${{github.actor}}" IS the github users
         
         # Get branch name to use for look up
         - name: Branch name
