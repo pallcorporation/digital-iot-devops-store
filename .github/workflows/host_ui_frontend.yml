@@ -315,7 +315,7 @@ jobs:
         #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
           run: |
             echo ${CF_ID_OUTPUT} is the output id
-            CLOUDFRONT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${IN_STACK_ID} --query 'Stacks[0].Outputs[?OutputKey==`${CF_ID_OUTPUT}`].OutputValue' --output text)
+            CLOUDFRONT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${IN_STACK_ID} --query "Stacks[0].Outputs[?OutputKey=='${CF_ID_OUTPUT}''].OutputValue" --output text)
             aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_ID --paths '/*'
         
         - name: Domain url
