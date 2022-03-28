@@ -90,15 +90,13 @@ jobs:
         - name: Set github username test
           id: github_user
           run: |
-            echo GITHUB_USER=mitch-test
-            echo "GITHUB_USER=${GITHUB_USER//-/}" >> $GITHUB_ENV
-            echo "${GITHUB_USER//-}"
+            actor="${github.actor//-/}"
 
-            echo "::set-output name=user::${GITHUB_USER//-}"
-        
-        - name: Echo github user
-          run: |
-            echo ${{steps.github_user.outputs.user}} is the user
+            echo $actor
+
+            echo "::set-env name=updated_actor::$actor"
+          env:
+            github_actor: ${{ github.updated_actor }}
         
         # Get branch name to use for look up
         - name: Branch name
