@@ -83,9 +83,10 @@ jobs:
           id: date
           run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
         
-        # Node installation (if required)
-        - name: Setup node.js environment
-          uses: actions/setup-node@v2.1.2
+       
+        
+        - name: Checkout
+          uses: actions/checkout@v2
 
         - name: Find-and-replace strings
           uses: mad9000/actions-find-and-replace-string@2
@@ -102,7 +103,11 @@ jobs:
 
         - name: Github user
           run: echo ${GITHUB_USER} <---Finally...
-        
+          
+         # Node installation (if required)
+        - name: Setup node.js environment
+          uses: actions/setup-node@v2.1.2
+
         # Get branch name to use for look up
         - name: Branch name
           id: get_branch_name
