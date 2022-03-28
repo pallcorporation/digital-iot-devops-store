@@ -209,8 +209,12 @@ jobs:
           if: ${{inputs.build_project_type == 'nx'}}
           run: |
             npm ci
-            npx nx build
-        
+            if [[ ${BRANCH_NAME} == 'main' ]]
+            then
+              npx nx build
+            else
+              nx run beeriot-web:build:staging
+            fi
         - name: Build Storybok
           if: ${{inputs.build_project_type == 'storybook'}}
           run: |
