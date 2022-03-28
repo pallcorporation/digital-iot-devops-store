@@ -87,16 +87,21 @@ jobs:
         - name: Setup node.js environment
           uses: actions/setup-node@v2.1.2
 
-        - name: Set github username test
-          id: github_user
+        - name: Find-and-replace strings
+          uses: mad9000/actions-find-and-replace-string@2
+          id: findandreplace_user
+          with:
+            source: ${{ github.actor }} # this translates to ref/heads/main on the main branch, but can be any arbitrary string 
+            find: '-'        # we want to remove ref/heads/ from source 
+            replace: ''
+        
+        - name: Get the above output
           run: |
-            actor="${github.actor//-}"
+            echo "The replaced value is ${{ steps.findandreplace_user.outputs.value }}"
+            echo "GITHUB_USER=${{ steps.findandreplace_user.outputs.value }}" >> $GITHUB_ENV
 
-            echo $actor
-
-            echo "::set-env name=updated_actor::$actor"
-          env:
-            github_actor: ${{ github.updated_actor }}
+        - name: Github user
+          run: echo ${GITHUB_USER} <---Finally...
         
         # Get branch name to use for look up
         - name: Branch name
