@@ -102,8 +102,8 @@ jobs:
             echo "GITHUB_USER=${{ steps.findandreplace_user.outputs.value }}" >> $GITHUB_ENV
 
         - name: Github user
-          run: echo ${GITHUB_USER} <---Finally...
-          
+          run: echo "${GITHUB_USER} <---Finally..."
+
          # Node installation (if required)
         - name: Setup node.js environment
           uses: actions/setup-node@v2.1.2
