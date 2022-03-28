@@ -261,7 +261,7 @@ jobs:
             then
               echo "AWS_ENV_NAME=dev" >> $GITHUB_ENV
             else
-              echo "AWS_ENV_NAME=dev)" >> $GITHUB_ENV
+              echo "AWS_ENV_NAME=dev" >> $GITHUB_ENV
             fi
 
         - name: Stack id to query
