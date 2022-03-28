@@ -23,9 +23,6 @@ on:
         required: true
         type: string
       
-      in_username:
-        required: true
-        type: string 
     secrets:
       envPAT:
         required: true
@@ -109,7 +106,7 @@ jobs:
           if: (github.ref != 'refs/heads/dev' || github.ref != 'refs/heads/integration' || github.ref != 'refs/heads/main')
           run: |
             echo "def user():" > "github_user.py"
-            echo "    return ${{inputs.in_username}}" >> "github_user.py"
+            echo "    return ${{github.actor}}" >> "github_user.py"
 
             rm ${{env.CDK_MODULE}}/src/github_user.py
             cp github_user.py ${{env.CDK_MODULE}}/src/

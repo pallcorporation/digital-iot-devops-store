@@ -257,6 +257,15 @@ jobs:
               echo "AWS_ENV_NAME=$(echo ${{inputs.branch_name}})" >> $GITHUB_ENV
             fi
 
+        - name: Stack id to query
+          run: |
+            echo "IN_STACK_ID=${{inputs.in_stack_id}}" >> $GITHUB_ENV
+
+        - name: Stack id to query if users
+          if: contains(github.ref, "users")
+          run: |
+            echo "IN_STACK_ID=${{inputs.in_stack_id}}-${{github.actor}}" >> $GITHUB_ENV
+
         # Upload a file to AWS s3
         - name:  Deploy to S3 - Copy Build folder to s3
         #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
@@ -267,14 +276,14 @@ jobs:
         - name: Invalidate cloudfront cache
         #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
           run: |
-            CLOUDFRONT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{inputs.in_stack_id}} --query 'Stacks[0].Outputs[?OutputKey==`${{inputs.in_cloudfront_output}}`].OutputValue' --output text)
+            CLOUDFRONT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${IN_STACK_ID} --query 'Stacks[0].Outputs[?OutputKey==`${{inputs.in_cloudfront_output}}`].OutputValue' --output text)
             aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_ID --paths '/*'
         
         - name: Domain url
           id: domain_url
         #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
           run: |
-            DOMAIN_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{inputs.in_stack_id}} --query 'Stacks[0].Outputs[?OutputKey==`${{inputs.in_cloudfront_url_output_to_query}}`].OutputValue' --output text)
+            DOMAIN_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${IN_STACK_ID} --query 'Stacks[0].Outputs[?OutputKey==`${{inputs.in_cloudfront_url_output_to_query}}`].OutputValue' --output text)
             echo "::set-output name=DOMAIN_URL_OUTPUT::$DOMAIN_URL" 
             
         - name: Echo Domain URL
