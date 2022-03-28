@@ -262,7 +262,7 @@ jobs:
             echo "IN_STACK_ID=${{inputs.in_stack_id}}" >> $GITHUB_ENV
 
         - name: Stack id to query if users
-          if: contains(github.ref, "users")
+          if: contains(github.ref, users)
           run: |
             echo "IN_STACK_ID=${{inputs.in_stack_id}}-${{github.actor}}" >> $GITHUB_ENV
 
