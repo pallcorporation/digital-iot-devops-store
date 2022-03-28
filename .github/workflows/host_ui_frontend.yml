@@ -213,7 +213,7 @@ jobs:
             then
               npx nx build
             else
-              nx run beeriot-web:build:staging
+              npx nx run beeriot-web:build:staging
             fi
         - name: Build Storybok
           if: ${{inputs.build_project_type == 'storybook'}}
