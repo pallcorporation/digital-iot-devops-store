@@ -307,13 +307,13 @@ jobs:
         - name: Cloudfront id output if users
           if: contains( github.ref, 'users' )
           run: |
-            echo "CF_ID_OUTPUT=${{inputs.in_cloudfront_output}}${GITHUB_USER}cfoutput" >> $GITHUB_ENV
+            echo "CF_ID_OUTPUT=${{inputs.in_cloudfront_output}}${{ github.updated_actor }}cfoutput" >> $GITHUB_ENV
             
         
         - name: Cloudfront URL output if users
           if: contains( github.ref, 'users' )
           run: |
-            echo "CF_URL_OUTPUT=${{inputs.in_cloudfront_url_output_to_query}}${GITHUB_USER}cfurloutput" >> $GITHUB_ENV
+            echo "CF_URL_OUTPUT=${{inputs.in_cloudfront_url_output_to_query}}${{ github.updated_actor }}cfurloutput" >> $GITHUB_ENV
 
         # Upload a file to AWS s3
         - name:  Deploy to S3 - Copy Build folder to s3
