@@ -272,6 +272,7 @@ jobs:
           if: contains( github.ref, 'users' )
           run: |
             echo "IN_STACK_ID=${{inputs.in_stack_id}}-${{github.actor}}" >> $GITHUB_ENV
+            
 
         - name: Hosting bucket
           run: |
@@ -290,16 +291,19 @@ jobs:
         - name: Cloudfront URL output
           run: |
             echo "CF_URL_OUTPUT=${{inputs.in_cloudfront_url_output_to_query}}cfurloutput" >> $GITHUB_ENV
+            
         
         - name: Cloudfront id output if users
           if: contains( github.ref, 'users' )
           run: |
             echo "CF_ID_OUTPUT=${{inputs.in_cloudfront_output}}${{github.actor}}cfoutput" >> $GITHUB_ENV
+            echo "${CF_ID_OUTPUT//-}"
         
         - name: Cloudfront URL output if users
           if: contains( github.ref, 'users' )
           run: |
             echo "CF_URL_OUTPUT=${{inputs.in_cloudfront_url_output_to_query}}${{github.actor}}cfurloutput" >> $GITHUB_ENV
+            echo "${CF_URL_OUTPUT//-}"
 
         # Upload a file to AWS s3
         - name:  Deploy to S3 - Copy Build folder to s3
