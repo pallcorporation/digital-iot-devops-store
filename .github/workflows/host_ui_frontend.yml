@@ -89,7 +89,7 @@ jobs:
 
         - name: Set github username test
           run: |
-            echo "GITHUB_USER_TEST=$(echo mitch-pall | tr "-" "")" >>$GITHUB_ENV
+            echo "GITHUB_USER_TEST=$(echo "mitch-pall" | tr "-" "")" >>$GITHUB_ENV
         
         - name: Who is the actor TEST
           run: |
@@ -97,7 +97,7 @@ jobs:
         
         - name: Set github username
           run: |
-            echo "GITHUB_USER=$(echo ${{github.actor}} | tr "-" "")" >>$GITHUB_ENV
+            echo "GITHUB_USER=$(echo "${{github.actor}}" | tr "-" "")" >>$GITHUB_ENV
         
         - name: Who is the actor
           run: |
