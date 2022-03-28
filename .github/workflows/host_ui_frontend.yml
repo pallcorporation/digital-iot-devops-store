@@ -88,25 +88,17 @@ jobs:
           uses: actions/setup-node@v2.1.2
 
         - name: Set github username test
+          id: github_user
           run: |
-            echo GITHUB_USER1=mitch-test
-            echo "GITHUB_USER1=${GITHUB_USER1//-/}" >> $GITHUB_ENV
-            
-        - name: Who is the actor
-          run: |
-            echo ${GITHUB_USER} is the user
-        
-        - name: Set github username
-          run: |
-            echo GITHUB_USER=${{github.actor}}
+            echo GITHUB_USER=mitch-test
             echo "GITHUB_USER=${GITHUB_USER//-/}" >> $GITHUB_ENV
-            
-        - name: Who is the actor
-          run: |
-            echo "${GITHUB_USER} is the user"
-            echo "${GITHUB_USER1} is the test user"
+            echo "${GITHUB_USER//-}"
 
-            
+            echo "::set-output name=user::${GITHUB_USER//-}"
+        
+        - name: Echo github user
+          run: |
+            echo ${{steps.github_user.outputs.user}} is the user
         
         # Get branch name to use for look up
         - name: Branch name
