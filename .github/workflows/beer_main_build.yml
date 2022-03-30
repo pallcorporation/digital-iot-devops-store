@@ -133,7 +133,7 @@ jobs:
             aws-region: ${{ env.AWS_REGION }}
       
       # https://github.com/marketplace/actions/github-tag-with-semantic-versioning
-        - uses: actions/checkout@master
+        - uses: actions/checkout@2
         - name: Github Tag with semantic versioning
           id: version_number
           uses: hennejg/github-tag-action@v4.3.1
@@ -199,14 +199,14 @@ jobs:
           run: |
             echo "Building NX... $TAG_VERSION"
         
-        - name: Build Changelog
-          id: github_release
-          uses: mikepenz/release-changelog-builder-action@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.envPAT }}
-        - name: Print Changelog
-          run: |
-            echo ${{steps.github_release.outputs.changelog}}
+        #- name: Build Changelog
+        #  id: github_release
+        #  uses: mikepenz/release-changelog-builder-action@v1
+        #  env:
+        #    GITHUB_TOKEN: ${{ secrets.envPAT }}
+        #- name: Print Changelog
+        #  run: |
+        #    echo ${{steps.github_release.outputs.changelog}}
         
         - name: Microsoft Teams Notification
           if: success()
