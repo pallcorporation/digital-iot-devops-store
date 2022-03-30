@@ -76,8 +76,14 @@ jobs:
             if [[ ${{inputs.branch_name}} == 'main' ]]
             then
               echo "BRANCH_NAME=production" >> $GITHUB_ENV
+            elif [[${{inputs.branch_name}} == 'dev']]
+            then
+              echo "BRANCH_NAME=dev" >> $GITHUB_ENV
+            elif [[${{inputs.branch_name}} == 'integration']]
+            then
+              echo "BRANCH_NAME=integration" >> $GITHUB_ENV
             else
-              echo "BRANCH_NAME=$(echo ${{inputs.branch_name}})" >> $GITHUB_ENV
+              echo "BRANCH_NAME=$(echo dev)" >> $GITHUB_ENV
             fi
         
         # Clone repositories prior to work
