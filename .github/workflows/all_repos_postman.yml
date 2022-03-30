@@ -81,7 +81,7 @@ jobs:
 
       # Clone repositories prior to work
       - name: Git clone the repository
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
         with:
           token: ${{ secrets.envPAT }}
           repository: pallcorporation/beer-ul-postman-env
@@ -209,7 +209,7 @@ jobs:
       
       # Clone repositories prior to work
       - name: Git clone the repository
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
 
       - name: Branch name
         id: get_branch_name
