@@ -65,7 +65,7 @@ jobs:
         
         # Clone repositories prior to work
         - name: Git clone the repository
-          uses: actions/checkout@v1
+          uses: actions/checkout@v2
 
         - name: Make project files directory
           run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}

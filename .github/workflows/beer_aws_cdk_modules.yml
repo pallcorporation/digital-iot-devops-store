@@ -89,8 +89,8 @@ jobs:
           run: echo "${BRANCH_NAME} is the branch name to use in lookup"
         
         # Clone repositories prior to work
-        #- name: Git clone the repository
-        #  uses: actions/checkout@v2
+        - name: Git clone the repository
+          uses: actions/checkout@v2
         
         - name: Make project files directory
           run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
