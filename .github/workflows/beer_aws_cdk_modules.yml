@@ -76,10 +76,12 @@ jobs:
             elif [[${{inputs.branch_name}} == 'integration']]
             then
               echo "BRANCH_NAME=integration" >> $GITHUB_ENV
-            else
-              echo "BRANCH_NAME=$(echo dev)" >> $GITHUB_ENV
             fi
 
+        - name: Branch if users
+          if: contains( github.ref, 'users' )
+          run: |
+            echo "BRANCH_NAME=dev" >> $GITHUB_ENV
             
         
         - name: Echo branch
