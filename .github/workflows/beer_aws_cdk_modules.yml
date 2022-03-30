@@ -112,14 +112,26 @@ jobs:
             path: ${{env.CDK_MODULE}}
 
         - name: Replace github username
-          if: (github.ref != 'refs/heads/dev' || github.ref != 'refs/heads/integration' || github.ref != 'refs/heads/main')
           run: |
-            echo "def user():" > "github_user.py"
-            echo "  user=""\""${{github.actor}}"\"" >> "github_user.py"
-            echo "  return user" >> "github_user.py"
+            if [[ ${{inputs.branch_name}} == 'main' ]]
+            then
+              echo "${BRANCH_NAME}"
+            elif [[${{inputs.branch_name}} == 'dev']]
+            then
+             echo "${BRANCH_NAME}"
+            elif [[${{inputs.branch_name}} == 'integration']]
+            then
+              echo "${BRANCH_NAME}"
+            else
+              echo "def user():" > "github_user.py"
+              echo "  user=""\""${{github.actor}}"\"" >> "github_user.py"
+              echo "  return user" >> "github_user.py"
 
-            rm ${{env.CDK_MODULE}}/src/github_user.py
-            cp github_user.py ${{env.CDK_MODULE}}/src/
+              rm ${{env.CDK_MODULE}}/src/github_user.py
+              cp github_user.py ${{env.CDK_MODULE}}/src/
+            fi
+
+            
         # Grant permissions to all files in directory
         - name: Grant permissions to all files
           run: chmod -R 755 ./
