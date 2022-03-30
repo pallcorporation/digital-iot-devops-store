@@ -54,4 +54,17 @@ jobs:
           id: date
           run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
 
+        #- name: Login to docker
+        #  if: |
+        #    ${{ steps.skip_dk_build.outputs.bypass_dk_build !='true' && inputs.deployment_type == 'image' }}
+        #  uses: docker/login-action@v1
+        #  with:
+        #    registry: ${{env.IMAGE_REGISTRY}}
+        #    username: ${{env.IMAGE_REGISTRY_USERNAME}}
+        #    password: ${{env.IMAGE_REGISTRY_TOKEN}}
+        
+        # Clone repositories prior to work
+        - name: Git clone the repository
+          uses: actions/checkout@v2
+
         
