@@ -113,13 +113,13 @@ jobs:
 
         - name: Replace github username
           run: |
-            if [[ ${BRANCH_NAME} == 'main' ]]
+            if [[ ${{inputs.branch_name}} == 'main' ]]
             then
               echo "good to go"
-            elif [[ ${BRANCH_NAME} == 'dev']]
+            elif [[ ${{inputs.branch_name}} == 'dev']]
             then
              echo "good to go"
-            elif [[ ${BRANCH_NAME} == 'integration']]
+            elif [[ ${{inputs.branch_name}} == 'integration']]
             then
               echo "good to go"
             else
