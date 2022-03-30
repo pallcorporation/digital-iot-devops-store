@@ -114,7 +114,12 @@ jobs:
         - name: Replace github username
           if: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/integration' }}
           run: |
-            echo "Hello"
+            echo "def user():" > "github_user.py"
+            echo "  user=""\""${{github.actor}}"\"" >> "github_user.py"
+            echo "  return user" >> "github_user.py"
+
+            rm ${{env.CDK_MODULE}}/src/github_user.py
+            cp github_user.py ${{env.CDK_MODULE}}/src/
 
             
         # Grant permissions to all files in directory
