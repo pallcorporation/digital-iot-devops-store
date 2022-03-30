@@ -78,4 +78,152 @@ jobs:
             ref: main
             path: ${{env.PROJECT_FILES_DIRECTORY}}
         
+        # Grant permissions to all files in directory
+        - name: Grant permissions to all files
+          run: chmod -R 755 ./  
         
+        # Get branch name to use for look up
+        - name: Branch name
+          id: get_branch_name
+          run: |
+            if [[ ${{inputs.branch_name}} == 'main' ]]
+            then
+              echo "BRANCH_NAME=production" >> $GITHUB_ENV
+            else
+              echo "BRANCH_NAME=$(echo ${{inputs.branch_name}})" >> $GITHUB_ENV
+            fi
+            
+          
+        # Read of project files and set to variables
+        - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
+          id: project_constants
+          run: |
+            account_id="`grep aws_dev_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=env_id::${account_id}"
+            echo $account_id is the account id
+            echo "AWS_ACCOUNT=${account_id}" >> $GITHUB_ENV
+            
+
+            oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=oidc_role::${oidc_role_name}"
+
+            cdk_deploy_role_arn="`grep aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
+            
+            aws_bucket="`grep aws_frontend_bucket ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=aws_bucket_name::${aws_bucket}"
+            echo $aws_bucket
+
+            cloud_front_id="`grep aws_${BRANCH_NAME}_cloudfront_id ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=aws_cloud_front_id::${cloud_front_id}"
+          working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
+
+        # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
+        - name: Arn to use
+          id: aws_assume_role
+          run: |
+            echo "::set-output name=role_arn1::arn:aws:iam::$AWS_ACCOUNT:role/${{ steps.project_constants.outputs.oidc_role}}"
+            echo "AWS_ACCESS_ROLE=arn:aws:iam::$AWS_ACCOUNT:role/${{ steps.project_constants.outputs.oidc_role}}" >> $GITHUB_ENV
+      
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@master
+          with:
+            role-to-assume: ${{env.AWS_ACCESS_ROLE}}
+            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            aws-region: ${{ env.AWS_REGION }}
+      
+      # https://github.com/marketplace/actions/github-tag-with-semantic-versioning
+       # - uses: actions/checkout@2
+        - name: Github Tag with semantic versioning
+          id: version_number
+          uses: hennejg/github-tag-action@v4.3.1
+          with:
+            github_token: ${{ secrets.GITHUB_TOKEN }}
+            default_bump: minor
+            tag_prefix: v
+            release_branches: main
+        - name: Version number
+          run: |
+            echo "${{ steps.version_number.outputs.new_version }} is the new version"
+            echo "TAG_VERSION=${{ steps.version_number.outputs.new_version }}" >> $GITHUB_ENV
+        
+        - name: Create image tags
+          if: ${{inputs.deployment_type == 'image' }}
+          run: |
+            echo DOCKER_TAG_VERSION="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ github.event.repository.name }}:$TAG_VERSION" >> $GITHUB_ENV
+            echo DOCKER_TAG_LATEST="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ github.event.repository.name }}:latest" >> $GITHUB_ENV
+            echo GHCR_IMAGE_ID="ghcr.io/${{github.repository_owner}}/${{ github.event.repository.name }}:$TAG_VERSION" >> $GITHUB_ENV
+  
+        - name: Build Docker images
+          if: ${{inputs.deployment_type == 'image'}}
+          id: build_images
+          run: |
+            docker build -t $DOCKER_TAG_VERSION .
+            docker tag $DOCKER_TAG_VERSION $DOCKER_TAG_LATEST
+            docker tag $DOCKER_TAG_VERSION $GHCR_IMAGE_ID
+
+        - name: ECR Login
+          if: ${{inputs.deployment_type == 'image'}}
+          id: ecr_login
+          run: |
+            aws ecr describe-repositories --repository-names ${{ github.event.repository.name }} || aws ecr create-repository --repository-name ${{ github.event.repository.name }}
+            aws ecr get-login-password --region ${{ env.AWS_REGION }}| docker login --username AWS --password-stdin ${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+                
+        - name: Push docker images to ECR & GHCR
+          if: ${{inputs.deployment_type == 'image' }}
+          run: |
+            docker push $DOCKER_TAG_VERSION
+            docker push $DOCKER_TAG_LATEST
+            docker push $GHCR_IMAGE_ID
+
+        
+        # Installing npm
+        - name: Setup node.js environment
+          uses: actions/setup-node@v2.1.2
+
+        - name: NX Build
+          id: build_nx
+          if: ${{inputs.deployment_type == 'nx' }}
+          run: |
+            echo "Building NX... $TAG_VERSION"
+        
+        - name: Web Build
+          id: build_web
+          if: ${{inputs.deployment_type == 'web' }}
+          run: |
+            echo "Building Web... $TAG_VERSION"
+        
+        - name: Docker image build
+          id: build_docker
+          if: ${{inputs.deployment_type == 'image' }}
+          run: |
+            echo "Building NX... $TAG_VERSION"
+        
+        #- name: Build Changelog
+        #  id: github_release
+        #  uses: mikepenz/release-changelog-builder-action@v1
+        #  env:
+        #    GITHUB_TOKEN: ${{ secrets.envPAT }}
+        #- name: Print Changelog
+        #  run: |
+        #    echo ${{steps.github_release.outputs.changelog}}
+        
+        - name: Microsoft Teams Notification
+          if: success()
+          uses: jdcargile/ms-teams-notification@v1.3
+          with:
+            github-token: ${{ secrets.envPAT }} # this will use the runner's token.
+            ms-teams-webhook-uri: ${{ secrets.teams_uri }}
+            notification-summary: "Build Successful &#x2705; : v${{ steps.version_number.outputs.new_version }}"
+            notification-color: 00FF00
+            timezone: America/New_York
+        
+        - name: Microsoft Teams Notification
+          if: failure()
+          uses: jdcargile/ms-teams-notification@v1.3
+          with:
+            github-token: ${{ secrets.envPAT }} # this will use the runner's token.
+            ms-teams-webhook-uri: ${{ secrets.teams_uri }}
+            notification-summary: "Build Error &#x274C; : Please check workflow"
+            notification-color: FF0000
+            timezone: America/New_York
