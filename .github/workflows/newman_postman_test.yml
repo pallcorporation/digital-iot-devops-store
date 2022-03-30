@@ -92,7 +92,7 @@ jobs:
         
         # Clone repositories prior to work
         - name: Git clone the repository
-          uses: actions/checkout@v1
+          uses: actions/checkout@v2
         
         - name: Make Newman directory
           run: mkdir ${{env.POSTMAN_COLLECTION_DIRECTORY}}
