@@ -29,7 +29,9 @@ on:
         required: true
       POSTMAN_PASSWORD_SECRET:
         required: true
-      COGNITO_USERPOOL_SECRET_PHRASE:
+      COGNITO_DEV_USERPOOL_SECRET_PHRASE:
+        required: true
+      COGNITO_INTEGRATION_USERPOOL_SECRET_PHRASE:
         required: true
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -191,18 +193,18 @@ jobs:
           run: |
             if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'dev' ]]
             then
-              echo "POSTMAN_USERNAME=${{secrets.BEER_POSTMAN_USERNAME}}" >> $GITHUB_ENV
-              echo "POSTMAN_PASSWORD=${{secrets.BEER_POSTMAN_PASSWORD}}" >> $GITHUB_ENV
-              echo "COGNITO_USERPOOL_SECRET=${{secrets.BEER_DEV_COGNITO_USERPOOL_SECRET}}" >> $GITHUB_ENV
+              echo "POSTMAN_USERNAME=${{secrets.POSTMAN_USERNAME_SECRET}}" >> $GITHUB_ENV
+              echo "POSTMAN_PASSWORD=${{secrets.POSTMAN_PASSWORD_SECRET}}" >> $GITHUB_ENV
+              echo "COGNITO_USERPOOL_SECRET=${{secrets.COGNITO_DEV_USERPOOL_SECRET_PHRASE}}" >> $GITHUB_ENV
             elif [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'integration' ]]
             then
-              echo "POSTMAN_USERNAME=${{secrets.BEER_POSTMAN_USERNAME}}" >> $GITHUB_ENV
-              echo "POSTMAN_PASSWORD=${{secrets.BEER_POSTMAN_PASSWORD}}" >> $GITHUB_ENV
-              echo "COGNITO_USERPOOL_SECRET=${{secrets.BEER_INTEGRATION_COGNITO_USERPOOL_SECRET}}" >> $GITHUB_ENV
+              echo "POSTMAN_USERNAME=${{secrets.POSTMAN_USERNAME_SECRET}}" >> $GITHUB_ENV
+              echo "POSTMAN_PASSWORD=${{secrets.POSTMAN_PASSWORD_SECRET}}" >> $GITHUB_ENV
+              echo "COGNITO_USERPOOL_SECRET=${{secrets.COGNITO_INTEGRATION_USERPOOL_SECRET_PHRASE}}" >> $GITHUB_ENV
             else
-              echo "POSTMAN_USERNAME=${{secrets.BEER_POSTMAN_USERNAME}}" >> $GITHUB_ENV
-              echo "POSTMAN_PASSWORD=${{secrets.BEER_POSTMAN_PASSWORD}}" >> $GITHUB_ENV
-              echo "COGNITO_USERPOOL_SECRET=${{secrets.BEER_DEV_COGNITO_USERPOOL_SECRET}}" >> $GITHUB_ENV
+              echo "POSTMAN_USERNAME=${{secrets.POSTMAN_USERNAME_SECRET}}" >> $GITHUB_ENV
+              echo "POSTMAN_PASSWORD=${{secrets.POSTMAN_PASSWORD_SECRET}}" >> $GITHUB_ENV
+              echo "COGNITO_USERPOOL_SECRET=${{secrets.COGNITO_DEV_USERPOOL_SECRET_PHRASE}}" >> $GITHUB_ENV
             fi
         - name: Run python script to seed policy to admins
           run: |
@@ -213,6 +215,7 @@ jobs:
           run: |
             python3 ${{env.POSTMAN_COLLECTION_DIRECTORY}}/replace_secrets.py
             ls
+            
             
         - name: Move postman files (authorizer test)
           if: ${{env.REPO_NAME == 'beer-be-api-authorizer' }}
