@@ -112,7 +112,7 @@ jobs:
             path: ${{env.CDK_MODULE}}
 
         - name: Replace github username
-          if: ${{ github.ref != 'refs/heads/main' || github.ref != 'refs/heads/dev' || github.ref != 'refs/heads/integration' }}
+          if: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/integration' }}
           run: |
             echo "Hello"
 
