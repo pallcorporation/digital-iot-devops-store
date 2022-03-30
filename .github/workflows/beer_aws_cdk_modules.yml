@@ -115,13 +115,13 @@ jobs:
           run: |
             if [[ ${{inputs.branch_name}} == 'main' ]]
             then
-              echo "${BRANCH_NAME}"
+              echo "good to go"
             elif [[${{inputs.branch_name}} == 'dev']]
             then
-             echo "${BRANCH_NAME}"
+             echo "good to go"
             elif [[${{inputs.branch_name}} == 'integration']]
             then
-              echo "${BRANCH_NAME}"
+              echo "good to go"
             else
               echo "def user():" > "github_user.py"
               echo "  user=""\""${{github.actor}}"\"" >> "github_user.py"
