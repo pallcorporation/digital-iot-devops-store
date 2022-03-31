@@ -200,6 +200,7 @@ jobs:
           - beer-be-iam-service
           - beer-be-permission-service
           - beer-be-companysite-service
+          - beer-be-area-service
       fail-fast: false
     steps:
       # Get current time stamp to use as reference elsewhere
