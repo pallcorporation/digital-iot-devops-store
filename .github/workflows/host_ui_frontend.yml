@@ -351,7 +351,7 @@ jobs:
             
         - name: Echo Domain URL
           run: |
-            echo "::warning::${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}} is the cloudfront url"
+            echo "::warning::https://${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}} is the cloudfront url"
 
     outputs:
       domain_url: ${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}}
