@@ -93,7 +93,7 @@ jobs:
           id: repo_name_passed
           run: |
             if [ ${{inputs.repo_name}} == "" ]; then
-            echo ::set-output name=reponamepassed::false
+              echo ::set-output name=reponamepassed::false
             else
               echo ::set-output name=reponamepassed::true
             fi
