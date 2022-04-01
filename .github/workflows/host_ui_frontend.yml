@@ -83,8 +83,6 @@ jobs:
           id: date
           run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
         
-       
-        
         - name: Checkout
           uses: actions/checkout@v2
 
@@ -285,6 +283,9 @@ jobs:
             elif [[ ${{inputs.branch_name}} == 'dev' ]]
             then
               echo "AWS_ENV_NAME=dev" >> $GITHUB_ENV
+            elif [[ ${{inputs.branch_name}} == 'beta' ]]
+            then
+              echo "AWS_ENV_NAME=beta" >> $GITHUB_ENV
             else
               echo "AWS_ENV_NAME=dev" >> $GITHUB_ENV
             fi
