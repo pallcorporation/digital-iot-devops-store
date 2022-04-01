@@ -92,10 +92,10 @@ jobs:
         - name: Check if input is null for repo name
           id: repo_name_passed
           run: |
-            if [ ${{inputs.repo_name}} == "" ]; then
-              echo ::set-output name=reponamepassed::false
-            else
+            if [ ${{inputs.repo_name}} != "" ]; then
               echo ::set-output name=reponamepassed::true
+            else
+              echo ::set-output name=reponamepassed::false
             fi
         
         - name: Checkout
