@@ -19,6 +19,12 @@ on:
 
       deployment_type:
         type: string
+      
+      repo_name:
+        type: string
+      repo_version:
+        type: string
+
       config_files_directory:
         required: true
         type: string
@@ -83,8 +89,20 @@ jobs:
           id: date
           run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
         
+        - name: Check if input is null for repo name
+          id: repo_name_passed
+          run: |
+            if [ ${{inputs.repo_name}} == "" ]; then
+            echo ::set-output name=reponamepassed::false
+            else
+              echo ::set-output name=reponamepassed::true
+            fi
+        
         - name: Checkout
           uses: actions/checkout@v2
+        
+        #- name: Git clone the repository
+        #  uses: actions/checkout@v2
 
         - name: Find-and-replace strings
           uses: mad9000/actions-find-and-replace-string@2
@@ -122,6 +140,18 @@ jobs:
             else
               echo "BRANCH_NAME=$(echo dev)" >> $GITHUB_ENV
             fi
+        - name: Make repo directory
+          if: ${{ steps.repo_name_passed.outputsreponamepassed }}
+          run: mkdir ${{ inputs.repo_name }}_stage
+          
+        - name: Check out ${{ inputs.repo_name }}
+          if: ${{ steps.repo_name_passed.outputsreponamepassed }}
+          uses: actions/checkout@v2
+          with:
+            token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+            repository: ${{ inputs.repo_name }}
+            ref: ${{inputs.repo_version}}
+            path: ${{ inputs.repo_name }}_stage
         
         - name: Build directory swagger
           if: ${{inputs.build_project_type == 'swagger' }}
@@ -141,8 +171,10 @@ jobs:
         - name: Build directory echo
           run: echo $BUILD_DIRECTORY
         # Clone repositories prior to work
-        - name: Git clone the repository
-          uses: actions/checkout@v2
+        
+        - name: Move files (if from application deployment)
+          if: ${{ steps.repo_name_passed.outputsreponamepassed }}
+          run: mv ${{ inputs.repo_name }}_stage/* .
         
         - name: Make project files directory
           run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
