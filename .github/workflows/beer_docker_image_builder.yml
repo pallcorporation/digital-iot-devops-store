@@ -124,8 +124,11 @@ jobs:
             elif [[ ${{inputs.branch_name}} == 'integration' ]]
             then
               echo "AWS_ENV_NAME=integration" >> $GITHUB_ENV
+            elif [[ ${{inputs.branch_name}} == 'dev' ]]
+            then
+              echo "AWS_ENV_NAME=dev" >> $GITHUB_ENV
             else
-              echo "AWS_ENV_NAME=$(echo ${{inputs.branch_name}})" >> $GITHUB_ENV
+              echo "AWS_ENV_NAME=${{github.actor}})" >> $GITHUB_ENV
             fi
         
         # Read of project files and set to variables
@@ -201,12 +204,13 @@ jobs:
             ls
         - name: Image Repository name
           run: |
-            echo "IMAGE_REPO_NAME=${{ github.event.repository.name }}"
+            echo "IMAGE_REPO_NAME=${{ github.event.repository.name }}" >> $GITHUB_ENV
         
         - name: Image Repository name
           if: contains( github.ref, 'users' )
           run: |
-            echo "IMAGE_REPO_NAME=${{ github.event.repository.name }}-${{github.actor}}"
+            echo "IMAGE_REPO_NAME=${{ github.event.repository.name }}-${{github.actor}}" >> $GITHUB_ENV
+            
 
 
         - name: ECR Registry
@@ -242,12 +246,12 @@ jobs:
         
         - name: Lambda function name
           run: |
-            echo "LAMBDA_FUNCTION_NAME = ${{inputs.lambd_function_name}}-${{ env.AWS_ENV_NAME }}"
+            echo "LAMBDA_FUNCTION_NAME = ${{inputs.lambd_function_name}}-${{ env.AWS_ENV_NAME }}" >> $GITHUB_ENV
         
         - name: Lambda function name (if users)
           if: contains( github.ref, 'users' )
           run: |
-            echo "LAMBDA_FUNCTION_NAME = ${{inputs.lambd_function_name}}-${{github.actor}}-${{ env.AWS_ENV_NAME }}"
+            echo "LAMBDA_FUNCTION_NAME = ${{inputs.lambd_function_name}}-${{github.actor}}-${{ env.AWS_ENV_NAME }}" >> $GITHUB_ENV
 
         - name: Update function with new image built
           if: ${{ steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.ecr_login.outputs.repo_created =='false' && steps.skip_dk_build.outputs.bypass_dk_build !='true'}} 
