@@ -149,7 +149,7 @@ jobs:
           uses: actions/checkout@v2
           with:
             token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
-            repository: ${{ inputs.repo_name }}
+            repository: pallcorporation/${{ inputs.repo_name }}
             ref: ${{inputs.repo_version}}
             path: ${{ inputs.repo_name }}_stage
         
