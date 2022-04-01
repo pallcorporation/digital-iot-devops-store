@@ -142,11 +142,11 @@ jobs:
               echo "BRANCH_NAME=$(echo dev)" >> $GITHUB_ENV
             fi
         - name: Make repo directory
-          if: ${{ steps.repo_name_passed.outputs.reponamepassed }}
+          if: ${{inputs.repo_name}}
           run: mkdir ${{ inputs.repo_name }}_stage
           
         - name: Check out ${{ inputs.repo_name }}
-          if: ${{ steps.repo_name_passed.outputs.reponamepassed }}
+          if: ${{inputs.repo_name}}
           uses: actions/checkout@v2
           with:
             token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
