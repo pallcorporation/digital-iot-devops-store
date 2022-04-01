@@ -90,6 +90,7 @@ jobs:
           run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
         
         - name: Check if input is null for repo name
+          if: ${{inputs.repo_name}}
           id: repo_name_passed
           run: |
             if [ ${{inputs.repo_name}} != "" ]; then
