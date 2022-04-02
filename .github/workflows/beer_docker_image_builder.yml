@@ -246,17 +246,17 @@ jobs:
         
         - name: Lambda function name
           run: |
-            echo "LAMBDA_FUNCTION_NAME = ${{inputs.lambd_function_name}}-${{ env.AWS_ENV_NAME }}" >> $GITHUB_ENV
+            echo LAMBDA_FUNCTION_NAME = "${{inputs.lambd_function_name}}-${{ env.AWS_ENV_NAME }}" >> $GITHUB_ENV
         
         - name: Lambda function name (if users)
           if: contains( github.ref, 'users' )
           run: |
-            echo "LAMBDA_FUNCTION_NAME = ${{inputs.lambd_function_name}}-${{github.actor}}-${{ env.AWS_ENV_NAME }}" >> $GITHUB_ENV
+            echo LAMBDA_FUNCTION_NAME = "${{inputs.lambd_function_name}}-${{github.actor}}-${{ env.AWS_ENV_NAME }}" >> $GITHUB_ENV
 
         - name: Update function with new image built
           if: ${{ steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.ecr_login.outputs.repo_created =='false' && steps.skip_dk_build.outputs.bypass_dk_build !='true'}} 
           run: |
-            aws lambda update-function-code --region ${{ env.AWS_REGION }} --function-name ${LAMBDA_FUNCTION_NAME} --image-uri $DOCKER_TAG_VERSION
+            aws lambda update-function-code --region ${{ env.AWS_REGION }} --function-name $LAMBDA_FUNCTION_NAME --image-uri $DOCKER_TAG_VERSION
 
     outputs:
       #env_name: ${{ steps.branch_check.outputs.env_id }}tt
