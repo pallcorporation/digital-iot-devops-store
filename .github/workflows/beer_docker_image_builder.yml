@@ -267,14 +267,12 @@ jobs:
             echo "IMAGE_REPO_NAME=${{inputs.repo_name}}" >> $GITHUB_ENV
 
         - name: ECR Registry
-          id: ecr_registry
           run: |
             echo DOCKER_TAG_VERSION="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:${TAG_VERSION}" >> $GITHUB_ENV
             echo DOCKER_TAG_LATEST="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:latest" >> $GITHUB_ENV
         
         - name: ECR Registry (Tools account if application deployment)
           if: ${{inputs.repo_name}}
-          id: ecr_registry
           run: |
             echo DOCKER_TAG_VERSION="${{ steps.project_constants_tools.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:${TAG_VERSION}E${BRANCH_NAME}" >> $GITHUB_ENV
             echo DOCKER_TAG_LATEST="${{ steps.project_constants_tools.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:latest" >> $GITHUB_ENV
