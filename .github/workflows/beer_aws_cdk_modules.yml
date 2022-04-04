@@ -22,6 +22,12 @@ on:
       config_files_directory:
         required: true
         type: string
+
+      repo_name:
+        type: string
+
+      repo_version:
+        type: string
       
     secrets:
       envPAT:
@@ -63,6 +69,16 @@ jobs:
           id: date
           run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
         
+        - name: Check if input is null for repo name
+          if: ${{inputs.repo_name}}
+          id: repo_name_passed
+          run: |
+            if [ ${{inputs.repo_name}} != "" ]; then
+              echo ::set-output name=reponamepassed::true
+            else
+              echo ::set-output name=reponamepassed::false
+            fi
+        
         # Get branch name to use for look up
         - name: Branch if Dev
           if: contains( github.ref, 'dev' )
@@ -97,11 +113,28 @@ jobs:
         - name: Git clone the repository
           uses: actions/checkout@v2
         
+        - name: Make repo directory
+          if: ${{inputs.repo_name}}
+          run: mkdir ${{ inputs.repo_name }}_stage
+          
+        - name: Check out ${{ inputs.repo_name }}
+          if: ${{inputs.repo_name}}
+          uses: actions/checkout@v2
+          with:
+            token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+            repository: pallcorporation/${{ inputs.repo_name }}
+            ref: ${{inputs.repo_version}}
+            path: ${{ inputs.repo_name }}_stage
+        
         - name: Make project files directory
           run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
         
         - name: Make cdk directory
           run: mkdir ${{env.CDK_MODULE}}
+        
+        - name: Move files (if from application deployment)
+          if: ${{ steps.repo_name_passed.outputsreponamepassed }}
+          run: mv ${{ inputs.repo_name }}_stage/* .
         
         - name: Project files clone
           uses: actions/checkout@v2
