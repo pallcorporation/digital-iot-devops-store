@@ -203,31 +203,31 @@ jobs:
 
         # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
         - name: Arn to use
-          id: aws_role
+          id: aws_assume_role
           run: |
             echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
-            echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}" >> $GITHUB_ENV
-        
+
         - name: Arn to use (If Application deployment)
-          id: aws_role_tools
+          id: aws_assume_role_tools
           if: ${{ steps.repo_name_passed.outputsreponamepassed }}
           run: |
             echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants_tools.outputs.env_id }}:role/${{ steps.project_constants_tools.outputs.oidc_role}}"
-            echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ steps.project_constants_tools.outputs.env_id }}:role/${{ steps.project_constants_tools.outputs.oidc_role}}" >> $GITHUB_ENV
         
         - name: Configure AWS credentials
-          if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.repo_name_passed.outputsreponamepassed == 'false'}}
+          id: aws_oidc_credentials
+          if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.repo_name_passed.outputsreponamepassed !='true' }}
           uses: aws-actions/configure-aws-credentials@master
           with:
-            role-to-assume: ${{steps.aws_role.outputs.role_arn1}}
+            role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
             role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
             aws-region: ${{ env.AWS_REGION }}
         
-        - name: Configure AWS credentials
-          if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.repo_name_passed.outputsreponamepassed == 'true'}}
+        - name: Configure AWS credentials (If Application deployment)
+          id: aws_oidc_credentials_tools
+          if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.repo_name_passed.outputsreponamepassed =='true'}}
           uses: aws-actions/configure-aws-credentials@master
           with:
-            role-to-assume: ${{steps.aws_role_tools.outputs.role_arn1}}
+            role-to-assume: ${{steps.aws_assume_role_tools.outputs.role_arn1}}
             role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
             aws-region: ${{ env.AWS_REGION }}
 
