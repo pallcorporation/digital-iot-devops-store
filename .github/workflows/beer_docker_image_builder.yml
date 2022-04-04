@@ -116,9 +116,6 @@ jobs:
             ref: main
             path: ${{env.PROJECT_FILES_DIRECTORY}}
         
-        - name: Make cdk directory
-          run: mkdir ${{env.CDK_MODULE}}
-        
         - name: Move files (if from application deployment)
           if: ${{ steps.repo_name_passed.outputsreponamepassed }}
           run: mv ${{ inputs.repo_name }}_stage/* .
