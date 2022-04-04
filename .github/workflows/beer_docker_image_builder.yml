@@ -206,15 +206,14 @@ jobs:
 
         # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
         - name: Arn to use
-          id: aws_assume_role
           run: |
             echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
             echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}" >> $GITHUB_ENV
         - name: Arn to use (If Application deployment)
-          id: aws_assume_role
           run: |
             echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants_tools.outputs.env_id }}:role/${{ steps.project_constants_tools.outputs.oidc_role}}"
             echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ steps.project_constants_tools.outputs.env_id }}:role/${{ steps.project_constants_tools.outputs.oidc_role}}" >> $GITHUB_ENV
+        
         - name: Configure AWS credentials
           if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true'}}
           uses: aws-actions/configure-aws-credentials@master
@@ -318,13 +317,11 @@ jobs:
 
     outputs:
       #env_name: ${{ steps.branch_check.outputs.env_id }}tt
-      #role_arn: ${{ steps.aws_assume_role.outputs.role_arn1}}
       cdk_check: ${{ steps.check_cdk.outputs.cdk_found}}
       env_name: ${{ steps.project_constants.outputs.env_id }}
       oidc_role: ${{ steps.project_constants.outputs.oidc_role}}
       skip_cdk: ${{ steps.skip_cdk.outputs.bypass_cdk}}
       cdk_deploy_name: ${{ steps.project_constants.outputs.cdk_deploy}}
       cdk_destroy_stack_bool: ${{ steps.project_constants.outputs.cdk_destroy_stack}}
-      role_arn: ${{ steps.aws_assume_role.outputs.role_arn1}}
       branch_name: ${BRANCH_NAME}
       aws_upload_bucket: ${{steps.project_constants.outputs.aws_bucket_name}} 
