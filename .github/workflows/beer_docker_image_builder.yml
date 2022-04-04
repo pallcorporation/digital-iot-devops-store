@@ -207,6 +207,7 @@ jobs:
             echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
             echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}" >> $GITHUB_ENV
         - name: Arn to use (If Application deployment)
+          if: ${{ steps.repo_name_passed.outputsreponamepassed }}
           run: |
             echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants_tools.outputs.env_id }}:role/${{ steps.project_constants_tools.outputs.oidc_role}}"
             echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ steps.project_constants_tools.outputs.env_id }}:role/${{ steps.project_constants_tools.outputs.oidc_role}}" >> $GITHUB_ENV
