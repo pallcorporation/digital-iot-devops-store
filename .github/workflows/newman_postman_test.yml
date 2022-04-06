@@ -227,6 +227,7 @@ jobs:
 
         - name: Run python script to seed policy to admins
           run: |
+            ls
             rm -rf ${{env.ADMIN_USERS_POLICY_SEED}}/super-user-policy.json
             cp ${{env.IAM_SERVICE_REPOSITORY}}/seeding-data/super-user-policy.jsonc ${{env.ADMIN_USERS_POLICY_SEED}}/super-user-policy.json
             pip3 install boto3
