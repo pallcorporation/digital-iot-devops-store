@@ -75,15 +75,6 @@ jobs:
               echo ::set-output name=reponamepassed::false
             fi
 
-        #- name: Login to docker
-        #  if: |
-        #    ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
-        #  uses: docker/login-action@v1
-        #  with:
-        #    registry: ${{env.IMAGE_REGISTRY}}
-        #    username: ${{env.IMAGE_REGISTRY_USERNAME}}
-        #    password: ${{env.IMAGE_REGISTRY_TOKEN}}
-
         - name: Make project files directory
           run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
         
@@ -116,14 +107,9 @@ jobs:
             if [[ ${{inputs.branch_name}} == 'main' ]]
             then
               echo "AWS_ENV_NAME=production" >> $GITHUB_ENV
-            elif [[ ${{inputs.branch_name}} == 'integration' ]]
+            elif [[ ${{inputs.branch_name}} == 'beta' ]]
             then
-              echo "AWS_ENV_NAME=integration" >> $GITHUB_ENV
-            elif [[ ${{inputs.branch_name}} == 'dev' ]]
-            then
-              echo "AWS_ENV_NAME=dev" >> $GITHUB_ENV
-            else
-              echo "AWS_ENV_NAME=${{github.actor}})" >> $GITHUB_ENV
+              echo "AWS_ENV_NAME=beta" >> $GITHUB_ENV
             fi
         
         # Read of project files and set to variables
@@ -132,6 +118,7 @@ jobs:
           run: |
             account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
             echo "::set-output name=env_id::${account_id}"
+            echo "AWS_ENVRIONMENT=${account_id}" >> $GITHUB_ENV
             
             oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
             echo "::set-output name=oidc_role::${oidc_role_name}"
@@ -144,6 +131,7 @@ jobs:
           run: |
             account_id="`grep aws_tools_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
             echo "::set-output name=env_id::${account_id}"
+            echo "AWS_ENVRIONMENT=${account_id}" >> $GITHUB_ENV
             
             oidc_role_name="`grep aws_tools_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
             echo "::set-output name=oidc_role::${oidc_role_name}"
@@ -164,32 +152,15 @@ jobs:
         
         - name: Configure AWS credentials
           id: aws_oidc_credentials
-          if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.repo_name_passed.outputsreponamepassed !='true' }}
+          #if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.repo_name_passed.outputsreponamepassed !='true' }}
           uses: aws-actions/configure-aws-credentials@master
           with:
             role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
             role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
             aws-region: ${{ env.AWS_REGION }}
         
-        - name: Configure AWS credentials (If Application deployment)
-          id: aws_oidc_credentials_tools
-          if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.repo_name_passed.outputsreponamepassed =='true'}}
-          uses: aws-actions/configure-aws-credentials@master
-          with:
-            role-to-assume: ${{steps.aws_assume_role_tools.outputs.role_arn1}}
-            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
-            aws-region: ${{ env.AWS_REGION }}
-
-        - name: Version number
-          #if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '+tag-skip') != true
-          run: |
-            echo "${{ steps.date.outputs.date }} is the new version"
-            echo "TAG_VERSION=${{ steps.date.outputs.date }}" >> $GITHUB_ENV
-        
         - name: Version number (If application deployment)
-          if: ${{inputs.repo_name}}
           run: |
-            echo "${{ steps.date.outputs.date }} is the new version"
             echo "TAG_VERSION=${{ inputs.repo_version }}" >> $GITHUB_ENV
  
         # Node installation (if required)
@@ -199,6 +170,10 @@ jobs:
         - name: Image Repository name (If application deployment)
           run: |
             echo "IMAGE_REPO_NAME=${{inputs.repo_name}}" >> $GITHUB_ENV
+        
+        - name: ECR Registry
+          run: |
+            echo DOCKER_TAG_VERSION="${{ steps.project_constants_tools.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:${TAG_VERSION}" >> $GITHUB_ENV
 
         - name: ECR Login
           id: ecr_login
