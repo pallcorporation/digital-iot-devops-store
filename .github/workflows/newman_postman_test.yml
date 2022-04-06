@@ -52,6 +52,8 @@ env:
   POSTMAN_COLLECTION_DIRECTORY: "newman_collection"
   REPO_NAME: ${{ github.event.repository.name }}
   ADMIN_USERS_POLICY_SEED: beer-ul-admin-users
+  IAM_SERVICE_REPOSITORY: beer-be-iam-service
+
   
 
 permissions:
@@ -183,6 +185,18 @@ jobs:
             role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
             aws-region: ${{ env.AWS_REGION }}
         
+        - name: Make ${{env.IAM_SERVICE_REPOSITORY}}
+          run: |
+            mkdir ${{env.IAM_SERVICE_REPOSITORY}}
+        
+        - name: beer-be-iam-service repo clone
+          uses: actions/checkout@v2
+          with:
+            token: ${{ secrets.envPAT }}
+            repository: pallcorporation/beer-ul-admin-users
+            ref: main
+            path: beer-be-iam-service
+        
         # Grant permissions to all files in directory
         - name: Grant permissions to all files
           run: chmod -R 755 ./
@@ -209,18 +223,12 @@ jobs:
               echo "COGNITO_USERPOOL_SECRET=${{secrets.COGNITO_DEV_USERPOOL_SECRET_PHRASE}}" >> $GITHUB_ENV
             fi
         
-        - name: beer-be-iam-service repo clone
-          uses: actions/checkout@v2
-          with:
-            token: ${{ secrets.envPAT }}
-            repository: pallcorporation/beer-ul-admin-users
-            ref: main
-            path: beer-be-iam-service
+      
 
         - name: Run python script to seed policy to admins
           run: |
             rm -rf ${{env.ADMIN_USERS_POLICY_SEED}}/super-user-policy.json
-            cp beer-be-iam-service/super-user-policy.jsonc ${{env.ADMIN_USERS_POLICY_SEED}}/super-user-policy.json
+            cp ${{env.IAM_SERVICE_REPOSITORY}}/seeding-data/super-user-policy.jsonc ${{env.ADMIN_USERS_POLICY_SEED}}/super-user-policy.json
             pip3 install boto3
             python3 ${{env.ADMIN_USERS_POLICY_SEED}}/${{env.BRANCH_NAME}}_admins.py
 
