@@ -125,22 +125,35 @@ jobs:
         - name: Setup node.js environment
           uses: actions/setup-node@v2.1.2
 
-        # Get branch name to use for look up
-        - name: Branch name
-          id: get_branch_name
+        - name: Branch if Dev
+          if: contains( github.ref, 'dev' )
           run: |
-            if [[ ${{inputs.branch_name}} == 'main' ]]
-            then
-              echo "BRANCH_NAME=production" >> $GITHUB_ENV
-            elif [[${{inputs.branch_name}} == 'dev']]
-            then
-              echo "BRANCH_NAME=dev" >> $GITHUB_ENV
-            elif [[${{inputs.branch_name}} == 'integration']]
-            then
-              echo "BRANCH_NAME=integration" >> $GITHUB_ENV
-            else
-              echo "BRANCH_NAME=$(echo dev)" >> $GITHUB_ENV
-            fi
+            echo "BRANCH_NAME=dev" >> $GITHUB_ENV
+        
+        - name: Branch if Integration
+          if: contains( github.ref, 'integration' )
+          run: |
+            echo "BRANCH_NAME=integration" >> $GITHUB_ENV
+
+        - name: Branch if users
+          if: contains( github.ref, 'users' )
+          run: |
+            echo "BRANCH_NAME=dev" >> $GITHUB_ENV
+        
+        - name: Branch if Main
+          if: contains( github.ref, 'main' )
+          run: |
+            echo "BRANCH_NAME=production" >> $GITHUB_ENV
+        
+        - name: Branch if BETA
+          if: contains( github.ref, 'beta' )
+          run: |
+            echo "BRANCH_NAME=beta" >> $GITHUB_ENV
+            
+        
+        - name: Echo branch
+          run: echo "${BRANCH_NAME} is the branch name to use in lookup"
+          
         - name: Make repo directory
           if: ${{inputs.repo_name}}
           run: mkdir ${{ inputs.repo_name }}_stage
