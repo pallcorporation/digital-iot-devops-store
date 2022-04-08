@@ -98,10 +98,9 @@ jobs:
           run: |
             echo "::set-output name=role_arn1::arn:aws:iam::$AWS_ENVRIONMENT:role/${{ steps.project_constants.outputs.oidc_role}}"
             echo "AWS_ACCESS_ROLE=arn:aws:iam::$AWS_ENVRIONMENT:role/${{ steps.project_constants.outputs.oidc_role}}" >> $GITHUB_ENV
-      - name: Image Repository name
-        run: |
-          echo "IMAGE_REPO_NAME=${{ github.event.repository.name }}" >> $GITHUB_ENV
-          
+        - name: Image Repository name
+          run: |
+            echo "IMAGE_REPO_NAME=${{ github.event.repository.name }}" >> $GITHUB_ENV
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@master
           with:
