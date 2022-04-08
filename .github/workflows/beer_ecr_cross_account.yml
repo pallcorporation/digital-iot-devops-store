@@ -1,0 +1,121 @@
+name: Docker Image Builder
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches:
+      - dev
+      - integration
+      - main
+      
+  workflow_call:
+    inputs:
+      repo_name:
+        type: string
+
+    secrets:
+      envPAT:
+        required: true
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+env:
+  #BUCKET_NAME : "github-oidc-test-mitch"
+  AWS_REGION : "us-east-1"
+  PROJECT_FILES_GIT : "beer-project-properties.git"
+  ORGANIZATION: "pallcorporation"
+  PROJECT_FILES_NAME: "project.properties"
+  PROJECT_FILES_DIRECTORY: "project_file"
+  IMAGE_REGISTRY: "ghcr.io"
+  IMAGE_REGISTRY_USERNAME: ${{github.actor}}
+  IMAGE_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+
+permissions:
+      id-token: write
+      contents: read    # This is required for actions/checkout@v1
+      packages: write
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:  
+  build-docker-image:
+    if: ${{inputs.branch_name}} != 'main' && github.repository != 'pallcorporation/digital-iot-devops-store'
+    runs-on: ubuntu-latest
+      
+    #needs: FindAWSAccount
+    steps:
+        # Get current time stamp to use as reference elsewhere
+        - name: Get current date
+          id: date
+          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+                
+        # Clone repositories prior to work
+        - name: Git clone the repository
+          uses: actions/checkout@v2
+
+        - name: Make project files directory
+          run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
+        
+        - name: Project files clone
+          uses: actions/checkout@v2
+          with:
+            token: ${{ secrets.envPAT }}
+            repository: pallcorporation/beer-project-properties
+            ref: main
+            path: ${{env.PROJECT_FILES_DIRECTORY}}
+
+        
+        # Grant permissions to all files in directory
+        - name: Grant permissions to all files
+          run: chmod -R 755 ./  
+        
+        - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
+          id: project_constants_tools
+          run: |
+            account_id="`grep aws_tools_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=env_id::${account_id}"
+            echo "AWS_ENVRIONMENT=${account_id}" >> $GITHUB_ENV
+
+            oidc_role_name="`grep aws_tools_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=oidc_role::${oidc_role_name}"
+
+          working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
+
+        - name: Arn to use
+          id: aws_assume_role_tools
+          run: |
+            echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants_tools.outputs.env_id }}:role/${{ steps.project_constants_tools.outputs.oidc_role}}"
+        
+        - name: Configure AWS credentials
+          id: aws_oidc_credentials
+          uses: aws-actions/configure-aws-credentials@master
+          with:
+            role-to-assume: ${{steps.aws_assume_role_tools.outputs.role_arn1}}
+            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            aws-region: ${{ env.AWS_REGION }}
+        
+        - name: Image Repository name
+          run: |
+            echo "IMAGE_REPO_NAME=${{inputs.repo_name}}" >> $GITHUB_ENV
+
+        - name: ECR Login
+          id: ecr_login
+          run: |
+            (aws ecr describe-repositories \
+            --repository-names ${IMAGE_REPO_NAME} \
+            && echo "::set-output name=repo_created::false" ) || \
+            ( aws ecr create-repository \
+            --repository-name ${IMAGE_REPO_NAME} \
+            && echo "::set-output name=repo_created::true" ) \
+            aws ecr get-login-password \
+            --region ${{ env.AWS_REGION }}| docker login \
+            --username AWS \
+            --password-stdin ${AWS_ENVRIONMENT}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+
+        - name: created repo
+          if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true'}}
+          run: |
+            echo "${{ steps.ecr_login.outputs.repo_created }} did we create repo"
+
+
