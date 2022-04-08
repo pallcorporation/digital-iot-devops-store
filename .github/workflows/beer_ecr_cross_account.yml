@@ -117,7 +117,7 @@ jobs:
             echo "::set-output name=env_id::${beta_account_id}"
             echo "AWS_BETA_ENVRIONMENT=${beta_account_id}" >> $GITHUB_ENV
 
-            prod_account_id="`grep aws_beta_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            prod_account_id="`grep aws_production_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
             echo "::set-output name=env_id::${prod_account_id}"
             echo "AWS_PRODUCTION_ENVRIONMENT=${prod_account_id}" >> $GITHUB_ENV
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
