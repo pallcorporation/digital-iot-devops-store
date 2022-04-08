@@ -106,7 +106,7 @@ jobs:
           uses: aws-actions/configure-aws-credentials@master
           with:
             role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
-            role-session-name: ${IMAGE_REPO_NAME}-${{ steps.date.outputs.date }}
+            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
             aws-region: ${{ env.AWS_REGION }}
       
       # https://github.com/marketplace/actions/github-tag-with-semantic-versioning
