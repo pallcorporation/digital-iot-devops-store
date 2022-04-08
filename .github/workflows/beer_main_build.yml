@@ -174,6 +174,17 @@ jobs:
             prod_account_id="`grep aws_production_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
             echo "::set-output name=env_id::${prod_account_id}"
             echo "AWS_PRODUCTION_ENVRIONMENT=${prod_account_id}" >> $GITHUB_ENV
+
+            beta_account_deploy="`grep aws_beta_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=env_id::${beta_account_deploy}"
+            echo "AWS_DEPLOYMENT_ROLE_BETA=${beta_account_deploy}" >> $GITHUB_ENV
+
+            prod_account_deploy="`grep aws_production_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=env_id::${prod_account_deploy}"
+            echo "AWS_DEPLOYMENT_ROLE_PRODUCTION=${prod_account_deploy}" >> $GITHUB_ENV
+
+
+
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
 
 
@@ -187,15 +198,19 @@ jobs:
                   "Sid": "allowPallpull",
                   "Effect": "Allow",
                   "Principal": {
+                    "Service": "lambda.amazonaws.com",
                     "AWS": [
                       "arn:aws:iam::${{env.AWS_BETA_ENVRIONMENT}}:root",
                       "arn:aws:iam::${{env.AWS_PRODUCTION_ENVRIONMENT}}:root",
-                      "arn:aws:iam::${{env.AWS_BETA_ENVRIONMENT}}:role/KMS-Pipeline-Role-IotPipelineCfnRole-1D8F377T1WGJ0"
+                      "arn:aws:iam::${{env.AWS_BETA_ENVRIONMENT}}:role/{AWS_DEPLOYMENT_ROLE_BETA}",
+                      "arn:aws:iam::${{env.AWS_PRODUCTION_ENVRIONMENT}}:role/{AWS_DEPLOYMENT_ROLE_PRODUCTION}"
+                      
                     ]
                   },
                   "Action": [
                     "ecr:BatchCheckLayerAvailability",
                     "ecr:BatchGetImage",
+                    "ecr:GetAuthorizationToken",
                     "ecr:GetDownloadUrlForLayer"
                   ]
                 }
