@@ -149,9 +149,10 @@ jobs:
 
         - name: Set repository policy for Beta & Production
           run: |
+            echo "POLICY_DOCUMENT=$(cat ./tools-cross-ecr-policy.json)" >> $GITHUB_ENV
             aws ecr set-repository-policy \
             --repository-name ${IMAGE_REPO_NAME} \
-            --policy-text tools-cross-ecr-policy.json
+            --cli-input-json $POLICY_DOCUMENT
 
         - name: created repo
           if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true'}}
