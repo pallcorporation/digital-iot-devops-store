@@ -155,7 +155,7 @@ jobs:
         #    --repository-name ${IMAGE_REPO_NAME} \
         #    --cli-input-json $POLICY_DOCUMENT
         - name: Echo
-          run: ls
+          run: ls && cat tools-cross-ecr-policy.json
         - name: created repo
           if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true'}}
           run: |
