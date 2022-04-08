@@ -120,6 +120,7 @@ jobs:
             prod_account_id="`grep aws_beta_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
             echo "::set-output name=env_id::${prod_account_id}"
             echo "AWS_PRODUCTION_ENVRIONMENT=${prod_account_id}" >> $GITHUB_ENV
+          working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
 
 
         - name: Make ecr policy for Beta
