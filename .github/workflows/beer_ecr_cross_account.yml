@@ -103,7 +103,8 @@ jobs:
             && echo "::set-output name=repo_created::false" ) || \
             ( aws ecr create-repository \
             --repository-name ${IMAGE_REPO_NAME} \
-            && echo "::set-output name=repo_created::true" ) \
+            && echo "::set-output name=repo_created::true" )
+            
             aws ecr get-login-password \
             --region ${{ env.AWS_REGION }}| docker login \
             --username AWS \
