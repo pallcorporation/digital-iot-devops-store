@@ -12,6 +12,8 @@ on:
       deployment_type:
         required: true
         type: string
+      branch_name:
+      type: string
 
     secrets:
       envPAT:
