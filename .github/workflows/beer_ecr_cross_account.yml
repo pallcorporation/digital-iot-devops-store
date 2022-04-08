@@ -124,14 +124,38 @@ jobs:
 
         - name: Make ecr policy for Beta
           run: |
-            echo "POLICY_DOCUMENT=$("{\n              \"Version\": \"2008-10-17\",\n              \"Statement\": [\n                {\n                  \"Sid\": \"allowPallpull\",\n                  \"Effect\": \"Allow\",\n                  \"Principal\": {\n                    \"AWS\": [\n                      \"arn:aws:iam::$AWS_BETA_ENVRIONMENT}:root\",\n                      \"arn:aws:iam::$AWS_PRODUCTION_ENVRIONMENT}:root\"\n                    ]\n                  },\n                  \"Action\": [\n                    \"ecr:BatchCheckLayerAvailability\",\n                    \"ecr:BatchGetImage\",\n                    \"ecr:GetDownloadUrlForLayer\"\n                  ]\n                }\n              ]\n            }")" >> $GITHUB_ENV
+            cat >./tools-cross-ecr-policy.json << EOF
+            {
+              "Version": "2008-10-17",
+              "Statement": [
+                {
+                  "Sid": "allowPallpull",
+                  "Effect": "Allow",
+                  "Principal": {
+                    "AWS": [
+                      "arn:aws:iam::$AWS_BETA_ENVRIONMENT}:root",
+                      "arn:aws:iam::$AWS_PRODUCTION_ENVRIONMENT}:root"
+                    ]
+                  },
+                  "Action": [
+                    "ecr:BatchCheckLayerAvailability",
+                    "ecr:BatchGetImage",
+                    "ecr:GetDownloadUrlForLayer"
+                  ]
+                }
+              ]
+            }
+            EOF
+            
 
-        - name: Set repository policy for Beta & Production
-          run: |
-            aws ecr set-repository-policy \
-            --repository-name ${IMAGE_REPO_NAME} \
-            --cli-input-json $POLICY_DOCUMENT
-
+        #- name: Set repository policy for Beta & Production
+        #  run: |
+        #    echo "POLICY_DOCUMENT=$(cat ./tools-cross-ecr-policy.json)" >> $GITHUB_ENV
+        #    aws ecr set-repository-policy \
+        #    --repository-name ${IMAGE_REPO_NAME} \
+        #    --cli-input-json $POLICY_DOCUMENT
+        - name: Echo
+          run: ls
         - name: created repo
           if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true'}}
           run: |
