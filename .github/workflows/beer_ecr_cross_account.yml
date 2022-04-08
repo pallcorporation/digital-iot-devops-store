@@ -133,7 +133,7 @@ jobs:
                   "Effect": "Allow",
                   "Principal": {
                     "AWS": [
-                      "arn:aws:iam::${{env.AWS_BETA_ENVRIONMENT:root",
+                      "arn:aws:iam::${{env.AWS_BETA_ENVRIONMENT}}:root",
                       "arn:aws:iam::${{env.AWS_PRODUCTION_ENVRIONMENT}}:root"
                     ]
                   },
