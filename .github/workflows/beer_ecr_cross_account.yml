@@ -131,7 +131,7 @@ jobs:
                       {
                           "Sid" : "allow public pull",
                           "Effect" : "Allow",
-                          "Principal" : [$AWS_BETA_ENVRIONMENT,$AWS_PRODUCTION_ENVRIONMENT],
+                          "Principal" :{ "AWS": ["arn:aws:iam::$AWS_BETA_ENVRIONMENT:root","arn:aws:iam::$AWS_PRODUCTION_ENVRIONMENT:root"]},
                           "Action" : [
                               "ecr:BatchCheckLayerAvailability",
                               "ecr:BatchGetImage",
