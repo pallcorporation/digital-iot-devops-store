@@ -151,7 +151,7 @@ jobs:
           run: |
             aws ecr set-repository-policy \
             --repository-name ${IMAGE_REPO_NAME} \
-            --policy-text file://tools-cross-ecr-policy.json
+            --policy-text tools-cross-ecr-policy.json
 
         - name: created repo
           if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true'}}
