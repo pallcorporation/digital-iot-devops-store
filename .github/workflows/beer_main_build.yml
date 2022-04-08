@@ -9,10 +9,6 @@ on:
 
   workflow_call:
     inputs:
-      branch_name:
-        required: true
-        type: string
-
       deployment_type:
         required: true
         type: string
@@ -81,55 +77,33 @@ jobs:
         # Grant permissions to all files in directory
         - name: Grant permissions to all files
           run: chmod -R 755 ./  
-        
-        # Get branch name to use for look up
-        - name: Branch name
-          id: get_branch_name
-          run: |
-            if [[ ${{inputs.branch_name}} == 'main' ]]
-            then
-              echo "BRANCH_NAME=production" >> $GITHUB_ENV
-            else
-              echo "BRANCH_NAME=$(echo ${{inputs.branch_name}})" >> $GITHUB_ENV
-            fi
-            
           
         # Read of project files and set to variables
-        - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
+        - name: Get project constants from project.properties
           id: project_constants
           run: |
-            account_id="`grep aws_dev_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            account_id="`grep aws_tools_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
             echo "::set-output name=env_id::${account_id}"
-            echo $account_id is the account id
-            echo "AWS_ACCOUNT=${account_id}" >> $GITHUB_ENV
+            echo "AWS_ENVRIONMENT=${account_id}" >> $GITHUB_ENV
             
 
-            oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            oidc_role_name="`grep aws_tools_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
             echo "::set-output name=oidc_role::${oidc_role_name}"
 
-            cdk_deploy_role_arn="`grep aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
-            
-            aws_bucket="`grep aws_frontend_bucket ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=aws_bucket_name::${aws_bucket}"
-            echo $aws_bucket
-
-            cloud_front_id="`grep aws_${BRANCH_NAME}_cloudfront_id ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=aws_cloud_front_id::${cloud_front_id}"
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
 
         # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
         - name: Arn to use
           id: aws_assume_role
           run: |
-            echo "::set-output name=role_arn1::arn:aws:iam::$AWS_ACCOUNT:role/${{ steps.project_constants.outputs.oidc_role}}"
-            echo "AWS_ACCESS_ROLE=arn:aws:iam::$AWS_ACCOUNT:role/${{ steps.project_constants.outputs.oidc_role}}" >> $GITHUB_ENV
+            echo "::set-output name=role_arn1::arn:aws:iam::$AWS_ENVRIONMENT:role/${{ steps.project_constants.outputs.oidc_role}}"
+            echo "AWS_ACCESS_ROLE=arn:aws:iam::$AWS_ENVRIONMENT:role/${{ steps.project_constants.outputs.oidc_role}}" >> $GITHUB_ENV
       
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@master
           with:
             role-to-assume: ${{env.AWS_ACCESS_ROLE}}
-            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            role-session-name: ${IMAGE_REPO_NAME}-${{ steps.date.outputs.date }}
             aws-region: ${{ env.AWS_REGION }}
       
       # https://github.com/marketplace/actions/github-tag-with-semantic-versioning
@@ -146,13 +120,17 @@ jobs:
           run: |
             echo "${{ steps.version_number.outputs.new_version }} is the new version"
             echo "TAG_VERSION=${{ steps.version_number.outputs.new_version }}" >> $GITHUB_ENV
+
+        - name: Image Repository name
+          run: |
+            echo "IMAGE_REPO_NAME=${{ github.event.repository.name }}" >> $GITHUB_ENV
         
         - name: Create image tags
           if: ${{inputs.deployment_type == 'image' }}
           run: |
-            echo DOCKER_TAG_VERSION="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ github.event.repository.name }}:$TAG_VERSION" >> $GITHUB_ENV
-            echo DOCKER_TAG_LATEST="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ github.event.repository.name }}:latest" >> $GITHUB_ENV
-            echo GHCR_IMAGE_ID="ghcr.io/${{github.repository_owner}}/${{ github.event.repository.name }}:$TAG_VERSION" >> $GITHUB_ENV
+            echo DOCKER_TAG_VERSION="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:$TAG_VERSION" >> $GITHUB_ENV
+            echo DOCKER_TAG_LATEST="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:latest" >> $GITHUB_ENV
+            echo GHCR_IMAGE_ID="ghcr.io/${{github.repository_owner}}/${IMAGE_REPO_NAME}:$TAG_VERSION" >> $GITHUB_ENV
   
         - name: Build Docker images
           if: ${{inputs.deployment_type == 'image'}}
@@ -162,13 +140,72 @@ jobs:
             docker tag $DOCKER_TAG_VERSION $DOCKER_TAG_LATEST
             docker tag $DOCKER_TAG_VERSION $GHCR_IMAGE_ID
 
+        #- name: ECR Login
+        #  if: ${{inputs.deployment_type == 'image'}}
+        #  id: ecr_login
+        #  run: |
+        #    aws ecr describe-repositories --repository-names ${IMAGE_REPO_NAME} || aws ecr create-repository --repository-name ${IMAGE_REPO_NAME}
+        #    aws ecr get-login-password --region ${{ env.AWS_REGION }}| docker login --username AWS --password-stdin ${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+
         - name: ECR Login
-          if: ${{inputs.deployment_type == 'image'}}
           id: ecr_login
           run: |
-            aws ecr describe-repositories --repository-names ${{ github.event.repository.name }} || aws ecr create-repository --repository-name ${{ github.event.repository.name }}
-            aws ecr get-login-password --region ${{ env.AWS_REGION }}| docker login --username AWS --password-stdin ${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
-                
+            (aws ecr describe-repositories \
+            --repository-names ${IMAGE_REPO_NAME} \
+            && echo "::set-output name=repo_created::false" ) || \
+            ( aws ecr create-repository \
+            --repository-name ${IMAGE_REPO_NAME} \
+            && echo "::set-output name=repo_created::true" )
+
+            aws ecr get-login-password \
+            --region ${{ env.AWS_REGION }}| docker login \
+            --username AWS \
+            --password-stdin ${AWS_ENVRIONMENT}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+        
+        - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
+          run: |
+            beta_account_id="`grep aws_beta_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=env_id::${beta_account_id}"
+            echo "AWS_BETA_ENVRIONMENT=${beta_account_id}" >> $GITHUB_ENV
+
+            prod_account_id="`grep aws_production_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=env_id::${prod_account_id}"
+            echo "AWS_PRODUCTION_ENVRIONMENT=${prod_account_id}" >> $GITHUB_ENV
+          working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
+
+
+        - name: Make ecr policy for Beta
+          run: |
+            cat >./tools-cross-ecr-policy.json << EOF
+            {
+              "Version": "2008-10-17",
+              "Statement": [
+                {
+                  "Sid": "allowPallpull",
+                  "Effect": "Allow",
+                  "Principal": {
+                    "AWS": [
+                      "arn:aws:iam::${{env.AWS_BETA_ENVRIONMENT}}:root",
+                      "arn:aws:iam::${{env.AWS_PRODUCTION_ENVRIONMENT}}:root"
+                    ]
+                  },
+                  "Action": [
+                    "ecr:BatchCheckLayerAvailability",
+                    "ecr:BatchGetImage",
+                    "ecr:GetDownloadUrlForLayer"
+                  ]
+                }
+              ]
+            }
+            EOF
+            
+
+        - name: Set repository policy for Beta & Production
+          run: |
+            aws ecr set-repository-policy \
+            --repository-name ${IMAGE_REPO_NAME} \
+            --policy-text file://tools-cross-ecr-policy.json
+
         - name: Push docker images to ECR & GHCR
           if: ${{inputs.deployment_type == 'image' }}
           run: |
