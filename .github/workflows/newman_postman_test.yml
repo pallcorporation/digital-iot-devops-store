@@ -280,6 +280,6 @@ jobs:
           with:
             github-token: ${{ secrets.envPAT }} # this will use the runner's token.
             ms-teams-webhook-uri: ${{ secrets.teams_uri }}
-            notification-summary: "${{ github.event.repository.name }} test error on ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} branch  &#x274C; : Please test results."
+            notification-summary: "${{ github.event.repository.name }} test error on ${{env.BRANCH_NAME}} branch  &#x274C; : Please test results."
             notification-color: FF0000
             timezone: America/New_York
