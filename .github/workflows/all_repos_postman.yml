@@ -394,16 +394,6 @@ jobs:
         if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
         run: |
           newman run ./${{ matrix.microservice-repos }}/postman/collection.json -e ./final_env_var.json
-
-      - name: Microsoft Teams Notification
-        if: success()
-        uses: jdcargile/ms-teams-notification@v1.3
-        with:
-          github-token: ${{ secrets.envPAT }} # this will use the runner's token.
-          ms-teams-webhook-uri: ${{ secrets.teams_uri }}
-          notification-summary: "${{ matrix.microservice-repos }} success &#x2705;"
-          notification-color: 00FF00
-          timezone: America/New_York
         
       - name: Microsoft Teams Notification
         if: failure()
