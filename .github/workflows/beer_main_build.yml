@@ -111,8 +111,8 @@ jobs:
         - name: Arn to use
           id: aws_assume_role
           run: |
-            echo "::set-output name=role_arn1::arn:aws:iam::${{steps.project_constants.outputs.aws_tools_account}}:role/${{ steps.project_constants.outputs.oidc_role_name}}"
-            echo "AWS_ACCESS_ROLE=arn:aws:iam::${{steps.project_constants.outputs.aws_tools_account}}:role/${{ steps.project_constants.outputs.oidc_role_name}}" >> $GITHUB_ENV
+            echo "::set-output name=role_arn1::arn:aws:iam::${{steps.project_constants.outputs.tools_account_id}}:role/${{ steps.project_constants.outputs.oidc_role_name}}"
+            echo "AWS_ACCESS_ROLE=arn:aws:iam::${{steps.project_constants.outputs.tools_account_id}}:role/${{ steps.project_constants.outputs.oidc_role_name}}" >> $GITHUB_ENV
         
       
       # https://github.com/marketplace/actions/github-tag-with-semantic-versioning
@@ -281,8 +281,8 @@ jobs:
         #    echo ${{steps.github_release.outputs.changelog}}
   
   Teams-Notification:
-    needs: main-setup
-    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type == 'nx')
+    needs: [Frontend-React-Build,Docker-Images]
+    if: (always() && contains(needs.*.result, 'success') && !(contains(needs.*.result, 'failure')) && github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type == 'nx')
     runs-on: ubuntu-latest          
     steps:
         - name: Microsoft Teams Notification
