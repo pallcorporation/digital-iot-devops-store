@@ -188,7 +188,7 @@ jobs:
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
 
 
-        - name: Make ecr policy for Beta
+        - name: Make ecr policy for Beta & Production
           run: |
             cat >./tools-cross-ecr-policy.json << EOF
             {
