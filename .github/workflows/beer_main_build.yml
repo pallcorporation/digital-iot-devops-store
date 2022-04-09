@@ -202,8 +202,8 @@ jobs:
                     "AWS": [
                       "arn:aws:iam::${{env.AWS_BETA_ENVRIONMENT}}:root",
                       "arn:aws:iam::${{env.AWS_PRODUCTION_ENVRIONMENT}}:root",
-                      "arn:aws:iam::${{env.AWS_BETA_ENVRIONMENT}}:role/{AWS_DEPLOYMENT_ROLE_BETA}",
-                      "arn:aws:iam::${{env.AWS_PRODUCTION_ENVRIONMENT}}:role/{AWS_DEPLOYMENT_ROLE_PRODUCTION}"
+                      "arn:aws:iam::${{env.AWS_BETA_ENVRIONMENT}}:role/${{env.AWS_DEPLOYMENT_ROLE_BETA}}",
+                      "arn:aws:iam::${{env.AWS_PRODUCTION_ENVRIONMENT}}:role/${{env.AWS_DEPLOYMENT_ROLE_PRODUCTION}}"
                       
                     ]
                   },
