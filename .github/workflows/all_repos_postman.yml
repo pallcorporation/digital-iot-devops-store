@@ -401,6 +401,6 @@ jobs:
         with:
           github-token: ${{ secrets.envPAT }} # this will use the runner's token.
           ms-teams-webhook-uri: ${{ secrets.teams_uri }}
-          notification-summary: "${{ matrix.microservice-repos }} test error  &#x274C; : Please test results."
+          notification-summary: "${{ matrix.microservice-repos }} test error on ${BRANCH_NAME} branch &#x274C; : Please test results."
           notification-color: FF0000
           timezone: America/New_York
