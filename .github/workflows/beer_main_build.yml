@@ -192,28 +192,27 @@ jobs:
           run: |
             cat >./tools-cross-ecr-policy.json << EOF
             {
-              "Version": "2008-10-17",
-              "Statement": [
-                {
-                  "Sid": "allowPallpull",
-                  "Effect": "Allow",
-                  "Principal": {
-                    "Service": "lambda.amazonaws.com",
-                    "AWS": [
-                      "arn:aws:iam::${{env.AWS_BETA_ENVRIONMENT}}:root",
-                      "arn:aws:iam::${{env.AWS_PRODUCTION_ENVRIONMENT}}:root",
-                      "arn:aws:iam::${{env.AWS_BETA_ENVRIONMENT}}:role/${{env.AWS_DEPLOYMENT_ROLE_BETA}}",
-                      "arn:aws:iam::${{env.AWS_PRODUCTION_ENVRIONMENT}}:role/${{env.AWS_DEPLOYMENT_ROLE_PRODUCTION}}"
-                      
+              "Version":"2008-10-17",
+              "Statement":[
+                  {
+                    "Sid":"allowPallpull",
+                    "Effect":"Allow",
+                    "Principal":{
+                        "Service":"lambda.amazonaws.com",
+                        "AWS":[
+                          "arn:aws:iam::${{env.AWS_BETA_ENVRIONMENT}}:root",
+                          "arn:aws:iam::${{env.AWS_BETA_ENVRIONMENT}}:role/${{env.AWS_DEPLOYMENT_ROLE_BETA}}",
+                          "arn:aws:iam::${{env.AWS_PRODUCTION_ENVRIONMENT}}:root",
+                          "arn:aws:iam::${{env.AWS_PRODUCTION_ENVRIONMENT}}:role/${{env.AWS_DEPLOYMENT_ROLE_PRODUCTION}}"
+                        ]
+                    },
+                    "Action":[
+                        "ecr:BatchCheckLayerAvailability",
+                        "ecr:BatchGetImage",
+                        "ecr:GetAuthorizationToken",
+                        "ecr:GetDownloadUrlForLayer"
                     ]
-                  },
-                  "Action": [
-                    "ecr:BatchCheckLayerAvailability",
-                    "ecr:BatchGetImage",
-                    "ecr:GetAuthorizationToken",
-                    "ecr:GetDownloadUrlForLayer"
-                  ]
-                }
+                  }
               ]
             }
             EOF

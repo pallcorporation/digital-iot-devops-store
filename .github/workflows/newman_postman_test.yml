@@ -33,6 +33,8 @@ on:
         required: true
       COGNITO_INTEGRATION_USERPOOL_SECRET_PHRASE:
         required: true
+      teams_uri:
+        required: false
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -271,3 +273,13 @@ jobs:
           if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
           run: |
             newman run ./postman/collection.json -e ./final_env_var.json
+        
+        - name: Microsoft Teams Notification
+          if: failure()
+          uses: jdcargile/ms-teams-notification@v1.3
+          with:
+            github-token: ${{ secrets.envPAT }} # this will use the runner's token.
+            ms-teams-webhook-uri: ${{ secrets.teams_uri }}
+            notification-summary: "${{ github.event.repository.name }} test error  &#x274C; : Please test results."
+            notification-color: FF0000
+            timezone: America/New_York
