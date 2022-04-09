@@ -394,18 +394,12 @@ jobs:
           ls
           cat final_env_var.json
 
-      
-      - name: Run automated postman api tests using Newman
-        if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
-        run: |
-          newman run ./${{ matrix.microservice-repos }}/postman/collection.json -e ./final_env_var.json
-        
       - name: Microsoft Teams Notification
         if: failure()
         uses: jdcargile/ms-teams-notification@v1.3
         with:
           github-token: ${{ secrets.envPAT }} # this will use the runner's token.
           ms-teams-webhook-uri: ${{ secrets.teams_uri }}
-          notification-summary: "${{ matrix.microservice-repos }} test error on ${{steps.get_branch_name.outputs.branch_name}} branch &#x274C; : Please test results."
+          notification-summary: "${{ matrix.microservice-repos }} test error on ${{env.BRANCH_NAME}} branch &#x274C; : Please test results."
           notification-color: FF0000
           timezone: America/New_York
