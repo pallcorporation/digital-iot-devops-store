@@ -43,23 +43,23 @@ permissions:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:  
-  main-setup:
+  tag-and-build:
     if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main')
-    runs-on: ubuntu-latest
-    outputs:
-      data: ${{ steps.date.outputs.date }}
-      repo_version: ${{ steps.version_number.outputs.new_version }}     
-      tools_account: ${{steps.project_constants.outputs.tools_account_id}}
-      aws_credentials_role: ${{steps.aws_assume_role.outputs.role_arn1}}
-      aws_credentials_session_name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
-      AWS_BETA_ACCOUNT_ID: ${{steps.project_constants.outputs.beta_account_id }}
-      AWS_PRODUCTION_ACCOUNT_ID: ${{steps.project_constants.outputs.prod_account_id }}
-      AWS_BETA_ACCOUNT_DEPLOY: ${{steps.project_constants.outputs.beta_account_deploy }}
-      AWS_PRODUCTION_ACCOUNT_DEPLOY: ${{steps.project_constants.outputs.prod_account_deploy }}
+    runs-on: ubuntu-latest          
     steps:
+
         - name: Get current date
           id: date
           run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+
+        - name: Login to docker
+          if: |
+            ${{ steps.skip_dk_build.outputs.bypass_dk_build !='true' && inputs.deployment_type == 'image' }}
+          uses: docker/login-action@v1
+          with:
+            registry: ${{env.IMAGE_REGISTRY}}
+            username: ${{env.IMAGE_REGISTRY_USERNAME}}
+            password: ${{env.IMAGE_REGISTRY_TOKEN}}
         
         # Clone repositories prior to work
         - name: Git clone the repository
@@ -85,25 +85,12 @@ jobs:
           id: project_constants
           run: |
             account_id="`grep aws_tools_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=tools_account_id::${account_id}"
+            echo "::set-output name=env_id::${account_id}"
+            echo "AWS_ENVRIONMENT=${account_id}" >> $GITHUB_ENV
             
-            oidc_role="`grep aws_tools_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=oidc_role_name::${oidc_role}"
 
-            beta_account="`grep aws_beta_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=beta_account_id::${beta_account}"
-
-            prod_account="`grep aws_production_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=prod_account_id::${prod_account}"
-
-
-            beta_account="`grep aws_beta_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=beta_account_deploy::${beta_account}"
-
-
-            prod_account="`grep aws_production_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=prod_account_deploy::${prod_account}"
-
+            oidc_role_name="`grep aws_tools_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=oidc_role::${oidc_role_name}"
 
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
 
@@ -111,9 +98,18 @@ jobs:
         - name: Arn to use
           id: aws_assume_role
           run: |
-            echo "::set-output name=role_arn1::arn:aws:iam::${{steps.project_constants.outputs.tools_account_id}}:role/${{ steps.project_constants.outputs.oidc_role_name}}"
-            echo "AWS_ACCESS_ROLE=arn:aws:iam::${{steps.project_constants.outputs.tools_account_id}}:role/${{ steps.project_constants.outputs.oidc_role_name}}" >> $GITHUB_ENV
-        
+            echo "::set-output name=role_arn1::arn:aws:iam::$AWS_ENVRIONMENT:role/${{ steps.project_constants.outputs.oidc_role}}"
+            echo "AWS_ACCESS_ROLE=arn:aws:iam::$AWS_ENVRIONMENT:role/${{ steps.project_constants.outputs.oidc_role}}" >> $GITHUB_ENV
+
+        - name: Image Repository name
+          run: |
+            echo "IMAGE_REPO_NAME=${{ github.event.repository.name }}" >> $GITHUB_ENV
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@master
+          with:
+            role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
+            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            aws-region: ${{ env.AWS_REGION }}
       
       # https://github.com/marketplace/actions/github-tag-with-semantic-versioning
        # - uses: actions/checkout@2
@@ -125,51 +121,18 @@ jobs:
             default_bump: minor
             tag_prefix: v
             release_branches: main
-
         - name: Version number
           run: |
             echo "${{ steps.version_number.outputs.new_version }} is the new version"
             echo "TAG_VERSION=${{ steps.version_number.outputs.new_version }}" >> $GITHUB_ENV
+
         
-  Docker-Images:
-    needs: main-setup
-    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main')
-    runs-on: ubuntu-latest          
-    steps:
-        - name: Get current date
-          id: date
-          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
-        
-        - name: Version number
-          run: |
-            echo "${{ needs.main-setup.outputs.repo_version }} is the new version"
-            echo "TAG_VERSION=${{ needs.main-setup.outputs.repo_version }}" >> $GITHUB_ENV
-        
-        - name: Image Repository name
-          run: |
-            echo "IMAGE_REPO_NAME=${{ github.event.repository.name }}" >> $GITHUB_ENV
-        
-        - name: Configure AWS credentials
-          uses: aws-actions/configure-aws-credentials@master
-          with:
-            role-to-assume: ${{ needs.main-setup.outputs.aws_credentials_role }}
-            role-session-name: ${{needs.main-setup.outputs.aws_credentials_session_name}}
-            aws-region: ${{ env.AWS_REGION }}
-        
-        - name: Login to docker
-          if: |
-            ${{ steps.skip_dk_build.outputs.bypass_dk_build !='true' && inputs.deployment_type == 'image' }}
-          uses: docker/login-action@v1
-          with:
-            registry: ${{env.IMAGE_REGISTRY}}
-            username: ${{env.IMAGE_REGISTRY_USERNAME}}
-            password: ${{env.IMAGE_REGISTRY_TOKEN}}
         
         - name: Create image tags
           if: ${{inputs.deployment_type == 'image' }}
           run: |
-            echo DOCKER_TAG_VERSION="${{needs.main-setup.outputs.tools_account}}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:$TAG_VERSION" >> $GITHUB_ENV
-            echo DOCKER_TAG_LATEST="${{needs.main-setup.outputs.tools_account}}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:latest" >> $GITHUB_ENV
+            echo DOCKER_TAG_VERSION="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:$TAG_VERSION" >> $GITHUB_ENV
+            echo DOCKER_TAG_LATEST="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:latest" >> $GITHUB_ENV
             echo GHCR_IMAGE_ID="ghcr.io/${{github.repository_owner}}/${IMAGE_REPO_NAME}:$TAG_VERSION" >> $GITHUB_ENV
   
         - name: Build Docker images
@@ -180,8 +143,14 @@ jobs:
             docker tag $DOCKER_TAG_VERSION $DOCKER_TAG_LATEST
             docker tag $DOCKER_TAG_VERSION $GHCR_IMAGE_ID
 
+        #- name: ECR Login
+        #  if: ${{inputs.deployment_type == 'image'}}
+        #  id: ecr_login
+        #  run: |
+        #    aws ecr describe-repositories --repository-names ${IMAGE_REPO_NAME} || aws ecr create-repository --repository-name ${IMAGE_REPO_NAME}
+        #    aws ecr get-login-password --region ${{ env.AWS_REGION }}| docker login --username AWS --password-stdin ${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+
         - name: ECR Login
-          if: ${{inputs.deployment_type == 'image'}}
           id: ecr_login
           run: |
             (aws ecr describe-repositories \
@@ -194,10 +163,32 @@ jobs:
             aws ecr get-login-password \
             --region ${{ env.AWS_REGION }}| docker login \
             --username AWS \
-            --password-stdin ${{needs.main-setup.outputs.tools_account}}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+            --password-stdin ${AWS_ENVRIONMENT}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
         
+        - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
+          run: |
+            beta_account_id="`grep aws_beta_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=env_id::${beta_account_id}"
+            echo "AWS_BETA_ENVRIONMENT=${beta_account_id}" >> $GITHUB_ENV
+
+            prod_account_id="`grep aws_production_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=env_id::${prod_account_id}"
+            echo "AWS_PRODUCTION_ENVRIONMENT=${prod_account_id}" >> $GITHUB_ENV
+
+            beta_account_deploy="`grep aws_beta_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=env_id::${beta_account_deploy}"
+            echo "AWS_DEPLOYMENT_ROLE_BETA=${beta_account_deploy}" >> $GITHUB_ENV
+
+            prod_account_deploy="`grep aws_production_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=env_id::${prod_account_deploy}"
+            echo "AWS_DEPLOYMENT_ROLE_PRODUCTION=${prod_account_deploy}" >> $GITHUB_ENV
+
+
+
+          working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
+
+
         - name: Make ecr policy for Beta & Production
-          if: ${{inputs.deployment_type == 'image'}}
           run: |
             cat >./tools-cross-ecr-policy.json << EOF
             {
@@ -209,9 +200,9 @@ jobs:
                     "Principal":{
                         "Service":"lambda.amazonaws.com",
                         "AWS":[
-                          "arn:aws:iam::${{needs.main-setup.outputs.AWS_BETA_ACCOUNT_ID}}:root",
-                          "arn:aws:iam::${{needs.main-setup.outputs.AWS_BETA_ACCOUNT_ID}}:role/${{needs.main-setup.outputs.AWS_BETA_ACCOUNT_DEPLOY}}",
-                          "arn:aws:iam::${{needs.main-setup.outputs.AWS_PRODUCTION_ACCOUNT_ID}}:root"
+                          "arn:aws:iam::${{env.AWS_BETA_ENVRIONMENT}}:root",
+                          "arn:aws:iam::${{env.AWS_BETA_ENVRIONMENT}}:role/${{env.AWS_DEPLOYMENT_ROLE_BETA}}",
+                          "arn:aws:iam::${{env.AWS_PRODUCTION_ENVRIONMENT}}:root"
                         ]
                     },
                     "Action":[
@@ -227,7 +218,6 @@ jobs:
             
 
         - name: Set repository policy for Beta & Production
-          if: ${{inputs.deployment_type == 'image'}}
           run: |
             aws ecr set-repository-policy \
             --repository-name ${IMAGE_REPO_NAME} \
@@ -240,34 +230,26 @@ jobs:
             docker push $DOCKER_TAG_LATEST
             docker push $GHCR_IMAGE_ID
 
-  Frontend-React-Build:
-    needs: main-setup
-    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type == 'nx')
-    runs-on: ubuntu-latest          
-    steps:
-        - name: Get current date
-          id: date
-          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
-        
-        - name: Version number
-          run: |
-            echo "${{ needs.main-setup.outputs.repo_version }} is the new version"
-            echo "TAG_VERSION=${{ needs.main-setup.outputs.repo_version }}" >> $GITHUB_ENV
         
         # Installing npm
         - name: Setup node.js environment
           uses: actions/setup-node@v2.1.2
-        
-        - name: Configure AWS credentials
-          uses: aws-actions/configure-aws-credentials@master
-          with:
-            role-to-assume: ${{ needs.main-setup.outputs.aws_credentials_role }}
-            role-session-name: ${{needs.main-setup.outputs.aws_credentials_session_name}}
-            aws-region: ${{ env.AWS_REGION }}
 
         - name: NX Build
           id: build_nx
           if: ${{inputs.deployment_type == 'nx' }}
+          run: |
+            echo "Building NX... $TAG_VERSION"
+        
+        - name: Web Build
+          id: build_web
+          if: ${{inputs.deployment_type == 'web' }}
+          run: |
+            echo "Building Web... $TAG_VERSION"
+        
+        - name: Docker image build
+          id: build_docker
+          if: ${{inputs.deployment_type == 'image' }}
           run: |
             echo "Building NX... $TAG_VERSION"
         
@@ -279,12 +261,7 @@ jobs:
         #- name: Print Changelog
         #  run: |
         #    echo ${{steps.github_release.outputs.changelog}}
-  
-  Teams-Notification:
-    needs: [Frontend-React-Build,Docker-Images]
-    if: (always() && contains(needs.*.result, 'success') && !(contains(needs.*.result, 'failure')) && github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type == 'nx')
-    runs-on: ubuntu-latest          
-    steps:
+        
         - name: Microsoft Teams Notification
           if: success()
           uses: jdcargile/ms-teams-notification@v1.3
