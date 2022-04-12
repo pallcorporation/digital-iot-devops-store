@@ -241,6 +241,26 @@ jobs:
             docker push $DOCKER_TAG_LATEST
             docker push $GHCR_IMAGE_ID
 
+        - name: Microsoft Teams Notification
+          if: success()
+          uses: jdcargile/ms-teams-notification@v1.3
+          with:
+            github-token: ${{ secrets.envPAT }} # this will use the runner's token.
+            ms-teams-webhook-uri: ${{ secrets.teams_uri }}
+            notification-summary: "Build Successful &#x2705; : v${{env.TAG_VERSION}}"
+            notification-color: 00FF00
+            timezone: America/New_York
+        
+        - name: Microsoft Teams Notification
+          if: failure()
+          uses: jdcargile/ms-teams-notification@v1.3
+          with:
+            github-token: ${{ secrets.envPAT }} # this will use the runner's token.
+            ms-teams-webhook-uri: ${{ secrets.teams_uri }}
+            notification-summary: "Build Error &#x274C; : Please check workflow"
+            notification-color: FF0000
+            timezone: America/New_York
+
   Frontend-React-Build:
     needs: main-setup
     if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type == 'nx')
@@ -272,25 +292,6 @@ jobs:
           run: |
             echo "Building NX... $TAG_VERSION"
         
-        #- name: Build Changelog
-        #  id: github_release
-        #  uses: mikepenz/release-changelog-builder-action@v1
-        #  env:
-        #    GITHUB_TOKEN: ${{ secrets.envPAT }}
-        #- name: Print Changelog
-        #  run: |
-        #    echo ${{steps.github_release.outputs.changelog}}
-  
-  Teams-Notification:
-    needs: [main-setup,Frontend-React-Build,Docker-Images]
-    if: (always() && contains(needs.*.result, 'success') && !(contains(needs.*.result, 'failure')) && github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type == 'nx')
-    runs-on: ubuntu-latest          
-    steps:
-        - name: Version number
-          run: |
-            echo "${{ needs.main-setup.outputs.repo_version }} is the new version"
-            echo "TAG_VERSION=${{ needs.main-setup.outputs.repo_version }}" >> $GITHUB_ENV
-
         - name: Microsoft Teams Notification
           if: success()
           uses: jdcargile/ms-teams-notification@v1.3
@@ -310,3 +311,12 @@ jobs:
             notification-summary: "Build Error &#x274C; : Please check workflow"
             notification-color: FF0000
             timezone: America/New_York
+        
+        #- name: Build Changelog
+        #  id: github_release
+        #  uses: mikepenz/release-changelog-builder-action@v1
+        #  env:
+        #    GITHUB_TOKEN: ${{ secrets.envPAT }}
+        #- name: Print Changelog
+        #  run: |
+        #    echo ${{steps.github_release.outputs.changelog}}
