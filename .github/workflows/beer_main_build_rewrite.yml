@@ -282,17 +282,22 @@ jobs:
         #    echo ${{steps.github_release.outputs.changelog}}
   
   Teams-Notification:
-    needs: [Frontend-React-Build,Docker-Images]
+    needs: [main-setup,Frontend-React-Build,Docker-Images]
     if: (always() && contains(needs.*.result, 'success') && !(contains(needs.*.result, 'failure')) && github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type == 'nx')
     runs-on: ubuntu-latest          
     steps:
+        - name: Version number
+          run: |
+            echo "${{ needs.main-setup.outputs.repo_version }} is the new version"
+            echo "TAG_VERSION=${{ needs.main-setup.outputs.repo_version }}" >> $GITHUB_ENV
+
         - name: Microsoft Teams Notification
           if: success()
           uses: jdcargile/ms-teams-notification@v1.3
           with:
             github-token: ${{ secrets.envPAT }} # this will use the runner's token.
             ms-teams-webhook-uri: ${{ secrets.teams_uri }}
-            notification-summary: "Build Successful &#x2705; : v${{ steps.version_number.outputs.new_version }}"
+            notification-summary: "Build Successful &#x2705; : v${{env.TAG_VERSION}}"
             notification-color: 00FF00
             timezone: America/New_York
         
