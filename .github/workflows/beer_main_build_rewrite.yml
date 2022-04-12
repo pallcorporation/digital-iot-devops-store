@@ -251,7 +251,7 @@ jobs:
           with:
             github-token: ${{ secrets.envPAT }} # this will use the runner's token.
             ms-teams-webhook-uri: ${{ secrets.teams_uri }}
-            notification-summary: "Build Successful &#x2705; : v${{env.TAG_VERSION}}"
+            notification-summary: "Build Successful &#x2705; : ${IMAGE_REPO_NAME} v${{env.TAG_VERSION}}"
             notification-color: 00FF00
             timezone: America/New_York
         
@@ -261,7 +261,7 @@ jobs:
           with:
             github-token: ${{ secrets.envPAT }} # this will use the runner's token.
             ms-teams-webhook-uri: ${{ secrets.teams_uri }}
-            notification-summary: "Build Error &#x274C; : Please check workflow"
+            notification-summary: "Build Error &#x274C; : ${IMAGE_REPO_NAME} Please check workflow"
             notification-color: FF0000
             timezone: America/New_York
 
@@ -306,7 +306,7 @@ jobs:
           with:
             github-token: ${{ secrets.envPAT }} # this will use the runner's token.
             ms-teams-webhook-uri: ${{ secrets.teams_uri }}
-            notification-summary: "Build Successful &#x2705; : v${{env.TAG_VERSION}}"
+            notification-summary: "Build Successful &#x2705; : ${IMAGE_REPO_NAME} v${{env.TAG_VERSION}}"
             notification-color: 00FF00
             timezone: America/New_York
         
@@ -316,7 +316,7 @@ jobs:
           with:
             github-token: ${{ secrets.envPAT }} # this will use the runner's token.
             ms-teams-webhook-uri: ${{ secrets.teams_uri }}
-            notification-summary: "Build Error &#x274C; : Please check workflow"
+            notification-summary: "Build Error &#x274C; : ${IMAGE_REPO_NAME} Please check workflow"
             notification-color: FF0000
             timezone: America/New_York
         
