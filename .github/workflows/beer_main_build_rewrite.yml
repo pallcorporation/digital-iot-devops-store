@@ -316,7 +316,7 @@ jobs:
           run: |
             echo "Building NX... $TAG_VERSION"
             npm ci
-            npx nx build
+            npx nx run beeriot-web:build:staging
         
         #NX_ARTIFACT_STORE
         # Upload a file to AWS s3
