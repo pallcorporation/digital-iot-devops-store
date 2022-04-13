@@ -311,6 +311,7 @@ jobs:
           if: ${{inputs.deployment_type == 'nx'}}
           run: |
             echo "Building NX... $TAG_VERSION"
+            npm ci
             npx nx build
         
         #NX_ARTIFACT_STORE
