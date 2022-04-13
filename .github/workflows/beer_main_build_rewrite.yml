@@ -34,6 +34,7 @@ env:
   IMAGE_REGISTRY: "ghcr.io"
   IMAGE_REGISTRY_USERNAME: ${{github.actor}}
   IMAGE_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  NX_ARTIFACT_STORE: beer-ul-nx-workspace
 
 
 permissions:
@@ -278,6 +279,13 @@ jobs:
         - name: Git clone the repository
           uses: actions/checkout@v2
         
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@master
+          with:
+            role-to-assume: ${{ needs.main-setup.outputs.aws_credentials_role }}
+            role-session-name: ${{needs.main-setup.outputs.aws_credentials_session_name}}
+            aws-region: ${{ env.AWS_REGION }}
+        
         - name: Version number
           run: |
             echo "${{ needs.main-setup.outputs.repo_version }} is the new version"
@@ -294,11 +302,33 @@ jobs:
             role-session-name: ${{needs.main-setup.outputs.aws_credentials_session_name}}
             aws-region: ${{ env.AWS_REGION }}
 
+        - name: Build directory nx
+          if: ${{inputs.build_project_type == 'nx' }}
+          run: |
+            echo "BUILD_DIRECTORY=dist/apps/beeriot-web" >> $GITHUB_ENV
+
         - name: NX Build
           id: build_nx
           if: ${{inputs.deployment_type == 'nx' }}
           run: |
             echo "Building NX... $TAG_VERSION"
+        
+        - name: Build nx Frontend
+          if: ${{inputs.build_project_type == 'nx'}}
+          run: |
+            npm ci
+            if [[ ${BRANCH_NAME} == 'main' ]]
+            then
+              npx nx build
+            else
+              npx nx run beeriot-web:build:staging
+            fi
+        
+        #NX_ARTIFACT_STORE
+        # Upload a file to AWS s3
+        - name:  Deploy to S3 - Copy Build folder to s3
+          run: |
+            aws s3 sync ./$BUILD_DIRECTORY s3://${{env.NX_ARTIFACT_STORE}}
         
         - name: Microsoft Teams Notification
           if: success()
