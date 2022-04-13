@@ -134,7 +134,7 @@ jobs:
         
   Docker-Images:
     needs: main-setup
-    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main')
+    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type == 'image')
     runs-on: ubuntu-latest          
     steps:
         - name: Get current date
