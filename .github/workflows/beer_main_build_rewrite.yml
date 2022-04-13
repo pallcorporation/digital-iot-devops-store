@@ -341,9 +341,13 @@ jobs:
             echo "The replaced value is ${{ steps.findandreplace_version2.outputs.value }}"
             echo "NEW_VERSION_TAGGED=${{ steps.findandreplace_version2.outputs.value }}" >> $GITHUB_ENV
 
+        - name: Compressed file name
+          run: |
+            echo "COMPRESSED_NX_TAGGED=v${{env.NEW_VERSION_TAGGED}}.zip" >> $GITHUB_ENV
+
         - name: Compress ${{env.NX_ARTIFACT_STORE}}
           run: |
-            echo "COMPRESSED_NX_TAGGED=v${{env.NEW_VERSION_TAGGED}}.zip" >> $GITHUB_ENV 
+            ls
             zip -r ${{env.COMPRESSED_NX_TAGGED}} $BUILD_DIRECTORY/
           
         - name:  Deploy to S3 - Copy Build folder to s3
