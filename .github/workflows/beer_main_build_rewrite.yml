@@ -318,7 +318,7 @@ jobs:
         - name: Compress ${{env.NX_ARTIFACT_STORE}}
           run: |
             echo "COMPRESSED_NX_TAGGED=v${{env.TAG_VERSION}}.zip" >> $GITHUB_ENV 
-            zip -r ${{env.COMPRESSED_NX_TAGGED}} $BUILD_DIRECTORY
+            zip -r ${{env.COMPRESSED_NX_TAGGED}} $BUILD_DIRECTORY/
         - name:  Deploy to S3 - Copy Build folder to s3
           run: |
             aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}
