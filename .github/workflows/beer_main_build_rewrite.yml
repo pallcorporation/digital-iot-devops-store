@@ -320,9 +320,22 @@ jobs:
         
         #NX_ARTIFACT_STORE
         # Upload a file to AWS s3
+        - name: Find-and-replace strings
+          uses: mad9000/actions-find-and-replace-string@2
+          id: findandreplace_version
+          with:
+            source: ${{env.TAG_VERSION}} # this translates to ref/heads/main on the main branch, but can be any arbitrary string 
+            find: '.'        # we want to remove ref/heads/ from source 
+            replace: ''
+        
+        - name: Get the above output
+          run: |
+            echo "The replaced value is ${{ steps.findandreplace_version.outputs.value }}"
+            echo "NEW_VERSION_TAGGED=${{ steps.findandreplace_version.outputs.value }}" >> $GITHUB_ENV
+
         - name: Compress ${{env.NX_ARTIFACT_STORE}}
           run: |
-            echo "COMPRESSED_NX_TAGGED=v${{env.TAG_VERSION}}.zip" >> $GITHUB_ENV 
+            echo "COMPRESSED_NX_TAGGED=v${{env.NEW_VERSION_TAGGED}}.zip" >> $GITHUB_ENV 
             zip -r ${{env.COMPRESSED_NX_TAGGED}} $BUILD_DIRECTORY/
           
         - name:  Deploy to S3 - Copy Build folder to s3
