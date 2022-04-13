@@ -384,3 +384,59 @@ jobs:
         #- name: Print Changelog
         #  run: |
         #    echo ${{steps.github_release.outputs.changelog}}
+  
+  All-Other-Build-Types:
+    needs: main-setup
+    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type != 'image' && inputs.deployment_type != 'nx')
+    runs-on: ubuntu-latest          
+    steps:
+        - name: Get current date
+          id: date
+          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+
+        - name: Image Repository name
+          run: |
+            echo "IMAGE_REPO_NAME=${{ github.event.repository.name }}" >> $GITHUB_ENV
+        
+        # Clone repositories prior to work
+        - name: Git clone the repository
+          uses: actions/checkout@v2
+        
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@master
+          with:
+            role-to-assume: ${{ needs.main-setup.outputs.aws_credentials_role }}
+            role-session-name: ${{needs.main-setup.outputs.aws_credentials_session_name}}
+            aws-region: ${{ env.AWS_REGION }}
+        
+        - name: Version number
+          run: |
+            echo "${{ needs.main-setup.outputs.repo_version }} is the new version"
+            echo "TAG_VERSION=${{ needs.main-setup.outputs.repo_version }}" >> $GITHUB_ENV
+        
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@master
+          with:
+            role-to-assume: ${{ needs.main-setup.outputs.aws_credentials_role }}
+            role-session-name: ${{needs.main-setup.outputs.aws_credentials_session_name}}
+            aws-region: ${{ env.AWS_REGION }}
+        
+        - name: Microsoft Teams Notification
+          if: success()
+          uses: jdcargile/ms-teams-notification@v1.3
+          with:
+            github-token: ${{ secrets.envPAT }} # this will use the runner's token.
+            ms-teams-webhook-uri: ${{ secrets.teams_uri }}
+            notification-summary: "Build Successful &#x2705; : ${{env.IMAGE_REPO_NAME}} v${{env.TAG_VERSION}}"
+            notification-color: 00FF00
+            timezone: America/New_York
+        
+        - name: Microsoft Teams Notification
+          if: failure()
+          uses: jdcargile/ms-teams-notification@v1.3
+          with:
+            github-token: ${{ secrets.envPAT }} # this will use the runner's token.
+            ms-teams-webhook-uri: ${{ secrets.teams_uri }}
+            notification-summary: "Build Error &#x274C; : ${{env.IMAGE_REPO_NAME}} Please check workflow"
+            notification-color: FF0000
+            timezone: America/New_York
