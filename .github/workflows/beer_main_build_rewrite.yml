@@ -343,7 +343,7 @@ jobs:
 
         - name: Compressed file name
           run: |
-            echo "COMPRESSED_NX_TAGGED=v${{env.NEW_VERSION_TAGGED}}.zip" >> $GITHUB_ENV
+            echo "COMPRESSED_NX_TAGGED=v${{env.TAG_VERSION}}.zip" >> $GITHUB_ENV
 
         - name: Compress ${{env.NX_ARTIFACT_STORE}}
           run: |
