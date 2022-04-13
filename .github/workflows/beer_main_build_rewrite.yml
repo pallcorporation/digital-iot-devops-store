@@ -306,30 +306,19 @@ jobs:
           if: ${{inputs.build_project_type == 'nx' }}
           run: |
             echo "BUILD_DIRECTORY=dist/apps/beeriot-web" >> $GITHUB_ENV
-
-        - name: NX Build
-          id: build_nx
-          if: ${{inputs.deployment_type == 'nx' }}
-          run: |
-            echo "Building NX... $TAG_VERSION"
         
-        - name: Build nx Frontend
+        - name: Build NX Frontend
           if: ${{inputs.build_project_type == 'nx'}}
           run: |
-            npm ci
-            if [[ ${BRANCH_NAME} == 'main' ]]
-            then
-              npx nx build
-            else
-              npx nx run beeriot-web:build:staging
-            fi
+            echo "Building NX... $TAG_VERSION"
+            npx nx build
         
         #NX_ARTIFACT_STORE
         # Upload a file to AWS s3
         - name: Compress ${{env.NX_ARTIFACT_STORE}}
           run: |
             echo "COMPRESSED_NX_TAGGED=v${{env.TAG_VERSION}}.zip" >> $GITHUB_ENV 
-            zip -r ${{env.COMPRESSED_NX_TAGGED}} ${{env.NX_ARTIFACT_STORE}}
+            zip -r ${{env.COMPRESSED_NX_TAGGED}} $BUILD_DIRECTORY
         - name:  Deploy to S3 - Copy Build folder to s3
           run: |
             aws s3 sync ./$BUILD_DIRECTORY s3://${{env.NX_ARTIFACT_STORE}}
