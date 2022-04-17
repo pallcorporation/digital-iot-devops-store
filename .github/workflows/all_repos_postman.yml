@@ -205,7 +205,7 @@ jobs:
           python3 ${{env.ADMIN_USERS_POLICY_SEED}}/${BRANCH_NAME}_admins.py
 
   AT:
-    needs: Project-admins
+    needs: Project-Admins
     runs-on: ubuntu-latest
     strategy:
       matrix:
