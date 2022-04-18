@@ -388,6 +388,19 @@ jobs:
           echo "after"
           ls
           cat final_env_var.json
+      
+      - name: Install newman
+          run: |
+            npm install -g newman
+        
+      - name: Collections found
+        run: |
+          echo ${{steps.postman_collections.outputs.postman_collections_found}}
+
+      - name: run newman
+        if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
+        run: |
+          newman run ./postman/collection.json -e ./final_env_var.json
 
       - name: Microsoft Teams Notification
         if: failure()
