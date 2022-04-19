@@ -147,7 +147,7 @@ jobs:
         - name: Check out ${{env.REPO_NAME}}
           uses: actions/checkout@v2
           with:
-            token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+            token: ${{ secrets.envPAT }}
             repository: pallcorporation/${{env.REPO_NAME}}
             ref: dev
             path: ${{env.REPO_NAME}}_stage
