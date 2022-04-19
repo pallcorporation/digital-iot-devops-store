@@ -141,6 +141,10 @@ jobs:
           run: |
             aws codecommit get-repository --repository-name ${{env.REPO_NAME}} || aws codecommit create-repository --repository-name ${{env.REPO_NAME}}
         
+        - name: Exception for directory
+          run: |
+            git config --global --add safe.directory /github/workspace
+        
         - name: Sync up to CodeCommit
           uses: youyo/sync-up-to-codecommit-action@v1
           with:
