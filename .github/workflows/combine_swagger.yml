@@ -66,5 +66,6 @@ jobs:
         
         - name: See results
           run: |
+            cd swagger-ui
             ls
         
