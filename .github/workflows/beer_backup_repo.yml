@@ -149,7 +149,7 @@ jobs:
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/${{env.REPO_NAME}}
-            ref: dev
+            ref: main
             path: ${{env.REPO_NAME}}_stage
         
         - name: Commit commit work
