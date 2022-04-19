@@ -54,11 +54,42 @@ jobs:
       AWS_PRODUCTION_ACCOUNT_ID: ${{steps.project_constants.outputs.prod_account_id }}
       AWS_BETA_ACCOUNT_DEPLOY: ${{steps.project_constants.outputs.beta_account_deploy }}
       AWS_PRODUCTION_ACCOUNT_DEPLOY: ${{steps.project_constants.outputs.prod_account_deploy }}
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      data_file: ${{steps.check_data_file.outputs.data_file_found}}
       
     steps:
         - name: Get current date
           id: date
           run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+        
+        - name: Check if data file exists
+          id: check_data_file
+          run: |
+            FILE=repos_data.json
+            if test -f "$FILE"; then
+                echo "::set-output name=data_file_found::true"
+            else
+              echo "::set-output name=data_file_found::false"
+            fi
+        - name: Check data file found
+          run: echo ${{steps.check_data_file.outputs.data_file_found }}
+
+        - name: Set matrix
+          id: set-matrix
+          if: ${{steps.check_data_file.outputs.data_file_found == 'true'}}
+          run: |
+            matrix=$(cat ./repos_data.json)
+            matrix="${matrix//'%'/'%25'}"
+            matrix="${matrix//$'\n'/'%0A'}"
+            matrix="${matrix//$'\r'/'%0D'}"
+            echo "::set-output name=matrix::$matrix"
+        
+        - name: Create files
+          shell: bash
+          id: store
+          run: |
+            mkdir -p 'cache_test/cache_test/subdir'
+            cp -a *.json cache_test/cache_test/subdir/
         
         # Clone repositories prior to work
         - name: Git clone the repository
@@ -116,11 +147,16 @@ jobs:
   back-up:
     needs: main-setup
     if: (github.repository != 'pallcorporation/digital-iot-devops-store')
-    runs-on: ubuntu-latest          
+    runs-on: ubuntu-latest
+    strategy:
+      #fail-fast: false
+      matrix: ${{fromJson(needs.main-setup.outputs.matrix)}}       
     steps:
         - name: Get current date
           id: date
           run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+
+        - run: echo ${{ matrix.repository }}
         
         # Clone repositories prior to work
         - name: Git clone the repository
@@ -128,7 +164,7 @@ jobs:
         
         - name: Image Repository name
           run: |
-            echo "REPO_NAME=${{ github.event.repository.name }}" >> $GITHUB_ENV
+            echo "REPO_NAME=${{ matrix.repository }}" >> $GITHUB_ENV
         
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@master
