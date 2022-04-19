@@ -157,9 +157,12 @@ jobs:
 
             git config --global user.email "${{ env.GH_USERNAME}}@users.noreply.github.com"
             git config --global user.name "${{ env.GH_USERNAME}}"
+            git config --global credential.helper '!aws codecommit credential-helper $@'
+            git config --global credential.UseHttpPath true
 
         - name: Try this
           run: |
             git clone --mirror https://${{secrets.envPAT}}@github.com/pallcorporation/${{env.REPO_NAME}}.git aws-codecommit-demo
             cd aws-codecommit-demo
             git push https://git-codecommit.${{env.AWS_REGION}}.amazonaws.com/v1/repos/${{env.REPO_NAME}} --all
+            
