@@ -12,6 +12,18 @@ on:
       branch_name:
         required: true
         type: string
+      
+      in_stack_id:
+        required: true
+        type: string
+        
+      in_cloudfront_url_output_to_query:
+        required: true
+        type: string
+        
+      in_cloudfront_output:
+        required: true
+        type: string
 
     secrets:
       envPAT:
@@ -114,3 +126,33 @@ jobs:
         - name:  Deploy to S3 - Copy Build folder to s3
           run: |
             aws s3 sync ./swagger-ui s3://beer-frontend-hosting-mitchboulay-dev
+        
+        - name: Stack id to query
+          run: |
+            echo "IN_STACK_ID=${{inputs.in_stack_id}}" >> $GITHUB_ENV
+        
+        - name: Cloudfront id output
+          run: |
+            echo "CF_ID_OUTPUT=${{inputs.in_cloudfront_output}}cfoutput" >> $GITHUB_ENV
+        
+        - name: Cloudfront URL output
+          run: |
+            echo "CF_URL_OUTPUT=${{inputs.in_cloudfront_url_output_to_query}}cfurloutput" >> $GITHUB_ENV
+        
+        - name: Invalidate cloudfront cache
+        #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
+          run: |
+            echo ${CF_ID_OUTPUT} is the output id
+            CLOUDFRONT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${IN_STACK_ID} --query "Stacks[0].Outputs[?OutputKey=='${CF_ID_OUTPUT}'].OutputValue" --output text)
+            aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_ID --paths '/*'
+        
+        - name: Domain url
+          id: domain_url
+        #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
+          run: |
+            DOMAIN_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${IN_STACK_ID} --query "Stacks[0].Outputs[?OutputKey=='${CF_URL_OUTPUT}'].OutputValue" --output text)
+            echo "::set-output name=DOMAIN_URL_OUTPUT::$DOMAIN_URL" 
+            
+        - name: Echo Domain URL
+          run: |
+            echo "::warning::https://${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}} is the cloudfront url"
