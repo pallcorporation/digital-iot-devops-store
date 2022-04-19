@@ -125,6 +125,8 @@ jobs:
         # Clone repositories prior to work
         - name: Git clone the repository
           uses: actions/checkout@v2
+          with:
+            fetch-depth: 0
         
         - name: Image Repository name
           run: |
