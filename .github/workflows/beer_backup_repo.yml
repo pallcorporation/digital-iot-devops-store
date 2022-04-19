@@ -158,5 +158,5 @@ jobs:
             git config --local init.defaultBranch dev
             git init
             git add .
-            git commit –m "Initial commit"
+            git commit -m "initial commit"
             git push https://git-codecommit.${{ env.AWS_REGION }}.amazonaws.com/v1/repos/${{env.REPO_NAME}} --all
