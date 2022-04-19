@@ -33,7 +33,7 @@ env:
   IMAGE_REGISTRY_USERNAME: ${{github.actor}}
   IMAGE_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   NX_ARTIFACT_STORE: beer-ul-nx-workspace
-
+  GH_USERNAME: ${{github.actor}}
 
 permissions:
       id-token: write
@@ -55,6 +55,7 @@ jobs:
       AWS_PRODUCTION_ACCOUNT_ID: ${{steps.project_constants.outputs.prod_account_id }}
       AWS_BETA_ACCOUNT_DEPLOY: ${{steps.project_constants.outputs.beta_account_deploy }}
       AWS_PRODUCTION_ACCOUNT_DEPLOY: ${{steps.project_constants.outputs.prod_account_deploy }}
+      
     steps:
         - name: Get current date
           id: date
@@ -151,6 +152,11 @@ jobs:
             repository: pallcorporation/${{env.REPO_NAME}}
             ref: main
             path: ${{env.REPO_NAME}}_stage
+        - name: Set git username and email
+          run: |
+
+            git config --global user.email "${{ env.GH_USERNAME}}@users.noreply.github.com"
+            git config --global user.name "${{ env.GH_USERNAME}}"
         
         - name: Commit commit work
           run: |
