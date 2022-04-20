@@ -144,6 +144,16 @@ jobs:
 
         - name: Clone and sync
           run: |
-            git clone --mirror https://${{secrets.BEER_PROJECT_PROPERTIES}}@github.com/pallcorporation/${{env.REPO_NAME}}.git ${{env.REPO_NAME}}_stage
+            git clone --mirror https://${{secrets.envPAT}}@github.com/pallcorporation/${{env.REPO_NAME}}.git ${{env.REPO_NAME}}_stage
             cd ${{env.REPO_NAME}}_stage
             git push https://git-codecommit.${{env.AWS_REGION}}.amazonaws.com/v1/repos/${{env.REPO_NAME}} --all
+        
+        - name: Microsoft Teams Notification
+          if: failure()
+          uses: jdcargile/ms-teams-notification@v1.3
+          with:
+            github-token: ${{ secrets.envPAT }} # this will use the runner's token.
+            ms-teams-webhook-uri: ${{ secrets.teams_uri }}
+            notification-summary: "Faild to backup ${{env.REPO_NAME}} &#x274C; : Please view workflow."
+            notification-color: FF0000
+            timezone: America/New_York
