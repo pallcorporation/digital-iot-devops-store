@@ -136,6 +136,12 @@ jobs:
           if: ${{inputs.repo_name}}
           run: mv ${{ inputs.repo_name }}_stage/* .
         
+        - name: Set environment variables for CDK stack
+          if: ${{inputs.repo_name}}
+          run: |
+            echo "DOCKER_IMAGE_TAG=${{inputs.repo_version}}" >> $GITHUB_ENV
+            echo "DOCKER_IMAGE_REPOSITORY=${{inputs.repo_name}}" >> $GITHUB_ENV
+        
         - name: Project files clone
           uses: actions/checkout@v2
           with:
