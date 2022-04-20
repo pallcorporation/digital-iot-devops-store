@@ -133,7 +133,7 @@ jobs:
           run: mkdir ${{env.CDK_MODULE}}
         
         - name: Move files (if from application deployment)
-          if: ${{ steps.repo_name_passed.outputsreponamepassed }}
+          if: ${{inputs.repo_name}}
           run: mv ${{ inputs.repo_name }}_stage/* .
         
         - name: Project files clone
