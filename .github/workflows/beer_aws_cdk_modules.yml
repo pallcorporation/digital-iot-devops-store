@@ -136,10 +136,19 @@ jobs:
           if: ${{inputs.repo_name}}
           run: mv ${{ inputs.repo_name }}_stage/* .
         
+        - name: Find-and-replace strings in tag version from application deployment
+          if: ${{inputs.repo_name}}
+          uses: mad9000/actions-find-and-replace-string@2
+          id: findandreplace_version1
+          with:
+            source: ${{inputs.repo_version}} # this translates to ref/heads/main on the main branch, but can be any arbitrary string 
+            find: 'v'        # we want to remove ref/heads/ from source 
+            replace: ''
+        
         - name: Set environment variables for CDK stack
           if: ${{inputs.repo_name}}
           run: |
-            echo "DOCKER_IMAGE_TAG=${{inputs.repo_version}}" >> $GITHUB_ENV
+            echo "DOCKER_IMAGE_TAG=${{steps.findandreplace_version1.outputs.value}}" >> $GITHUB_ENV
             echo "DOCKER_IMAGE_REPOSITORY=${{inputs.repo_name}}" >> $GITHUB_ENV
         
         - name: Project files clone
