@@ -217,6 +217,9 @@ jobs:
           - beer-be-permission-service
           - beer-be-companysite-service
           - beer-be-area-service
+          - beer-be-group-service
+          - beer-be-settings-service
+          - beer-be-system-service
       fail-fast: false
     steps:
       # Get current time stamp to use as reference elsewhere
