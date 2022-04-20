@@ -69,16 +69,6 @@ jobs:
           id: date
           run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
         
-        - name: Check if input is null for repo name
-          if: ${{inputs.repo_name}}
-          id: repo_name_passed
-          run: |
-            if [ ${{inputs.repo_name != ""}} ]; then
-              echo ::set-output name=reponamepassed::true
-            else
-              echo ::set-output name=reponamepassed::false
-            fi
-        
         # Get branch name to use for look up
         - name: Branch if Dev
           if: contains( github.ref, 'dev' )
@@ -277,13 +267,13 @@ jobs:
           working-directory: ${{env.CDK_MODULE}}
         
         - name: API Gateway url
-          if: ${{inputs.repo_name == ""}}
+          if: github.repository != 'pallcorporation/beer-application-deployment'
           id: get_api_url
           run: |
             API_DOMAIN_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.API_GATEWAY_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.API_GATEWAY_OUPUT_LOOKUP}}`].OutputValue' --output text)
             echo "::set-output name=API_DOMAIN_URL_OUTPUT::$API_DOMAIN_URL" 
         - name: API Gateway URL echo
-          if: ${{inputs.repo_name == ""}}
+          if: github.repository != 'pallcorporation/beer-application-deployment'
           run: |
             echo "${{ steps.get_api_url.outputs.API_DOMAIN_URL_OUTPUT}} is the url"
             echo "API_GATEWAY_URL=${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}}" >> $GITHUB_ENV
