@@ -80,7 +80,7 @@ permissions:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:  
   AWS-CDK-Deployment:
-    if: github.repository != 'pallcorporation/digital-iot-devops-store'
+    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.repository != 'pallcorporation/beer-application-deployment')
     runs-on: ubuntu-latest
       
     steps:
@@ -489,7 +489,7 @@ jobs:
         - name: Download from s3
           run: |
             mkdir deployment_stage
-            aws s3 cp s3://${{inputs.repo_name}}/${{inputs.repo_version}}.zip ./
+            aws s3 cp s3://beer-ul-nx-workspace-beta/${{inputs.repo_version}}.zip ./
         
         - name: 'Unzip project'
           uses: montudor/action-zip@v1.0.0
