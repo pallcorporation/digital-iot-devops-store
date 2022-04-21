@@ -402,3 +402,122 @@ jobs:
 
     outputs:
       domain_url: ${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}}
+  
+  Application-Deployment:
+    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.repository == 'pallcorporation/beer-application-deployment')
+    runs-on: ubuntu-latest
+      
+    steps:
+        # Get current time stamp to use as reference elsewhere
+        - name: Get current date
+          id: date
+          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+
+        # Get branch name to use for look up
+        
+        - name: Branch if Prod
+          if: contains( github.ref, 'prod' )
+          run: |
+            echo "BRANCH_NAME=production" >> $GITHUB_ENV
+        
+        - name: Branch if BETA
+          if: contains( github.ref, 'beta' )
+          run: |
+            echo "BRANCH_NAME=beta" >> $GITHUB_ENV
+            
+        
+        - name: Echo branch
+          run: echo "${BRANCH_NAME} is the branch name to use in lookup"
+
+        - name: Make project files directory
+          run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
+        
+        - name: Project files clone
+          uses: actions/checkout@v2
+          with:
+            token: ${{ secrets.envPAT }}
+            repository: pallcorporation/beer-project-properties
+            ref: main
+            path: ${{env.PROJECT_FILES_DIRECTORY}}
+        
+        # Read of project files and set to variables
+        - name: Get project constants - tools
+          id: project_constants_tools
+          run: |
+            account_id="`grep aws_tools_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=env_id::${account_id}"
+            
+            oidc_role_name="`grep aws_tools_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=oidc_role::${oidc_role_name}"
+
+            cdk_deploy_role_arn="`grep aws_tools_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
+
+          working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
+        
+        - name: Get project constants - tools
+          id: project_constants_target
+          run: |
+            account_id="`grep aws_${{env.BRANCH_NAME}}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=env_id::${account_id}"
+            
+            oidc_role_name="`grep aws_${{env.BRANCH_NAME}}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=oidc_role::${oidc_role_name}"
+
+            cdk_deploy_role_arn="`grep aws_${{env.BRANCH_NAME}}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
+
+          working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
+        
+        # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
+        - name: Arn to use
+          id: aws_assume_role_tools
+          run: |
+            echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants_tools.outputs.env_id }}:role/${{ steps.project_constants_tools.outputs.oidc_role}}"
+        - name: Arn to use
+          id: aws_assume_role_target
+          run: |
+            echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants_target.outputs.env_id }}:role/${{ steps.project_constants_target.outputs.oidc_role}}"
+      
+        - name: Configure AWS credentials Tools
+          uses: aws-actions/configure-aws-credentials@master
+          with:
+            role-to-assume: ${{steps.aws_assume_role_tools.outputs.role_arn1}}
+            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            aws-region: ${{ env.AWS_REGION }}
+
+        - name: Download from s3
+          run: |
+            mkdir deployment_stage
+            aws s3 cp s3://${{inputs.repo_name}}/${{inputs.repo_version}}.zip ./
+        
+        - name: 'Unzip project'
+          uses: montudor/action-zip@v1.0.0
+          with:
+            args: unzip -qq ${{inputs.repo_version}}.zip -d deployment_stage
+        
+        - name: Configure AWS credentials ${{env.BRANCH_NAME}}
+          uses: aws-actions/configure-aws-credentials@master
+          with:
+            role-to-assume: ${{steps.aws_assume_role_target.outputs.role_arn1}}
+            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            aws-region: ${{ env.AWS_REGION }}
+
+        - name: AWS function environment suffix
+          id: get_aws_branch_name
+          run: |
+            if [[ ${{inputs.branch_name}} == 'prod' ]]
+            then
+              echo "AWS_ENV_NAME=production" >> $GITHUB_ENV
+            elif [[ ${{inputs.branch_name}} == 'beta' ]]
+            then
+              echo "AWS_ENV_NAME=beta" >> $GITHUB_ENV
+            fi
+        
+        - name: Hosting bucket
+          run: |
+            echo "HOSTING_BUCKET=${{inputs.hosting_bucket}}-${{env.AWS_ENV_NAME}}" >> $GITHUB_ENV
+        
+        - name: Copy to ${{env.BRANCH_NAME}} s3
+          run: |
+            aws s3 sync ./deployment_stage/dist/apps/beeriot-web s3://${{env.HOSTING_BUCKET}}
