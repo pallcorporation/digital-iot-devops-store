@@ -202,6 +202,7 @@ jobs:
           rm -rf ${{env.ADMIN_USERS_POLICY_SEED}}/super-user-policy.json
           cp ${{env.IAM_SERVICE_REPOSITORY}}/seeding-data/super-user-policy.jsonc ${{env.ADMIN_USERS_POLICY_SEED}}/super-user-policy.json
           pip3 install boto3
+          pip3 install pytz
           python3 ${{env.ADMIN_USERS_POLICY_SEED}}/${BRANCH_NAME}_admins.py
 
   AT:
