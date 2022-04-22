@@ -387,6 +387,7 @@ jobs:
       - name: Run python script to replace secrets
         run: |
           ls
+          pip3 install pytz
           python3 replace_secrets.py
           echo "after"
           ls
