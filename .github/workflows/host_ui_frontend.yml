@@ -206,6 +206,8 @@ jobs:
           if: ${{inputs.build_project_type == 'swagger' }}
           run: |
             npm install swagger-ui
+            npm install -g swagger-cli
+            
 
         - name: Swagger install dependencies
           if: ${{inputs.build_project_type == 'swagger1' }}
@@ -251,6 +253,8 @@ jobs:
         - name: Build swagger
           if: ${{inputs.build_project_type == 'swagger'}}
           run: |
+            mv swagger.yaml swagger_old.yaml
+            swagger-cli bundle swagger_old.yaml --outfile swagger.yaml --type yaml
             npm run build
         - name: Build nx Frontend
           if: ${{inputs.build_project_type == 'nx'}}
