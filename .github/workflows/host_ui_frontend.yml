@@ -394,8 +394,9 @@ jobs:
         - name: Copy Swagger json to s3
           if: ${{inputs.build_project_type == 'swagger'}}
           run: |
+            mv swagger.yaml open-api.yaml
             aws s3 cp open-api.json s3://${HOSTING_BUCKET}
-            aws s3 cp swagger.yaml s3://${HOSTING_BUCKET}
+            aws s3 cp open-api.yaml s3://${HOSTING_BUCKET}
         - name: Invalidate cloudfront cache
         #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
           run: |
