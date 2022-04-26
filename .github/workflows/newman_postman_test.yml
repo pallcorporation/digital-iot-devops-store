@@ -104,7 +104,7 @@ jobs:
           run: mkdir ${{env.POSTMAN_COLLECTION_DIRECTORY}}
 
         - name: Make postman directory (authorizer test)
-          if: ${{ github.event.repository.name }} == "beer-be-api-authorizer"
+          if: ${{env.REPO_NAME == 'beer-be-api-authorizer' }}
           run: |
             DIR="postman/"
             if [ -d "$DIR" ]; then
@@ -135,7 +135,7 @@ jobs:
         
         
         - name: Clone default repository (authorizer test)
-          if: ${{ github.event.repository.name }} == "beer-be-api-authorizer"
+          if: ${{env.REPO_NAME == 'beer-be-api-authorizer' }}
           uses: actions/checkout@v2
           with:
             token: ${{ secrets.envPAT }}
