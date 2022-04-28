@@ -69,14 +69,14 @@ jobs:
           id: date
           run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
         
-        - name: Uninstall AWS CLI
-          run: |
-            aws --version             
-            sudo pip3 uninstall awscli
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install --update
-            aws --version
+        # - name: Uninstall AWS CLI
+        #   run: |
+        #     aws --version             
+        #     sudo pip3 uninstall awscli
+        #     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        #     unzip awscliv2.zip
+        #     sudo ./aws/install --update
+        #     aws --version
         
         # Get branch name to use for look up
         - name: Branch if Dev
@@ -243,7 +243,7 @@ jobs:
         - name: Install CDK
           if: ${{ steps.skip_cdk.outputs.bypass_cdk !='true'}}
           run: | 
-            sudo npm -g install aws-cdk
+#            sudo npm -g install aws-cdk
             pip3 install -r  ${{env.CDK_MODULE}}/requirements.txt
 
         - name: Install yaml
