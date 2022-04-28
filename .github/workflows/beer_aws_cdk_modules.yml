@@ -69,6 +69,15 @@ jobs:
           id: date
           run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
         
+        - name: Uninstall AWS CLI
+          run: |
+            aws --version             
+            sudo pip3 uninstall awscli
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+            aws --version
+        
         # Get branch name to use for look up
         - name: Branch if Dev
           if: contains( github.ref, 'dev' )
@@ -227,14 +236,16 @@ jobs:
             role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
             role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
             aws-region: ${{ env.AWS_REGION }}
-        
+        - name: Grant permissions to all files
+          run: | 
+            chmod -R 755 ${{env.CDK_MODULE}}
+
         - name: Install CDK
           if: ${{ steps.skip_cdk.outputs.bypass_cdk !='true'}}
           run: | 
-            chmod -R 755 ${{env.CDK_MODULE}}
-            sudo npm -g uninstall aws-cdk
             sudo npm -g install aws-cdk
             pip3 install -r  ${{env.CDK_MODULE}}/requirements.txt
+
         - name: Install yaml
           run: |
             pip install pyyaml
