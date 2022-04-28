@@ -232,7 +232,8 @@ jobs:
           if: ${{ steps.skip_cdk.outputs.bypass_cdk !='true'}}
           run: | 
             chmod -R 755 ${{env.CDK_MODULE}}
-            sudo npm install -g aws-cdk
+            sudo npm -g uninstall aws-cdk
+            sudo npm -g install aws-cdk
             pip3 install -r  ${{env.CDK_MODULE}}/requirements.txt
         - name: Install yaml
           run: |
