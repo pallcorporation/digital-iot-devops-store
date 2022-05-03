@@ -15,11 +15,10 @@ on:
     secrets:
       envPAT:
         required: true
+
       PYINSTALLER_KEY:
         required: true
         
-      sign_cert:
-        required: true
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
