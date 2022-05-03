@@ -59,9 +59,14 @@ jobs:
             pip install pyinstaller
             pyinstaller --version
             cd c:\
-            cd "Program Files (x86)"\"Windows Kits"\10\bin
+            cd "Program Files (x86)"
             ls
-
+            cd "Windows Kits"
+            ls
+            cd 10
+            ls
+            cd bin
+            ls
             
 
 
