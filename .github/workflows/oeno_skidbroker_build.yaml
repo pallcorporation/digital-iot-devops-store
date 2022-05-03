@@ -53,15 +53,18 @@ jobs:
         - name: Git clone the repository
           uses: actions/checkout@v2
         
-        - name: Set up env
+        - name: Set up build env
           run: |
-            git status
             pip install pyinstaller
             pyinstaller --version
-            cd "C:\Program Files (x86)\Windows Kits\10\bin\x64\"
+            python --version
+            python -m venv env
+            env\scripts\Activate
             ls
-            "C:\Program Files (x86)\Windows Kits\10\bin\x64\signtool.exe --version"
-            signtool
+
+            cd "C:\Program Files (x86)\Windows Kits\10\bin\x64\"
+            signtool.exe --help
+            "C:\Program Files (x86)\Windows Kits\10\bin\x64\signtool.exe --help"
 
             
 
@@ -76,6 +79,40 @@ jobs:
         #     aws s3 cp urls.json s3://${{inputs.hosting_bucket}}-${{env.AWS_ENV_NAME}}
 
 
+
+# pre_build:  
+#     commands:  
+#       # Create Python virtual environment
+#       - 'echo "Creating Python Virtual Enironment"'
+#       - 'python -m venv env'
+#       # Activate environment and installrequired dependencies
+#       - 'echo "Installing dependencies"'
+#       - 'env\scripts\Activate' 
+
+
+
+#       - 'env\scripts\pip install -r requirements.txt'
+#       - 'env\scripts\pip install pyinstaller pyinstaller[encryption] tinyaes'
+#       # Move static assets and scripts to Include dir for exe build
+#       - 'echo "moving static required assets to Include directory for exe build"'
+#       #- 'cd env\Lib\site-packages'
+#       #- 'for /d %a in ("dash*") do xcopy /S "%a"/I /Y "..\..\Include\%a"'
+#       - 'cp -r env\Lib\site-packages\dash* env\Include'
+#       - 'ls env\Include'
+#   build:  
+#     commands:  
+#       # Create asset verison info
+#       - 'python generateVersionInfo.py -v $Env:CODEBUILD_BUILD_NUMBER -n $Env:ARTIFACT_NAME -d $Env:ARTIFACT_DESCRIPTION'
+#       # Build Executible
+#       - 'cd service'
+#       - '..\env\Scripts\pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" --key=$Env:PYINSTALLER_KEY skid_broker_client.py'
+#       # Bundle PLC Snap7 dependency dll with exe 
+#       - 'cp .\snap7.dll .\dist'
+#       # Sign exe with Pall Corp Oenoflow Cert
+#       - 'C:\"Program Files (x86)"\"Windows Kits"\8.1\bin\x64\signtool sign /debug /F ..\oenoflow_prod.pfx /P 72556366 /T http://timestamp.digicert.com ..\service\dist\skid_broker_client.exe'
+#   post_build:  
+#     commands:  
+#       - 'mv .\dist\skid_broker_client.exe .\dist\$Env:ARTIFACT_NAME.exe'
 
 
         
