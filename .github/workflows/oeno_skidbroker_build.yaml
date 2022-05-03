@@ -60,7 +60,7 @@ jobs:
             pyinstaller --version
             cd "C:\Program Files (x86)\Windows Kits\10\bin\x64\"
             ls
-            "C:\Program Files (x86)\Windows Kits\10\bin\x64\signtool" --version
+            "C:\Program Files (x86)\Windows Kits\10\bin\x64\signtool --version"
             signtool
 
             
