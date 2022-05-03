@@ -15,6 +15,8 @@ on:
     secrets:
       envPAT:
         required: true
+      PYINSTALLER_KEY:
+        required: true
         
       sign_cert:
         required: true
@@ -30,6 +32,12 @@ env:
   PROJECT_FILES_DIRECTORY: "project_file"
   CDK_MODULE: "cdk_checkedout"
   DEVOPS_STORE: "devops_store"
+  CODEBUILD_BUILD_NUMBER: "1"
+  ARTIFACT_NAME: "skid_broker_client"
+  ARTIFACT_DESCRIPTION: "IPC <--> PLC/HMI Communication Broker"
+
+
+
 
   
 
@@ -60,6 +68,12 @@ jobs:
             env\scripts\Activate
             env\scripts\pip install -r requirements.txt
             env\scripts\pip install pyinstaller pyinstaller[encryption] tinyaes
+            cp -r env\Lib\site-packages\dash* env\Include
+            ls env\Include
+            echo ${{ARTIFACT_NAME}}
+            echo ${{PYINSTALLER_KEY}}
+            python generateVersionInfo.py -v ${{env.CODEBUILD_BUILD_NUMBER}} -n ${{env.ARTIFACT_NAME}} -d ${{env.ARTIFACT_DESCRIPTION}}
+            pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" --key=${{env.PYINSTALLER_KEY}} skid_broker_client.py'
             C:\"Program Files (x86)"\"Windows Kits"\10\bin\x64\signtool.exe sign
 
             
@@ -72,7 +86,7 @@ jobs:
         # - name:  Deploy to S3 - Copy Build folder to s3
         # #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
         #   run: |
-        #     aws s3 cp urls.json s3://${{inputs.hosting_bucket}}-${{env.AWS_ENV_NAME}}
+             aws s3 cp urls.json s3://${{inputs.hosting_bucket}}-${{env.AWS_ENV_NAME}}
 
 
 
