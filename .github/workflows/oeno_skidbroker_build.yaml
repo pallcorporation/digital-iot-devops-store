@@ -70,8 +70,8 @@ jobs:
             env\scripts\pip install pyinstaller pyinstaller[encryption] tinyaes
             cp -r env\Lib\site-packages\dash* env\Include
             ls env\Include
-            echo ${{ARTIFACT_NAME}}
-            echo ${{PYINSTALLER_KEY}}
+            echo ${{env.ARTIFACT_NAME}}
+            echo ${{env.PYINSTALLER_KEY}}
             python generateVersionInfo.py -v ${{env.CODEBUILD_BUILD_NUMBER}} -n ${{env.ARTIFACT_NAME}} -d ${{env.ARTIFACT_DESCRIPTION}}
             pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" --key=${{env.PYINSTALLER_KEY}} skid_broker_client.py
             C:\"Program Files (x86)"\"Windows Kits"\10\bin\x64\signtool.exe sign
