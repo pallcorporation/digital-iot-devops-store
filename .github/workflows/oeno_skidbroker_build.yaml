@@ -62,7 +62,7 @@ jobs:
             ls
             cd "Program Files"
             ls
-            cd "C:\"Program Files"\"Windows Kits"\8.1\bin\x64\"
+            cd "Windows Security"
             ls
 
 
