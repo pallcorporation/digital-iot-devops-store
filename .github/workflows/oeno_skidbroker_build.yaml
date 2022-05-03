@@ -7,46 +7,17 @@ on:
    branches:
      - dev
      - integration
-  # workflow_call:
-  #   inputs:
-  #     branch_name:
-  #       required: true
-  #       type: string
-      
-  #     destroy_stack:
-  #       type: boolean
-  #       default: false
+  workflow_call:
+    inputs:
+      input_from_caller:
+        type: string
 
-  #     deployment_type:
-  #       type: string
-  #     config_files_directory:
-  #       required: true
-  #       type: string
+    secrets:
+      envPAT:
+        required: true
         
-
-  #     hosting_bucket:
-  #       required: true
-  #       type: string
-        
-      
-  #     in_stack_id:
-  #       required: true
-  #       type: string
-        
-      
-  #     in_cloudfront_url_output_to_query:
-  #       required: true
-  #       type: string
-        
-      
-      # in_cloudfront_output:
-      #   required: true
-      #   type: string
-        
-
-    # secrets:
-    #   envPAT:
-    #     required: true
+      sign_cert:
+        required: true
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
