@@ -60,9 +60,9 @@ jobs:
   Project-Admins:
     runs-on: ubuntu-latest
     outputs:
-      postman_username1: ${{ steps.postman_username.outputs.postman_username }}
-      postman_password1: ${{ steps.postman_password.outputs.postman_password }}
       cognito_secret1: ${{ steps.cognito_secret.outputs.cognito_secret }}
+      postman_username: ${{ env.POSTMAN_USERNAME }}
+      postman_password: ${{ env.POSTMAN_PASSWORD }}
     steps:
       # Get current time stamp to use as reference elsewhere
       - name: Get current date
@@ -175,45 +175,15 @@ jobs:
           
           fi
       
-      - name: Set environment Cognito secret variables for python
-        id: postman_username
-        run: |
-          if [[ ${BRANCH_NAME} == 'dev' ]]
-          then
-            echo "POSTMAN_USERNAME=${{secrets.postman_username}}" >> $GITHUB_ENV
-            echo "::set-output name=postman_username::${{secrets.postman_username}}"
-
-          elif [[ ${BRANCH_NAME} == 'integration' ]]
-          then
-            echo "POSTMAN_USERNAME=${{secrets.postman_username}}" >> $GITHUB_ENV
-            echo "::set-output name=postman_username::${{secrets.postman_username}}"
-          
-          fi
-      - name: Set environment Cognito secret variables for python
-        id: postman_password
-        run: |
-          if [[ ${BRANCH_NAME} == 'dev' ]]
-          then
-            echo "POSTMAN_PASSWORD=${{secrets.postman_password}}" >> $GITHUB_ENV
-            echo "::set-output name=postman_password::${{secrets.postman_password}}"
-
-          elif [[ ${BRANCH_NAME} == 'integration' ]]
-          then
-            echo "POSTMAN_PASSWORD=${{secrets.postman_password}}" >> $GITHUB_ENV
-            echo "::set-output name=postman_password::${{secrets.postman_password}}"
-          fi
-      
       - name: Postman required variables
         run: |
           echo "CREATE_POSTMAN_USER=True" >> $GITHUB_ENV
-      - run: echo ${{env.COGNITO_USER_POOL_STACK_ID}}
+
+
       - name: Cognito User Pool query
         id: get_user_pool_id
         run: |
-          echo "COGNITO_USERPOOL_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.COGNITO_USER_POOL_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.COGNITO_USER_POOL_ID_OUTPUT}}`].OutputValue' --output text)" >> $GITHUB_ENV
-
-      - run: echo ${{env.COGNITO_USERPOOL_ID}}
-      
+          echo "COGNITO_USERPOOL_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.COGNITO_USER_POOL_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.COGNITO_USER_POOL_ID_OUTPUT}}`].OutputValue' --output text)" >> $GITHUB_ENV      
 
       - name: Run python script to seed policy to admins
         run: |
@@ -257,6 +227,11 @@ jobs:
         id: date
         run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
       
+      - name: Postman variables
+        run: |
+          echo "POSTMAN_USERNAME=${{ needs.Project-Admins.outputs.postman_username }}" >> $GITHUB_ENV
+          echo "POSTMAN_PASSWORD=${{ needs.Project-Admins.outputs.postman_password }}" >> $GITHUB_ENV
+      
       # Clone repositories prior to work
       - name: Git clone the repository
         uses: actions/checkout@v2
@@ -265,19 +240,6 @@ jobs:
         id: get_branch_name
         run: |
           echo "BRANCH_NAME=${{inputs.branch_name}}" >> $GITHUB_ENV
-
-    #  - name: Branch name
-    #    id: get_branch_name
-    #    run: |
-    #      if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'main' ]]
-    #      then
-    #        echo "BRANCH_NAME=dev" >> $GITHUB_ENV
-    #      elif [ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == '' ]
-    #      then 
-    #        echo "BRANCH_NAME=dev" >> $GITHUB_ENV
-    #      else
-    #        echo "BRANCH_NAME=$(echo ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}})" >> $GITHUB_ENV
-    #      fi
         
       - name: Make ${{ matrix.microservice-repos }} directories
         id: make_directories
@@ -339,12 +301,6 @@ jobs:
           role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
           role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
           aws-region: ${{ env.AWS_REGION }}
-      
-      - name: Where are we
-        run: |
-          ls
-          
-        working-directory: 
 
       # Grant permissions to all files in directory
       - name: Grant permissions to all files
@@ -387,40 +343,11 @@ jobs:
             echo "::set-output name=cognito_secret::${{secrets.cognito_integration_user_pool_secret}}"
           fi
       
-      - name: Set environment variables for postman username
-        id: postman_username
-        run: |
-          if [[ ${BRANCH_NAME} == 'dev' ]]
-          then
-            echo "POSTMAN_USERNAME=${{secrets.postman_username}}" >> $GITHUB_ENV
-            echo "::set-output name=postman_username::${{secrets.postman_username}}"
-
-          elif [[ ${BRANCH_NAME} == 'integration' ]]
-          then
-            echo "POSTMAN_USERNAME=${{secrets.postman_username}}" >> $GITHUB_ENV
-            echo "::set-output name=postman_username::${{secrets.postman_username}}"
-          fi
-      - name: Set environment variables for postman password
-        id: postman_password
-        run: |
-          if [[ ${BRANCH_NAME} == 'dev' ]]
-          then
-            echo "POSTMAN_PASSWORD=${{secrets.postman_password}}" >> $GITHUB_ENV
-            echo "::set-output name=postman_password::${{secrets.postman_password}}"
-
-          elif [[ ${BRANCH_NAME} == 'integration' ]]
-          then
-            echo "POSTMAN_PASSWORD=${{secrets.postman_password}}" >> $GITHUB_ENV
-            echo "::set-output name=postman_password::${{secrets.postman_password}}"
-          fi
-      
       - name: API Gateway output
         run: |
           echo "API_GATEWAY_STACKID_OUT=beerapigateway0iotapigwurloutput" >> $GITHUB_ENV
           echo "API_GATEWAY_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.API_GATEWAY_STACKID_OUT}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.API_GATEWAY_URL_OUT}}`].OutputValue' --output text)" >> $GITHUB_ENV
-
       
-
       - name: Run python script to replace secrets
         run: |
           ls
@@ -440,6 +367,12 @@ jobs:
         if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
         run: |
           newman run ./${{ matrix.microservice-repos }}/postman/collection.json -e ./final_env_var.json
+      
+      - name: Python script to disable & delete created postman user
+        if: always()
+        run: |
+          echo "DELETE_POSTMAN_USER=True"
+          python3 ${{env.ADMIN_USERS_POLICY_SEED}}/delete_user.py
 
       - name: Microsoft Teams Notification
         if: failure()
@@ -450,3 +383,5 @@ jobs:
           notification-summary: "${{ matrix.microservice-repos }} test error on ${{env.BRANCH_NAME}} branch &#x274C; : Please test results."
           notification-color: FF0000
           timezone: America/New_York
+
+      
