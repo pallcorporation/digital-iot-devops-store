@@ -203,6 +203,22 @@ jobs:
         run: |
           echo "CREATE_POSTMAN_USER=True" >> $GITHUB_ENV
       
+      - name: Cognito User Pool query
+          id: get_user_pool_id
+          run: |
+            echo "COGNITO_USERPOOL_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.COGNITO_USER_POOL_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.COGNITO_USER_POOL_ID_OUTPUT}}`].OutputValue' --output text)" >> $GITHUB_ENV
+
+      
+
+      - name: Run python script to seed policy to admins
+        run: |
+          ls
+          rm -rf ${{env.ADMIN_USERS_POLICY_SEED}}/super-user-policy.json
+          cp ${{env.IAM_SERVICE_REPOSITORY}}/seeding-data/super-user-policy.jsonc ${{env.ADMIN_USERS_POLICY_SEED}}/super-user-policy.json
+          pip3 install boto3
+          pip3 install pytz
+          python3 ${{env.ADMIN_USERS_POLICY_SEED}}/admins.py
+      
       - name: Read output file from seed
         run: |
           cat deploy_data.properties
@@ -212,15 +228,6 @@ jobs:
 
           COGNITO_PASSWORD="`grep COGNITO_PASSWORD deploy_data.properties|cut -d'=' -f2`"
           echo "POSTMAN_PASSWORD=${COGNITO_PASSWORD}" >> $GITHUB_ENV
-
-      - name: Run python script to seed policy to admins
-        run: |
-          ls
-          rm -rf ${{env.ADMIN_USERS_POLICY_SEED}}/super-user-policy.json
-          cp ${{env.IAM_SERVICE_REPOSITORY}}/seeding-data/super-user-policy.jsonc ${{env.ADMIN_USERS_POLICY_SEED}}/super-user-policy.json
-          pip3 install boto3
-          pip3 install pytz
-          python3 ${{env.ADMIN_USERS_POLICY_SEED}}/${BRANCH_NAME}_admins.py
 
   AT:
     needs: Project-Admins
