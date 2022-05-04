@@ -15,8 +15,7 @@ on:
     secrets:
       envPAT:
         required: true
-
-      envPY_KEY:
+      PY_KEY:
         required: true
         
   # Allows you to run this workflow manually from the Actions tab
@@ -70,9 +69,9 @@ jobs:
             cp -r env\Lib\site-packages\dash* env\Include
             ls env\Include
             echo ${{env.ARTIFACT_NAME}}
-            echo ${{env.PYINSTALLER_KEY}}
+            echo ${{secrets.PY_KEY}}
             python generateVersionInfo.py -v ${{env.CODEBUILD_BUILD_NUMBER}} -n ${{env.ARTIFACT_NAME}} -d ${{env.ARTIFACT_DESCRIPTION}}
-            pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" --key=${{env.envPY_KEY}} skid_broker_client.py
+            pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" --key=${{secrets.PY_KEY}} skid_broker_client.py
             C:\"Program Files (x86)"\"Windows Kits"\10\bin\x64\signtool.exe sign
 
             
