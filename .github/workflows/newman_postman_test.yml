@@ -229,15 +229,7 @@ jobs:
           run: |
             echo "CREATE_POSTMAN_USER=True" >> $GITHUB_ENV
         
-        - name: Read output file from seed
-          run: |
-            cat deploy_data.properties
-
-            COGNITO_USERNAME="`grep COGNITO_USERNAME deploy_data.properties|cut -d'=' -f2`"
-            echo "POSTMAN_USERNAME=${COGNITO_USERNAME}" >> $GITHUB_ENV
-
-            COGNITO_PASSWORD="`grep COGNITO_PASSWORD deploy_data.properties|cut -d'=' -f2`"
-            echo "POSTMAN_PASSWORD=${COGNITO_PASSWORD}" >> $GITHUB_ENV
+        
       
         - name: Run python script to seed policy to admins
           run: |
@@ -247,6 +239,16 @@ jobs:
             pip3 install boto3
             pip3 install pytz
             python3 ${{env.ADMIN_USERS_POLICY_SEED}}/${{env.BRANCH_NAME}}_admins.py
+            
+        - name: Read output file from seed
+          run: |
+            cat deploy_data.properties
+
+            COGNITO_USERNAME="`grep COGNITO_USERNAME deploy_data.properties|cut -d'=' -f2`"
+            echo "POSTMAN_USERNAME=${COGNITO_USERNAME}" >> $GITHUB_ENV
+
+            COGNITO_PASSWORD="`grep COGNITO_PASSWORD deploy_data.properties|cut -d'=' -f2`"
+            echo "POSTMAN_PASSWORD=${COGNITO_PASSWORD}" >> $GITHUB_ENV
 
         - name: Run python script to replace secrets
           run: |
