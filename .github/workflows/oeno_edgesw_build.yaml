@@ -65,8 +65,7 @@ jobs:
         - name: Get current date
           id: date
           run: |
-            echo ${{env.input_from_caller}} 
-            echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"  
+            echo ::set-output name=date::$(date +'%Y%m%dT%H%M%S')  
         
         - name: Git clone the repository
           uses: actions/checkout@v2
