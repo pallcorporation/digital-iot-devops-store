@@ -234,7 +234,8 @@ jobs:
           id: get_user_pool_id
           run: |
             echo "COGNITO_USERPOOL_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.COGNITO_USER_POOL_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.COGNITO_USER_POOL_ID_OUTPUT}}`].OutputValue' --output text)" >> $GITHUB_ENV
-      
+        
+
         - name: Run python script to seed policy to admins
           run: |
             ls

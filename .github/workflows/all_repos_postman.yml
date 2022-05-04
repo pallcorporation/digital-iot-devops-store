@@ -203,7 +203,7 @@ jobs:
       - name: Postman required variables
         run: |
           echo "CREATE_POSTMAN_USER=True" >> $GITHUB_ENV
-      
+      - run: echo ${{env.COGNITO_USERPOOL_ID}}
       - name: Cognito User Pool query
         id: get_user_pool_id
         run: |
