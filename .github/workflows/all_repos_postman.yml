@@ -45,6 +45,7 @@ env:
   REPO_NAME: ${{ github.event.repository.name }}
   ADMIN_USERS_POLICY_SEED: beer-ul-admin-users
   IAM_SERVICE_REPOSITORY: beer-be-iam-service
+  COGNITO_USER_POOL_STACK_ID: beer-cognito-0-user-pool
 
 permissions:
       id-token: write
