@@ -33,7 +33,7 @@ env:
   DEVOPS_STORE: "devops_store"
   CODEBUILD_BUILD_NUMBER: "1"
   ARTIFACT_NAME: "skid_broker_client"
-  ARTIFACT_DESCRIPTION: "IPC <--> PLC/HMI Communication Broker"
+  ARTIFACT_DESCRIPTION: "IPC to PLC/HMI Communication Broker"
   PY_KEY: ${{ secrets.PYINSTALLER_KEY}}
 
 
