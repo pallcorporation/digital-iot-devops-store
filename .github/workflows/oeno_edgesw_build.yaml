@@ -43,7 +43,7 @@ env:
   APP_NAME: ${{ inputs.APP_NAME}}
   ARTIFACT_DESCRIPTION: ${{ inputs.ARTIFACT_DESCRIPTION }}
   PY_KEY: ${{ secrets.PYINSTALLER_KEY }}
-  APP_SIGN_KEY: ${{ secrets.OENO_APP_SIGN_KEY }}
+  APP_SIGN_KEY: "72556366" #${{ secrets.OENO_APP_SIGN_KEY }}
   
 permissions:
       id-token: write
@@ -94,7 +94,7 @@ jobs:
         - name: Sign application
           run: |
             cd service 
-            C:\"Program Files (x86)"\"Windows Kits"\10\bin\x64\signtool.exe sign /debug /F ..\oenoflow_prod.pfx /P "${{ env.APP_SIGN_KEY }}" /T http://timestamp.digicert.com ..\service\dist\${{ env.ARTIFACT_NAME }}
+            C:\"Program Files (x86)"\"Windows Kits"\10\bin\x64\signtool.exe sign /debug /F ..\oenoflow_prod.pfx /P ${{ env.APP_SIGN_KEY }} /T http://timestamp.digicert.com ..\service\dist\${{ env.ARTIFACT_NAME }}
         
         - name: Bundle deployment assets
           run: |
