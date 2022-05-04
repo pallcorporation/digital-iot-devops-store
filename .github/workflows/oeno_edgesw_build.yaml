@@ -9,7 +9,11 @@ on:
      - integration
   workflow_call:
     inputs:
-      input_from_caller:
+      APP_NAME:
+        type: string
+      ARTIFACT_NAME:
+        type: string
+      ARTIFACT_DESCRIPTION:
         type: string
 
     secrets:
