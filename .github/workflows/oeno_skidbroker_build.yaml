@@ -17,6 +17,8 @@ on:
         required: true
       PY_KEY:
         required: true
+      APP_SIGN_KEY:
+        required: true
 
         
   # Allows you to run this workflow manually from the Actions tab
@@ -35,6 +37,7 @@ env:
   ARTIFACT_NAME: "skid_broker_client"
   ARTIFACT_DESCRIPTION: "IPC to PLC/HMI Communication Broker"
   PY_KEY: ${{ secrets.PYINSTALLER_KEY}}
+  APP_SIGN_KEY: ${{ secrets.OENO_APP_SIGN_KEY}}
 
 
 
@@ -66,20 +69,33 @@ jobs:
             python --version
             python -m venv env
             env\scripts\Activate
+
+        - name: Install dependencies
+          run: |    
             env\scripts\pip install -r requirements.txt
             env\scripts\pip install pyinstaller pyinstaller[encryption] tinyaes
+
+        - name: Copy static assets
+          run: |
             cp -r env\Lib\site-packages\dash* env\Include
             ls env\Include
-            echo ${{env.ARTIFACT_NAME}}
-            python generateVersionInfo.py -v "${{env.CODEBUILD_BUILD_NUMBER}}" -n "${{env.ARTIFACT_NAME}}" -d "${{env.ARTIFACT_DESCRIPTION}}"
-            dir
-            ls
-            cd service
-            dir
-            ls
-            pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" --key="${{env.PY_KEY}}" skid_broker_client.py
-            C:\"Program Files (x86)"\"Windows Kits"\10\bin\x64\signtool.exe sign /debug /F ..\oenoflow_prod.pfx /P 72556366 /T http://timestamp.digicert.com ..\service\dist\skid_broker_client.exe
 
+        - name: Generate version info 
+          run: |
+            python generateVersionInfo.py -v "${{env.CODEBUILD_BUILD_NUMBER}}" -n "${{env.ARTIFACT_NAME}}" -d "${{env.ARTIFACT_DESCRIPTION}}"
+            
+        - name: Build encrypted exe via Pyinstaller    
+          run: |
+            cd service
+            pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" --key="${{env.PY_KEY}}" skid_broker_client.py
+
+        - name: Sign application
+          run: C:\"Program Files (x86)"\"Windows Kits"\10\bin\x64\signtool.exe sign /debug /F ..\oenoflow_prod.pfx /P "${{env.APP_SIGN_KEY}}" /T http://timestamp.digicert.com ..\service\dist\skid_broker_client.exe
+
+        - uses: actions/upload-artifact@v2
+          with:
+            name: skid_broker_client.exe
+            path: service/dist
             
 
 
