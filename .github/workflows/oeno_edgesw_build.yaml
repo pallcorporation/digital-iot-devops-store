@@ -2,11 +2,12 @@ name: CI
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
+  # Triggers the workflow on push 
   push:
    branches:
      - dev
-     - integration
+     - beta
+     - prod
   workflow_call:
     inputs:
       APP_NAME:
@@ -98,7 +99,7 @@ jobs:
         - name: Sign application
           run: |
             cd service 
-            C:\"Program Files (x86)"\"Windows Kits"\10\bin\x64\signtool.exe sign /debug /F ..\oenoflow_prod.pfx /P 72556366 /T http://timestamp.digicert.com ..\service\dist\${{ env.ARTIFACT_NAME }}
+            C:\"Program Files (x86)"\"Windows Kits"\10\bin\x64\signtool.exe sign /debug /F ..\oenoflow_prod.pfx /P "${{ env.APP_SIGN_KEY }}" /T http://timestamp.digicert.com ..\service\dist\${{ env.ARTIFACT_NAME }}
         
         - name: Bundle deployment assets
           run: |
@@ -110,7 +111,9 @@ jobs:
             name: ${{ env.APP_NAME }}
             path: ota/
             
-
+        # Next steps to upload file to S3 softwarepackages- for beta or prod
+        # if branch == beta || prod
+        #   upload ota/* zip to ^^above archive to packageUpdates/appname
 
   
         
