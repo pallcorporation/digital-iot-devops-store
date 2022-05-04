@@ -15,6 +15,8 @@ on:
     secrets:
       envPAT:
         required: true
+      PY_KEY:
+        required: true
 
         
   # Allows you to run this workflow manually from the Actions tab
