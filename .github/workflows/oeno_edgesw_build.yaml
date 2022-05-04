@@ -107,8 +107,8 @@ jobs:
 
         - uses: actions/upload-artifact@v2
           with:
-            name: ${{ env.ARTIFACT_NAME }}
-            path: ota
+            name: ${{ env.APP_NAME }}
+            path: ota/
             
 
 
