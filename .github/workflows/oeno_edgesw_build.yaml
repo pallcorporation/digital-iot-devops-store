@@ -34,7 +34,8 @@ env:
   CDK_MODULE: "cdk_checkedout"
   DEVOPS_STORE: "devops_store"
   CODEBUILD_BUILD_NUMBER: "1"
-  ARTIFACT_NAME: "skid_broker_client"
+  ARTIFACT_NAME: "skid_broker_client.exe"
+  APP_NAME: "skid_broker"
   ARTIFACT_DESCRIPTION: "IPC to PLC/HMI Communication Broker"
   PY_KEY: ${{ secrets.PYINSTALLER_KEY}}
   APP_SIGN_KEY: ${{ secrets.OENO_APP_SIGN_KEY}}
@@ -59,7 +60,9 @@ jobs:
         # Get current time stamp to use as reference elsewhere
         - name: Get current date
           id: date
-          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"  
+          run: |
+            echo ${{env.input_from_caller}} 
+            echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"  
         
         - name: Git clone the repository
           uses: actions/checkout@v2
@@ -82,22 +85,27 @@ jobs:
 
         - name: Generate version info 
           run: |
-            python generateVersionInfo.py -v "${{env.CODEBUILD_BUILD_NUMBER}}" -n "${{env.ARTIFACT_NAME}}" -d "${{env.ARTIFACT_DESCRIPTION}}"
+            python generateVersionInfo.py -v "${{env.CODEBUILD_BUILD_NUMBER}}" -n "${{env.APP_NAME}}" -d "${{env.ARTIFACT_DESCRIPTION}}"
             
         - name: Build encrypted exe via Pyinstaller    
           run: |
             cd service
-            ..\env\scripts\pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" --key="${{env.PY_KEY}}" skid_broker_client.py
+            ..\env\scripts\pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" --key="${{env.PY_KEY}}" ${{ env.APP_NAME }}.py
 
         - name: Sign application
           run: |
             cd service 
-            C:\"Program Files (x86)"\"Windows Kits"\10\bin\x64\signtool.exe sign /debug /F ..\oenoflow_prod.pfx /P 72556366 /T http://timestamp.digicert.com ..\service\dist\skid_broker_client.exe
+            C:\"Program Files (x86)"\"Windows Kits"\10\bin\x64\signtool.exe sign /debug /F ..\oenoflow_prod.pfx /P 72556366 /T http://timestamp.digicert.com ..\service\dist\${{ env.ARTIFACT_NAME }}
+        
+        - name: Bundle deployment assets
+          run: |
+            cp .\service\dist\${{ env.ARTIFACT_NAME }} .\ota\${{ env.ARTIFACT_NAME }}
+            
 
         - uses: actions/upload-artifact@v2
           with:
-            name: skid_broker_client.exe
-            path: service/dist
+            name: ${{ env.ARTIFACT_NAME }}
+            path: ota
             
 
 
@@ -110,39 +118,6 @@ jobs:
         #   run: |
              #aws s3 cp urls.json s3://${{inputs.hosting_bucket}}-${{env.AWS_ENV_NAME}}
 
-
-
-# pre_build:  
-#     commands:  
-#       # Create Python virtual environment
-#       - 'echo "Creating Python Virtual Enironment"'
-#       - 'python -m venv env'
-#       # Activate environment and installrequired dependencies
-#       - 'echo "Installing dependencies"'
-#       - 'env\scripts\Activate' 
-#       - 'env\scripts\pip install -r requirements.txt'
-#       - 'env\scripts\pip install pyinstaller pyinstaller[encryption] tinyaes'
-
-#       # Move static assets and scripts to Include dir for exe build
-#       - 'echo "moving static required assets to Include directory for exe build"'
-#       #- 'cd env\Lib\site-packages'
-#       #- 'for /d %a in ("dash*") do xcopy /S "%a"/I /Y "..\..\Include\%a"'
-#       - 'cp -r env\Lib\site-packages\dash* env\Include'
-#       - 'ls env\Include'
-#   build:  
-#     commands:  
-#       # Create asset verison info
-#       - 'python generateVersionInfo.py -v $Env:CODEBUILD_BUILD_NUMBER -n $Env:ARTIFACT_NAME -d $Env:ARTIFACT_DESCRIPTION'
-#       # Build Executible
-#       - 'cd service'
-#       - '..\env\Scripts\pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" --key=$Env:PYINSTALLER_KEY skid_broker_client.py'
-#       # Bundle PLC Snap7 dependency dll with exe 
-#       - 'cp .\snap7.dll .\dist'
-#       # Sign exe with Pall Corp Oenoflow Cert
-#       - 'C:\"Program Files (x86)"\"Windows Kits"\8.1\bin\x64\signtool sign /debug /F ..\oenoflow_prod.pfx /P 72556366 /T http://timestamp.digicert.com ..\service\dist\skid_broker_client.exe'
-#   post_build:  
-#     commands:  
-#       - 'mv .\dist\skid_broker_client.exe .\dist\$Env:ARTIFACT_NAME.exe'
 
 
         
