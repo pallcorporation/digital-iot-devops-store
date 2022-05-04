@@ -46,6 +46,7 @@ env:
   ADMIN_USERS_POLICY_SEED: beer-ul-admin-users
   IAM_SERVICE_REPOSITORY: beer-be-iam-service
   COGNITO_USER_POOL_STACK_ID: beer-cognito-0-user-pool
+  COGNITO_USER_POOL_ID_OUTPUT: beercognito0userpoolidoutput
 
 permissions:
       id-token: write
@@ -203,12 +204,13 @@ jobs:
       - name: Postman required variables
         run: |
           echo "CREATE_POSTMAN_USER=True" >> $GITHUB_ENV
-      - run: echo ${{env.COGNITO_USERPOOL_ID}}
+      - run: echo ${{env.COGNITO_USER_POOL_STACK_ID}}
       - name: Cognito User Pool query
         id: get_user_pool_id
         run: |
           echo "COGNITO_USERPOOL_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.COGNITO_USER_POOL_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.COGNITO_USER_POOL_ID_OUTPUT}}`].OutputValue' --output text)" >> $GITHUB_ENV
 
+      - run: echo ${{env.COGNITO_USERPOOL_ID}}
       
 
       - name: Run python script to seed policy to admins
