@@ -57,6 +57,8 @@ env:
   IAM_SERVICE_REPOSITORY: beer-be-iam-service
   COGNITO_USER_POOL_STACK_ID: beer-cognito-0-user-pool
   COGNITO_USER_POOL_ID_OUTPUT: beercognito0userpoolidoutput
+  API_GATEWAY_STACKID_OUT: beer-apigateway-0-iot-apigw
+  API_GATEWAY_URL_OUT: beerapigateway0iotapigwurloutput
 
   
 
