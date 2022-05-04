@@ -43,7 +43,7 @@ env:
   APP_NAME: ${{ inputs.APP_NAME}}
   ARTIFACT_DESCRIPTION: ${{ inputs.ARTIFACT_DESCRIPTION }}
   PY_KEY: ${{ secrets.PYINSTALLER_KEY }}
-  APP_SIGN_KEY: "72556366" #${{ secrets.OENO_APP_SIGN_KEY }}
+  APP_SIGN_KEY: ${{ secrets.OENO_APP_SIGN_KEY }}
   
 permissions:
       id-token: write
