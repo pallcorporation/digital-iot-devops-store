@@ -94,7 +94,7 @@ jobs:
         - name: Build encrypted exe via Pyinstaller    
           run: |
             cd service
-            ..\env\scripts\pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" --key="${{env.PY_KEY}}" ${{ env.APP_NAME }}.py
+            ..\env\scripts\pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" --key=${{env.PY_KEY}} ${{ env.APP_NAME }}.py
 
         - name: Sign application
           run: |
