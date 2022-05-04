@@ -42,14 +42,9 @@ env:
   ARTIFACT_NAME: ${{ inputs.ARTIFACT_NAME }}
   APP_NAME: ${{ inputs.APP_NAME}}
   ARTIFACT_DESCRIPTION: ${{ inputs.ARTIFACT_DESCRIPTION }}
-  PY_KEY: ${{ secrets.PYINSTALLER_KEY}}
-  APP_SIGN_KEY: ${{ secrets.OENO_APP_SIGN_KEY}}
-
-
-
-
+  PY_KEY: ${{ secrets.PYINSTALLER_KEY }}
+  APP_SIGN_KEY: ${{ secrets.OENO_APP_SIGN_KEY }}
   
-
 permissions:
       id-token: write
       contents: read    # This is required for actions/checkout@v1
@@ -94,7 +89,7 @@ jobs:
         - name: Build encrypted exe via Pyinstaller    
           run: |
             cd service
-            ..\env\scripts\pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" --key=${{env.APP_SIGN_KEY}} ${{ env.APP_NAME }}.py
+            ..\env\scripts\pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" --key=${{env.PY_KEY}} ${{ env.APP_NAME }}.py
 
         - name: Sign application
           run: |
