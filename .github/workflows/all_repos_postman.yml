@@ -20,6 +20,10 @@ on:
         required: true
       postman_password:
         required: true
+      api_gateway_url_dev:
+        required: true
+      api_gateway_url_integration:
+        required: true
       cognito_dev_user_pool_secret:
         required: true
       cognito_integration_user_pool_secret:
@@ -383,6 +387,18 @@ jobs:
           then
             echo "POSTMAN_PASSWORD=${{secrets.postman_password}}" >> $GITHUB_ENV
             echo "::set-output name=postman_password::${{secrets.postman_password}}"
+          fi
+      
+      - name: Set environment variables for postman API Url
+        id: api_url
+        run: |
+          if [[ ${BRANCH_NAME} == 'dev' ]]
+          then
+            echo "API_GATEWAY_URL=${{secrets.api_gateway_url_dev}}" >> $GITHUB_ENV
+
+          elif [[ ${BRANCH_NAME} == 'integration' ]]
+          then
+            echo "API_GATEWAY_URL=${{secrets.api_gateway_url_integration}}" >> $GITHUB_ENV
           fi
 
       - name: Run python script to replace secrets
