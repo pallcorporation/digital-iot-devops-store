@@ -283,7 +283,7 @@ jobs:
           working-directory: ${{env.CDK_MODULE}}
         
         - name: Cleanup API Gateway routes
-          if: ${{steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
+          if: ${{steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.skip_cdk.outputs.bypass_cdk !='true' && github.ref == 'refs/heads/dev' && github.ref != 'refs/heads/dev'}}
           run: |
             python3 src/aws_modules/APIGatewayv2/apigateway_cleanup.py
              
