@@ -420,7 +420,7 @@ jobs:
       - name: Admin users repo clone
         uses: actions/checkout@v2
         with:
-          token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+          token: ${{ secrets.envPAT }}
           repository: pallcorporation/beer-ul-admin-users
           ref: main
           path: ${{env.ADMIN_USERS_POLICY_SEED}}
@@ -432,7 +432,7 @@ jobs:
       - name: Project files clone
         uses: actions/checkout@v2
         with:
-          token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+          token: ${{ secrets.envPAT }}
           repository: pallcorporation/beer-project-properties
           ref: main
           path: ${{env.PROJECT_FILES_DIRECTORY}}
