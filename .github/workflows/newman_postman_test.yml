@@ -174,6 +174,12 @@ jobs:
             echo "::set-output name=aws_cloud_front_id::${cloud_front_id}"
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
         
+        - name: API Gateway output
+          run: |
+            echo "API_GATEWAY_STACKID_OUT=beerapigateway0iotapigwurloutput" >> $GITHUB_ENV
+            echo "API_GATEWAY_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.API_GATEWAY_STACKID_OUT}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.API_GATEWAY_URL_OUT}}`].OutputValue' --output text)" >> $GITHUB_ENV
+
+        
         # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
         - name: Arn to use
           id: aws_assume_role
@@ -211,22 +217,28 @@ jobs:
           run: |
             if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'dev' ]]
             then
-              echo "POSTMAN_USERNAME=${{secrets.POSTMAN_USERNAME_SECRET}}" >> $GITHUB_ENV
-              echo "POSTMAN_PASSWORD=${{secrets.POSTMAN_PASSWORD_SECRET}}" >> $GITHUB_ENV
               echo "COGNITO_USERPOOL_SECRET=${{secrets.COGNITO_DEV_USERPOOL_SECRET_PHRASE}}" >> $GITHUB_ENV
             elif [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'integration' ]]
             then
-              echo "POSTMAN_USERNAME=${{secrets.POSTMAN_USERNAME_SECRET}}" >> $GITHUB_ENV
-              echo "POSTMAN_PASSWORD=${{secrets.POSTMAN_PASSWORD_SECRET}}" >> $GITHUB_ENV
               echo "COGNITO_USERPOOL_SECRET=${{secrets.COGNITO_INTEGRATION_USERPOOL_SECRET_PHRASE}}" >> $GITHUB_ENV
             else
-              echo "POSTMAN_USERNAME=${{secrets.POSTMAN_USERNAME_SECRET}}" >> $GITHUB_ENV
-              echo "POSTMAN_PASSWORD=${{secrets.POSTMAN_PASSWORD_SECRET}}" >> $GITHUB_ENV
               echo "COGNITO_USERPOOL_SECRET=${{secrets.COGNITO_DEV_USERPOOL_SECRET_PHRASE}}" >> $GITHUB_ENV
             fi
         
-      
+        - name: Postman required variables
+          run: |
+            echo "CREATE_POSTMAN_USER=True" >> $GITHUB_ENV
+        
+        - name: Read output file from seed
+          run: |
+            cat deploy_data.properties
 
+            COGNITO_USERNAME="`grep COGNITO_USERNAME deploy_data.properties|cut -d'=' -f2`"
+            echo "POSTMAN_USERNAME=${COGNITO_USERNAME}" >> $GITHUB_ENV
+
+            COGNITO_PASSWORD="`grep COGNITO_PASSWORD deploy_data.properties|cut -d'=' -f2`"
+            echo "POSTMAN_PASSWORD=${COGNITO_PASSWORD}" >> $GITHUB_ENV
+      
         - name: Run python script to seed policy to admins
           run: |
             ls
@@ -240,7 +252,6 @@ jobs:
           run: |
             python3 ${{env.POSTMAN_COLLECTION_DIRECTORY}}/replace_secrets.py
             ls
-            
             
         - name: Move postman files (authorizer test)
           if: ${{env.REPO_NAME == 'beer-be-api-authorizer' }}
