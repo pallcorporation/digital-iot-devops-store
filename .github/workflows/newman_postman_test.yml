@@ -246,6 +246,10 @@ jobs:
             pip3 install boto3
             pip3 install pytz
             python3 ${{env.ADMIN_USERS_POLICY_SEED}}/admins.py
+        
+        - name: Run python script to Confirm or create envrionment admin user
+          run: |
+            python3 ${{env.ADMIN_USERS_POLICY_SEED}}/create_environment_user.py
 
         - name: Read output file from seed
           run: |
