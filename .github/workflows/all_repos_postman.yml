@@ -217,16 +217,18 @@ jobs:
     strategy:
       matrix:
         microservice-repos:
+          - beer-be-area-service
           - beer-be-block-service
+          - beer-be-cluster-service
           - beer-be-company-service
+          - beer-be-companysite-service
           - beer-be-consumable-service
           - beer-be-iam-service
           - beer-be-permission-service
-          - beer-be-companysite-service
-          - beer-be-area-service
           - beer-be-group-service
           - beer-be-settings-service
           - beer-be-system-service
+          
       fail-fast: false
     steps:
       # Get current time stamp to use as reference elsewhere
