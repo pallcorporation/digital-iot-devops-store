@@ -36,7 +36,7 @@ env:
   PROJECT_FILES_GIT : "beer-project-properties.git"
   ORGANIZATION: "pallcorporation"
   PROJECT_FILES_NAME: "project.properties"
-  PROJECT_FILES_DIRECTORY: "project_file"
+  PROJECT_FILES_DIRECTORY: "beer-project-properties"
   IMAGE_REGISTRY: "ghcr.io"
   IMAGE_REGISTRY_USERNAME: ${{github.actor}}
   IMAGE_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -272,8 +272,8 @@ jobs:
           ref: main
           path: ${{env.PROJECT_FILES_DIRECTORY}}
 
-      - name: Copy Project files
-        run: cp -a ${{env.PROJECT_FILES_DIRECTORY}}/* /${{ matrix.microservice-repos }}/${{env.PROJECT_FILES_DIRECTORY}}
+      #- name: Copy Project files
+      #  run: cp -a ${{env.PROJECT_FILES_DIRECTORY}}/* ${{ matrix.microservice-repos }}/${{env.PROJECT_FILES_DIRECTORY}}
       
       - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
         id: project_constants
