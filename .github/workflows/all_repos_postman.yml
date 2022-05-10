@@ -273,7 +273,7 @@ jobs:
           path: ${{env.PROJECT_FILES_DIRECTORY}}
 
       - name: Copy Project files
-        run: cp -a ${{env.PROJECT_FILES_DIRECTORY}}/* ${{ matrix.microservice-repos }}/${{env.PROJECT_FILES_DIRECTORY}}
+        run: cp -a ${{env.PROJECT_FILES_DIRECTORY}}/* /${{ matrix.microservice-repos }}/${{env.PROJECT_FILES_DIRECTORY}}
       
       - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
         id: project_constants
