@@ -315,6 +315,7 @@ jobs:
           if: ${{inputs.build_project_type == 'nx'}}
           run: |
             pip3 install boto3
+            pip3 install jproperties
             mv .env .env_old
             python3 ${{env.PROJECT_FILES_DIRECTORY}}/create_env_file.py
             cat .env
