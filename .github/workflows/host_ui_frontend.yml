@@ -140,7 +140,7 @@ jobs:
           if: contains( github.ref, 'users' )
           run: |
             echo "BRANCH_NAME=dev" >> $GITHUB_ENV
-            echo "GITHUB_USER=True" >> $GITHUB_ENV
+            echo "USE_GITHUB_USER=True" >> $GITHUB_ENV
         
         - name: Branch if Main
           if: contains( github.ref, 'main' )
