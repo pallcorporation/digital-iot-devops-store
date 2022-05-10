@@ -316,7 +316,7 @@ jobs:
           run: |
             pip3 install boto3
             mv .env .env_old
-            python3 ${{env.PROJECT_FILES_DIRECTORY}}/create_envfile.py
+            python3 ${{env.PROJECT_FILES_DIRECTORY}}/create_env_file.py
             cat .env
 
         - name: Build nx Frontend
