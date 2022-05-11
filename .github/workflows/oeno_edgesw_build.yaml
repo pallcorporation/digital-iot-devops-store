@@ -110,15 +110,34 @@ jobs:
         # if branch == beta || prod
         #   upload ota/* zip to ^^above archive to packageUpdates/appname
 
-  
-        
-        
-        # Upload a file to AWS s3
-        # - name:  Deploy to S3 - Copy Build folder to s3
-        # #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
-        #   run: |
-             #aws s3 cp urls.json s3://${{inputs.hosting_bucket}}-${{env.AWS_ENV_NAME}}
+         name: Github Tag with semantic versioning
+          id: version_number
+          uses: hennejg/github-tag-action@v4.3.1
+          with:
+            github_token: ${{ secrets.GITHUB_TOKEN }}
+            default_bump: minor
+            tag_prefix: v
+            release_branches: main
 
+        - name: Version number
+          run: |
+            echo "${{ steps.version_number.outputs.new_version }} is the new version"
+            echo "TAG_VERSION=${{ steps.version_number.outputs.new_version }}" >> $GITHUB_ENV
+        
+        # do a look up by branch for AWS account number
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@master
+          with:
+            role-to-assume: arn:aws:iam::142557150669:role/oeno-github-oidc-access-role
+            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            aws-region: ${{ env.AWS_REGION }}
+        
+        Upload a file to AWS s3
+        - name:  Deploy to S3 - Copy Build folder to s3
+        #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
+          run: |
+             aws s3 cp readme.md s3://mitch-stage-clone-bucket
+              
 
 
         
