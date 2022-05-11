@@ -66,6 +66,20 @@ jobs:
         - name: Git clone the repository
           uses: actions/checkout@v2
 
+        # do a look up by branch for AWS account number
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@master
+          with:
+            role-to-assume: arn:aws:iam::142557150669:role/oeno-github-oidc-access-role
+            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            aws-region: ${{ env.AWS_REGION }}
+        
+        #Upload a file to AWS s3
+        - name:  Deploy to S3 - Copy Build folder to s3
+        #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
+          run: |
+             aws s3 cp readme.md s3://mitch-stage-clone-bucket
+
         - name: Set up build env
           run: |
             python --version
