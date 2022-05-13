@@ -511,16 +511,30 @@ jobs:
             role-to-assume: ${{steps.aws_assume_role_tools.outputs.role_arn1}}
             role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
             aws-region: ${{ env.AWS_REGION }}
+        
+        - name: Application UI Version
+          if: (inputs.repo_version == 'main')
+          run: |
+            
+            if [[ ${{inputs.repo_version}} == 'main' ]]
+            then
+              UI_VERSION=$(aws s3 ls beer-ul-nx-workspace --recursive | sort | tail -n 1 | awk '{print $4}')
+            else
+              UI_VERSION=$(${{inputs.repo_version}}.zip)
+            fi
+
+            echo "TARGET_UI_VERSION=${UI_VERSION}" >> $GITHUB_ENV
+
 
         - name: Download from s3
           run: |
             mkdir deployment_stage
-            aws s3 cp s3://${{inputs.tools_bucket}}/${{inputs.repo_version}}.zip ./
+            aws s3 cp s3://${{inputs.tools_bucket}}/${{env.TARGET_UI_VERSION}} ./
         
         - name: 'Unzip project'
           uses: montudor/action-zip@v1.0.0
           with:
-            args: unzip -qq ${{inputs.repo_version}}.zip -d deployment_stage
+            args: unzip -qq ${{env.TARGET_UI_VERSION}} -d deployment_stage
         
         - name: Configure AWS credentials ${{env.BRANCH_NAME}}
           uses: aws-actions/configure-aws-credentials@master
