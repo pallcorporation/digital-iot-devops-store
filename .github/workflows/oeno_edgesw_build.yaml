@@ -58,7 +58,7 @@ jobs:
     outputs:
       aws_account: ${{ steps.project_constants.outputs.env_id }}
       oidc_role: ${{ steps.project_constants.outputs.oidc_role }}
-      aws_assume_role: ${{ steps.project_constants.outputs.aws_assume_role}}
+      aws_assume_role: ${{ steps.project_constants.outputs.role_arn1}}
       branch_name: ${{ env.BRANCH_NAME }}
       date_timestamp: ${{ steps.project_constants.outputs.date}}
     steps:
