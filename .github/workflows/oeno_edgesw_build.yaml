@@ -60,7 +60,7 @@ jobs:
       oidc_role: ${{ steps.project_constants.outputs.oidc_role }}
       aws_assume_role: ${{ steps.aws_assume_role.outputs.role_arn1}}
       branch_name: ${{ env.BRANCH_NAME }}
-      bucket_name: ${{ steps.project_constatns.outputs.bucket_name }}
+      bucket_name: ${{ steps.project_constants.outputs.bucket_name }}
       date_timestamp: ${{ steps.project_constants.outputs.date}}
     steps:
       # Get current time stamp to use as reference elsewhere
@@ -125,6 +125,7 @@ jobs:
     needs: setup
     if: github.repository != 'pallcorporation/digital-iot-devops-store'
     runs-on: windows-2019
+    input:
       
     steps:
         # Get current time stamp to use as reference elsewhere
