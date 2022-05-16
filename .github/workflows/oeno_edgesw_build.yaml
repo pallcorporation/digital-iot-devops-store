@@ -62,7 +62,7 @@ jobs:
           id: date
           run: |
             $today = Get-Date -format "yyyyMMddHMS"
-            echo "::setoutput name=$today"
+            echo "::setoutput name=date::$today"
         
         - name: Git clone the repository
           uses: actions/checkout@v2
