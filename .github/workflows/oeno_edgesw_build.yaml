@@ -7,7 +7,7 @@ on:
    branches:
      - dev
      - beta
-     - prod
+     - main
   workflow_call:
     inputs:
       APP_NAME:
@@ -65,12 +65,49 @@ jobs:
         
         - name: Git clone the repository
           uses: actions/checkout@v2
+          
+         # Get branch name to use for look up
+        - name: Branch if Dev
+          if: contains( github.ref, 'dev' )
+          run: |
+            echo "BRANCH_NAME=dev" >> $GITHUB_ENV
+        
+        - name: Branch if Main
+          if: contains( github.ref, 'main' )
+          run: |
+            echo "BRANCH_NAME=prod" >> $GITHUB_ENV
+        
+        - name: Branch if BETA
+          if: contains( github.ref, 'beta' )
+          run: |
+            echo "BRANCH_NAME=beta" >> $GITHUB_ENV
+            
+        
+        - name: Echo branch
+          run: echo "${BRANCH_NAME} is the branch name to use in lookup"
+
+        # Read of project files and set to variables
+        - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
+          id: project_constants
+          run: |
+            account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=env_id::${account_id}"
+            
+            oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=oidc_role::${oidc_role_name}"
+
+            cdk_deploy_role_arn="`grep aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
+            
+            aws_bucket="`grep aws_${BRANCH_NAME}_software_bucket ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=aws_bucket_name::${aws_bucket}"
+            echo $aws_bucket
 
         # do a look up by branch for AWS account number
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@master
           with:
-            role-to-assume: arn:aws:iam::142557150669:role/oeno-github-oidc-access-role
+            role-to-assume: arn:aws:iam::${account_id}:role/oeno-${oidc_role}-role
             role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
             aws-region: ${{ env.AWS_REGION }}
         
@@ -78,7 +115,7 @@ jobs:
         - name:  Deploy to S3 - Copy Build folder to s3
         #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
           run: |
-             aws s3 cp readme.md s3://mitch-stage-clone-bucket
+             aws s3 cp readme.md s3://$aws_bucket
 
         - name: Set up build env
           run: |
