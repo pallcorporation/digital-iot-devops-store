@@ -90,17 +90,20 @@ jobs:
         - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
           id: project_constants
           run: |
-            account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=env_id::${account_id}"
+            $pprop = select-string aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}; $account_id = $pprop -split "=",2
+            account_id="$account_id"
+            echo $account_id
             
-            oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=oidc_role::${oidc_role_name}"
+            $pprop = select-string aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}; $oidc_role_name = $pprop -split "=",2
+            oidc_role_name="$oidc_role_name"
+            echo $oidc_role_name
 
-            cdk_deploy_role_arn="`grep aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
+            $pprop = select-string aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}; $cdk_deploy_role_arn = $pprop -split "=",2
+            cdk_deploy_role_arn="$cdk_deploy_role_arn"
+            echo $cdk_deploy_role_arn
             
-            aws_bucket="`grep aws_${BRANCH_NAME}_software_bucket ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=aws_bucket::${aws_bucket}"
+            $pprop = select-string aws_${BRANCH_NAME}_software_bucket ${{env.PROJECT_FILES_NAME}}; $aws_bucket = $pprop -split "=",2
+            aws_bucket="$aws_bucket"
             echo $aws_bucket
 
         # do a look up by branch for AWS account number
