@@ -125,7 +125,6 @@ jobs:
     needs: setup
     if: github.repository != 'pallcorporation/digital-iot-devops-store'
     runs-on: windows-2019
-    input:
       
     steps:
         # Get current time stamp to use as reference elsewhere
