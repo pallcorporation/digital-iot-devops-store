@@ -65,7 +65,7 @@ jobs:
         
         - name: Git clone the repository
           uses: actions/checkout@v2
-          
+
          # Get branch name to use for look up
         - name: Branch if Dev
           if: contains( github.ref, 'dev' )
@@ -100,7 +100,7 @@ jobs:
             echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
             
             aws_bucket="`grep aws_${BRANCH_NAME}_software_bucket ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=aws_bucket_name::${aws_bucket}"
+            echo "::set-output name=aws_bucket::${aws_bucket}"
             echo $aws_bucket
 
         # do a look up by branch for AWS account number
