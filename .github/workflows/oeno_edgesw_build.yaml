@@ -91,29 +91,34 @@ jobs:
           id: project_constants
           run: |
             $pprop = select-string aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}; $account_id = $pprop -split "=",2
-            $account_id[1]
-            echo "::set-output name=env_id::${account_id[1]}"
+            $env_id=$account_id[1]
             
             $pprop = select-string aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}; $oidc_role_name = $pprop -split "=",2
-            $oidc_role_name[1]
-            echo "::set-output name=oidc_role::${oidc_role_name[1]}"
-
+            $oidc_role=$oidc_role_name[1]
 
             $pprop = select-string aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}; $cdk_deploy_role_arn = $pprop -split "=",2
             $cdk_deploy_role_arn[1]
-            echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn[1]}"
+            echo ::set-output name=cdk_deploy::${cdk_deploy_role_arn[1]}
             
             $pprop = select-string aws_${BRANCH_NAME}_software_bucket ${{env.PROJECT_FILES_NAME}}; $aws_bucket = $pprop -split "=",2
             $aws_bucket[1]
-            echo "::set-output name=aws_bucket_name::${aws_bucket[1]}"
+            echo ::set-output name=aws_bucket_name::${aws_bucket[1]}
 
         # do a look up by branch for AWS account number
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@master
           with:
-            role-to-assume: arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/oeno-${{ steps.project_constants.outputs.oidc_role}}-role
+            role-to-assume: arn:aws:iam::${env_id}:role/oeno-${oidc_role}-role
             role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
             aws-region: ${{ env.AWS_REGION }}
+
+        # # do a look up by branch for AWS account number
+        # - name: Configure AWS credentials
+        #   uses: aws-actions/configure-aws-credentials@master
+        #   with:
+        #     role-to-assume: arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/oeno-${{ steps.project_constants.outputs.oidc_role}}-role
+        #     role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+        #     aws-region: ${{ env.AWS_REGION }}
         
         #Upload a file to AWS s3
         - name:  Deploy to S3 - Copy Build folder to s3
