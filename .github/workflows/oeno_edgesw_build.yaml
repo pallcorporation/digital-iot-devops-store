@@ -110,7 +110,7 @@ jobs:
           cdk_deploy_role_arn="`grep aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
           echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
 
-          bucket_name="`grep aws_${BRANCH_NAME}_software_bucket_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          bucket_name="`grep aws_${BRANCH_NAME}_software_bucket ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
           echo $bucket_name is the bucket name
           echo "::set-output name=bucket_name::${bucket_name}"
           
@@ -120,6 +120,7 @@ jobs:
         id: aws_assume_role
         run: |
           echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
+ 
   AWS-WIN-EXE-BUILD:
     needs: setup
     if: github.repository != 'pallcorporation/digital-iot-devops-store'
@@ -132,6 +133,7 @@ jobs:
           run: |
             $today = Get-Date -format "yyyyMMddHMS"
             echo "::setoutput name=date::$today"
+            echo ${{needs.setpup.outputs.bucket_name}}
         
         - name: Git clone the repository
           uses: actions/checkout@v2
