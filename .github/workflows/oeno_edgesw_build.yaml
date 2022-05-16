@@ -51,8 +51,72 @@ permissions:
       packages: write
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
-jobs:  
+jobs:
+  setup:
+    if: github.repository != 'pallcorporation/digital-iot-devops-store'
+    runs-on: ubuntu-latest
+    outputs:
+      aws_account: ${{ steps.project_constants.outputs.env_id }}
+      oidc_role: ${{ steps.project_constants.outputs.oidc_role }}
+      aws_assume_role: ${{ steps.project_constants.outputs.aws_assume_role}}
+      branch_name: ${{ env.BRANCH_NAME }}
+      date_timestamp: ${{ steps.project_constants.outputs.date}}
+    steps:
+      # Get current time stamp to use as reference elsewhere
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+      
+      - name: Branch if Dev
+        if: contains( github.ref, 'dev' )
+        run: |
+          echo "BRANCH_NAME=dev" >> $GITHUB_ENV
+        
+      - name: Branch if Main
+        if: contains( github.ref, 'main' )
+        run: |
+          echo "BRANCH_NAME=prod" >> $GITHUB_ENV
+      
+      - name: Branch if BETA
+        if: contains( github.ref, 'beta' )
+        run: |
+          echo "BRANCH_NAME=beta" >> $GITHUB_ENV
+          
+      
+      - name: Echo branch
+        run: echo "${BRANCH_NAME} is the branch name to use in lookup"
+
+      - name: Project files clone
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/oeno-project-properties
+          ref: main
+          path: ${{env.PROJECT_FILES_DIRECTORY}}
+
+      - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
+        id: project_constants
+        run: |
+          account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "::set-output name=env_id::${account_id}"
+          echo $account_id is the account id
+          echo "AWS_ACCOUNT=${account_id}" >> $GITHUB_ENV
+          
+
+          oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "::set-output name=oidc_role::${oidc_role_name}"
+
+          cdk_deploy_role_arn="`grep aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
+          
+        working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
+      
+      - name: Arn to use
+        id: aws_assume_role
+        run: |
+          echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
   AWS-WIN-EXE-BUILD:
+    needs: setup
     if: github.repository != 'pallcorporation/digital-iot-devops-store'
     runs-on: windows-2019
       
@@ -111,8 +175,8 @@ jobs:
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@master
           with:
-            role-to-assume: arn:aws:iam::${{steps.project_constants.env_id}}:role/oeno-${{steps.project_constants.oidc_role}}-role
-            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            role-to-assume: ${{ needs.setup.outputs.aws_assume_role }}
+            role-session-name: ${{ github.event.repository.name }}-${{ needs.setup.outputs.date_timestamp }}
             aws-region: ${{ env.AWS_REGION }}
 
         # # do a look up by branch for AWS account number
