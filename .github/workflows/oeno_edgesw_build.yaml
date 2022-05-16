@@ -104,6 +104,7 @@ jobs:
           
 
           oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo $oidc_role_name is the role name
           echo "::set-output name=oidc_role::${oidc_role_name}"
 
           cdk_deploy_role_arn="`grep aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
