@@ -124,19 +124,16 @@ jobs:
           id: aws_assume_role
           run: |
             echo "::set-output name=role_arn1::arn:aws:iam::${{steps.project_constants.outputs.tools_account_id}}:role/${{ steps.project_constants.outputs.oidc_role_name}}"
-            echo "AWS_ACCESS_ROLE=arn:aws:iam::${{steps.project_constants.outputs.tools_account_id}}:role/${{ steps.project_constants.outputs.oidc_role_name}}" >> $GITHUB_ENV
         
-        - name: Tools Arn to use
+        - name: Beta Arn to use
           id: aws_beta_assume_role
           run: |
-            echo "::set-output name=role_arn1::arn:aws:iam::${{steps.project_constants.outputs.beta_account}}:role/${{ steps.project_constants.outputs.beta_oidc_role}}"
-            echo "AWS_ACCESS_ROLE=arn:aws:iam::${{steps.project_constants.outputs.beta_account}}:role/${{ steps.project_constants.outputs.beta_oidc_role}}" >> $GITHUB_ENV
+            echo "::set-output name=role_arn1::arn:aws:iam::${{steps.project_constants.outputs.beta_account_id}}:role/${{ steps.project_constants.outputs.beta_oidc_role}}"
         
-        - name: Tools Arn to use
+        - name: Prod Arn to use
           id: aws_prod_assume_role
           run: |
-            echo "::set-output name=role_arn1::arn:aws:iam::${{steps.project_constants.outputs.prod_account}}:role/${{ steps.project_constants.outputs.prod_oidc_role}}"
-            echo "AWS_ACCESS_ROLE=arn:aws:iam::${{steps.project_constants.outputs.prod_account}}:role/${{ steps.project_constants.outputs.prod_oidc_role}}" >> $GITHUB_ENV
+            echo "::set-output name=role_arn1::arn:aws:iam::${{steps.project_constants.outputs.prod_account_id}}:role/${{ steps.project_constants.outputs.prod_oidc_role}}"
 
       
       # https://github.com/marketplace/actions/github-tag-with-semantic-versioning
@@ -382,7 +379,7 @@ jobs:
           
         - name:  Deploy to S3 - Copy Build folder to s3
           run: |
-            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}/beta
+            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}/test/beta
         
         - name: Microsoft Teams Notification
           if: success()
@@ -505,7 +502,7 @@ jobs:
           
         - name:  Deploy to S3 - Copy Build folder to s3
           run: |
-            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}
+            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}/test/prod
         
         - name: Microsoft Teams Notification
           if: success()
