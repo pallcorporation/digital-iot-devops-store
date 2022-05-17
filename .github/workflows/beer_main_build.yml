@@ -124,19 +124,16 @@ jobs:
           id: aws_assume_role
           run: |
             echo "::set-output name=role_arn1::arn:aws:iam::${{steps.project_constants.outputs.tools_account_id}}:role/${{ steps.project_constants.outputs.oidc_role_name}}"
-            echo "AWS_ACCESS_ROLE=arn:aws:iam::${{steps.project_constants.outputs.tools_account_id}}:role/${{ steps.project_constants.outputs.oidc_role_name}}" >> $GITHUB_ENV
         
         - name: Beta Arn to use
           id: aws_beta_assume_role
           run: |
             echo "::set-output name=role_arn1::arn:aws:iam::${{steps.project_constants.outputs.beta_account_id}}:role/${{ steps.project_constants.outputs.beta_oidc_role}}"
-            echo "AWS_ACCESS_ROLE=arn:aws:iam::${{steps.project_constants.outputs.beta_account_id}}:role/${{ steps.project_constants.outputs.beta_oidc_role}}" >> $GITHUB_ENV
         
         - name: Prod Arn to use
           id: aws_prod_assume_role
           run: |
             echo "::set-output name=role_arn1::arn:aws:iam::${{steps.project_constants.outputs.prod_account_id}}:role/${{ steps.project_constants.outputs.prod_oidc_role}}"
-            echo "AWS_ACCESS_ROLE=arn:aws:iam::${{steps.project_constants.outputs.prod_account_id}}:role/${{ steps.project_constants.outputs.prod_oidc_role}}" >> $GITHUB_ENV
 
       
       # https://github.com/marketplace/actions/github-tag-with-semantic-versioning
