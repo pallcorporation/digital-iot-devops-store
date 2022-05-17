@@ -529,7 +529,7 @@ jobs:
         - name: Download from s3
           run: |
             mkdir deployment_stage
-            aws s3 cp s3://${{inputs.tools_bucket}}/${{env.TARGET_UI_VERSION}} ./
+            aws s3 cp s3://${{inputs.tools_bucket}}/${{env.BRANCH_NAME}}/${{env.TARGET_UI_VERSION}} ./
         
         - name: 'Unzip project'
           uses: montudor/action-zip@v1.0.0
