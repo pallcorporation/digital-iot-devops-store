@@ -16,6 +16,8 @@ on:
         type: string
       ARTIFACT_DESCRIPTION:
         type: string
+      UPLOAD_NAME:
+        type: string
 
     secrets:
       envPAT:
@@ -204,7 +206,7 @@ jobs:
              cd ota
              Compress-Archive -Path * -DestinationPath ${{ env.UPLOAD_NAME}}.zip  
              aws s3 cp ${{ env.UPLOAD_NAME}}.zip s3://${{needs.setup.outputs.bucket_name}}/packageUpdates/${{ env.UPLOAD_NAME}}/
-             
+
         # Next steps to upload file to S3 softwarepackages- for beta or prod
         # if branch == beta || prod
         #   upload ota/* zip to ^^above archive to packageUpdates/appname
