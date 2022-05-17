@@ -318,7 +318,7 @@ jobs:
             pip3 install jproperties
             mv .env .env_old
             python3 ${{env.PROJECT_FILES_DIRECTORY}}/create_env_file.py
-            cat .env
+
 
         - name: Build nx Frontend
           if: ${{inputs.build_project_type == 'nx'}}
