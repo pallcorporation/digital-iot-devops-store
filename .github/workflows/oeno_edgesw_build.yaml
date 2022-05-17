@@ -133,10 +133,10 @@ jobs:
         #     tag_prefix: v
         #     release_branches: main
 
-        - name: Version number
-          run: |
-            echo "${{ steps.version_number.outputs.new_version }} is the new version"
-            echo "TAG_VERSION=${{ steps.version_number.outputs.new_version }}" >> $GITHUB_ENV
+        # - name: Version number
+        #   run: |
+        #     echo "${{ steps.version_number.outputs.new_version }} is the new version"
+        #     echo "TAG_VERSION=${{ steps.version_number.outputs.new_version }}" >> $GITHUB_ENV
  
   AWS-WIN-EXE-BUILD:
     needs: setup
