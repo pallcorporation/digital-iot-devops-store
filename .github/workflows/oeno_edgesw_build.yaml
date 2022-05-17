@@ -65,6 +65,7 @@ jobs:
       branch_name: ${{ env.BRANCH_NAME }}
       bucket_name: ${{ steps.project_constants.outputs.bucket_name }}
       date_timestamp: ${{ steps.project_constants.outputs.date}}
+      release_version: ${{ env.TAG_VERSION }}
     steps:
       # Get current time stamp to use as reference elsewhere
       - name: Get current date
@@ -124,19 +125,37 @@ jobs:
         run: |
           echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
 
-        # - name: Github Tag with semantic versioning
-        #   id: version_number
-        #   uses: hennejg/github-tag-action@v4.3.1
-        #   with:
-        #     github_token: ${{ secrets.GITHUB_TOKEN }}
-        #     default_bump: minor
-        #     tag_prefix: v
-        #     release_branches: main
+      - name: Beta Tag
+        if: github.ref == 'refs/heads/beta'
+        id: version_number_beta
+        uses: hennejg/github-tag-action@v4.3.1
+        with:
+          github_token: ${{ secrets.envPAT }}
+          default_bump: minor
+          tag_prefix: v
+          release_branches: beta
+      
+      - name: Prod Tag
+        if: github.ref == 'refs/heads/main'
+        id: version_number_prod
+        uses: hennejg/github-tag-action@v4.3.1
+        with:
+          github_token: ${{ secrets.envPAT }}
+          default_bump: major
+          tag_prefix: v
+          release_branches: main
 
-        # - name: Version number
-        #   run: |
-        #     echo "${{ steps.version_number.outputs.new_version }} is the new version"
-        #     echo "TAG_VERSION=${{ steps.version_number.outputs.new_version }}" >> $GITHUB_ENV
+      - name: Version number
+        if: github.ref == 'refs/heads/beta'
+        run: |
+          echo "${{ steps.version_number_beta.outputs.new_version }} is the new version"
+          echo "TAG_VERSION=${{ steps.version_number_beta.outputs.new_version }}" >> $GITHUB_ENV
+
+      - name: Version number
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "${{ steps.version_number_prod.outputs.new_version }} is the new version"
+          echo "TAG_VERSION=${{ steps.version_number_prod.outputs.new_version }}" >> $GITHUB_ENV
  
   AWS-WIN-EXE-BUILD:
     needs: setup
