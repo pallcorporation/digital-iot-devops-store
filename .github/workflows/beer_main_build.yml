@@ -30,7 +30,7 @@ env:
   PROJECT_FILES_GIT : "beer-project-properties.git"
   ORGANIZATION: "pallcorporation"
   PROJECT_FILES_NAME: "project.properties"
-  PROJECT_FILES_DIRECTORY: "project_file"
+  PROJECT_FILES_DIRECTORY: "beer-project-properties"
   IMAGE_REGISTRY: "ghcr.io"
   IMAGE_REGISTRY_USERNAME: ${{github.actor}}
   IMAGE_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -295,6 +295,10 @@ jobs:
           id: date
           run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
 
+        - name: Set ENV Variables
+          run: |
+            echo "BUCKET_DIRECTORY=beta" >> $GITHUB_ENV
+
         - name: Image Repository name
           run: |
             echo "IMAGE_REPO_NAME=${{ github.event.repository.name }}" >> $GITHUB_ENV
@@ -319,16 +323,27 @@ jobs:
             role-session-name: ${{needs.main-setup.outputs.aws_beta_credentials_session_name}}
             aws-region: ${{ env.AWS_REGION }}
         
+        - name: Make project files directory
+          run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
+
+        - name: Project files clone
+          uses: actions/checkout@v2
+          with:
+            token: ${{ secrets.envPAT }}
+            repository: pallcorporation/beer-project-properties
+            ref: main
+            path: ${{env.PROJECT_FILES_DIRECTORY}}
+        
         - name: Create NX environment varibles file
-          if: ${{inputs.build_project_type == 'nx'}}
+          if: ${{inputs.deployment_type == 'nx'}}
           run: |
             pip3 install boto3
             pip3 install jproperties
             mv .env .env_old
             python3 ${{env.PROJECT_FILES_DIRECTORY}}/create_env_file.py
-
+            cat .env
         - name: NX Build directory
-          if: ${{inputs.deployment_type == 'nx' }}
+          if: ${{inputs.deployment_type == 'nx'}}
           run: |
             echo "BUILD_DIRECTORY=dist/apps/beeriot-web" >> $GITHUB_ENV
         
@@ -376,10 +391,16 @@ jobs:
             role-to-assume: ${{ needs.main-setup.outputs.aws_credentials_role }}
             role-session-name: ${{needs.main-setup.outputs.aws_credentials_session_name}}
             aws-region: ${{ env.AWS_REGION }}
+        
+        - name: Deploy to S3 - Test
+          if: ${{ env.IMAGE_REPO_NAME == 'beer-test-nx-build' }}
+          run:
+            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}/test/${{ env.BUCKET_DIRECTORY }}
           
         - name:  Deploy to S3 - Copy Build folder to s3
+          if: ${{ env.IMAGE_REPO_NAME != 'beer-test-nx-build' }}
           run: |
-            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}/test/beta
+            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}/${{ env.BUCKET_DIRECTORY }}
         
         - name: Microsoft Teams Notification
           if: success()
@@ -411,12 +432,16 @@ jobs:
         #    echo ${{steps.github_release.outputs.changelog}}
   Frontend-React-Build-Prod:
     needs: [main-setup,Frontend-React-Build-Beta]
-    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type == 'nx')
+    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main1' && inputs.deployment_type == 'nx')
     runs-on: ubuntu-latest          
     steps:
         - name: Get current date
           id: date
           run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+        
+        - name: Set ENV Variables
+          run: |
+            echo "BUCKET_DIRECTORY=prod" >> $GITHUB_ENV
 
         - name: Image Repository name
           run: |
@@ -442,8 +467,19 @@ jobs:
             role-session-name: ${{needs.main-setup.outputs.aws_prod_credentials_session_name}}
             aws-region: ${{ env.AWS_REGION }}
         
+        - name: Make project files directory
+          run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
+
+        - name: Project files clone
+          uses: actions/checkout@v2
+          with:
+            token: ${{ secrets.envPAT }}
+            repository: pallcorporation/beer-project-properties
+            ref: main
+            path: ${{env.PROJECT_FILES_DIRECTORY}}
+        
         - name: Create NX environment varibles file
-          if: ${{inputs.build_project_type == 'nx'}}
+          if: ${{inputs.deployment_type == 'nx'}}
           run: |
             pip3 install boto3
             pip3 install jproperties
@@ -451,7 +487,7 @@ jobs:
             python3 ${{env.PROJECT_FILES_DIRECTORY}}/create_env_file.py
 
         - name: NX Build directory
-          if: ${{inputs.deployment_type == 'nx' }}
+          if: ${{inputs.deployment_type == 'nx'}}
           run: |
             echo "BUILD_DIRECTORY=dist/apps/beeriot-web" >> $GITHUB_ENV
         
@@ -500,9 +536,15 @@ jobs:
             role-session-name: ${{needs.main-setup.outputs.aws_credentials_session_name}}
             aws-region: ${{ env.AWS_REGION }}
           
+        - name: Deploy to S3 - Test
+          if: ${{ env.IMAGE_REPO_NAME == 'beer-test-nx-build' }}
+          run:
+            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}/test/${{ env.BUCKET_DIRECTORY }}
+          
         - name:  Deploy to S3 - Copy Build folder to s3
+          if: ${{ env.IMAGE_REPO_NAME != 'beer-test-nx-build' }}
           run: |
-            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}/test/prod
+            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}/${{ env.BUCKET_DIRECTORY }}
         
         - name: Microsoft Teams Notification
           if: success()
