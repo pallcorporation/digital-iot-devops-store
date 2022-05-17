@@ -41,6 +41,7 @@ env:
   CODEBUILD_BUILD_NUMBER: "1" # semantic versioning injected here
   ARTIFACT_NAME: ${{ inputs.ARTIFACT_NAME }}
   APP_NAME: ${{ inputs.APP_NAME}}
+  UPLOAD_NAME: ${{ inputs.UPLOAD_NAME }}
   ARTIFACT_DESCRIPTION: ${{ inputs.ARTIFACT_DESCRIPTION }}
   PY_KEY: ${{ secrets.PY_KEY }}
   APP_SIGN_KEY: ${{ secrets.APP_SIGN_KEY }}
@@ -145,8 +146,7 @@ jobs:
           if: contains( github.ref, 'beta' )
           run: |
             echo "BRANCH_NAME=beta" >> $GITHUB_ENV
-            
-        
+                    
         - name: Echo branch
           run: echo "${BRANCH_NAME} is the branch name to use in lookup"
 
@@ -157,13 +157,7 @@ jobs:
             role-to-assume: ${{ needs.setup.outputs.aws_assume_role }}
             role-session-name: ${{ github.event.repository.name }}-${{ needs.setup.outputs.date_timestamp }}
             aws-region: ${{ env.AWS_REGION }}
-        
-        #Upload a file to AWS s3
-        - name:  Deploy to S3 - Copy Build folder to s3
-        #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
-          run: |
-             aws s3 cp readme.md s3://${{needs.setup.outputs.bucket_name}}
-
+                
         - name: Set up build env
           run: |
             python --version
@@ -198,12 +192,19 @@ jobs:
           run: |
             cp .\service\dist\${{ env.ARTIFACT_NAME }} .\ota\${{ env.ARTIFACT_NAME }}
             
-
+        # Upload artifacts to Git for easy access
         - uses: actions/upload-artifact@v2
           with:
             name: ${{ env.APP_NAME }}
             path: ota/
             
+        # Upload artifacts to AWS s3 to trigger OTA
+        - name:  Deploy to S3 - Copy Build folder to s3
+          run: |
+             cd ota
+             Compress-Archive -Path * -DestinationPath ${{ env.UPLOAD_NAME}}.zip  
+             aws s3 cp ${{ env.UPLOAD_NAME}}.zip s3://${{needs.setup.outputs.bucket_name}}/packageUpdates/${{ env.UPLOAD_NAME}}/
+             
         # Next steps to upload file to S3 softwarepackages- for beta or prod
         # if branch == beta || prod
         #   upload ota/* zip to ^^above archive to packageUpdates/appname
