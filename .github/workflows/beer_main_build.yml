@@ -332,7 +332,7 @@ jobs:
             python3 ${{env.PROJECT_FILES_DIRECTORY}}/create_env_file.py
 
         - name: NX Build directory
-          if: ${{inputs.deployment_type == 'nx' }}
+          if: ${{inputs.deployment_type == 'nx'}}
           run: |
             echo "BUILD_DIRECTORY=dist/apps/beeriot-web" >> $GITHUB_ENV
         
@@ -457,7 +457,7 @@ jobs:
             aws-region: ${{ env.AWS_REGION }}
         
         - name: Create NX environment varibles file
-          if: ${{inputs.build_project_type == 'nx'}}
+          if: ${{inputs.deployment_type == 'nx'}}
           run: |
             pip3 install boto3
             pip3 install jproperties
