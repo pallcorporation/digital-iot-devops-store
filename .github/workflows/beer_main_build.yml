@@ -382,7 +382,7 @@ jobs:
           
         - name:  Deploy to S3 - Copy Build folder to s3
           run: |
-            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}/beta
+            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}/test/beta
         
         - name: Microsoft Teams Notification
           if: success()
@@ -505,7 +505,7 @@ jobs:
           
         - name:  Deploy to S3 - Copy Build folder to s3
           run: |
-            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}
+            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}/test/prod
         
         - name: Microsoft Teams Notification
           if: success()
