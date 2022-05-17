@@ -395,12 +395,12 @@ jobs:
         - name: Deploy to S3 - Test
           if: ${{ env.IMAGE_REPO_NAME == 'beer-test-nx-build' }}
           run:
-            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}/test/${{ env.BUCKET_DIRECTORY }}
+            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}/test/${{ env.BUCKET_DIRECTORY }}/
           
         - name:  Deploy to S3 - Copy Build folder to s3
           if: ${{ env.IMAGE_REPO_NAME != 'beer-test-nx-build' }}
           run: |
-            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}/${{ env.BUCKET_DIRECTORY }}
+            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}/${{ env.BUCKET_DIRECTORY }}/
         
         - name: Microsoft Teams Notification
           if: success()
@@ -539,12 +539,12 @@ jobs:
         - name: Deploy to S3 - Test
           if: ${{ env.IMAGE_REPO_NAME == 'beer-test-nx-build' }}
           run:
-            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}/test/${{ env.BUCKET_DIRECTORY }}
+            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}/test/${{ env.BUCKET_DIRECTORY }}/
           
         - name:  Deploy to S3 - Copy Build folder to s3
           if: ${{ env.IMAGE_REPO_NAME != 'beer-test-nx-build' }}
           run: |
-            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}/${{ env.BUCKET_DIRECTORY }}
+            aws s3 cp ${{env.COMPRESSED_NX_TAGGED}} s3://${{env.NX_ARTIFACT_STORE}}/${{ env.BUCKET_DIRECTORY }}/
         
         - name: Microsoft Teams Notification
           if: success()
