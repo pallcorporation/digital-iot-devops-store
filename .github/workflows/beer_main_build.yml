@@ -323,6 +323,17 @@ jobs:
             role-session-name: ${{needs.main-setup.outputs.aws_beta_credentials_session_name}}
             aws-region: ${{ env.AWS_REGION }}
         
+        - name: Make project files directory
+          run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
+
+        - name: Project files clone
+          uses: actions/checkout@v2
+          with:
+            token: ${{ secrets.envPAT }}
+            repository: pallcorporation/beer-project-properties
+            ref: main
+            path: ${{env.PROJECT_FILES_DIRECTORY}}
+        
         - name: Create NX environment varibles file
           if: ${{inputs.deployment_type == 'nx'}}
           run: |
@@ -330,7 +341,7 @@ jobs:
             pip3 install jproperties
             mv .env .env_old
             python3 ${{env.PROJECT_FILES_DIRECTORY}}/create_env_file.py
-
+            cat .env
         - name: NX Build directory
           if: ${{inputs.deployment_type == 'nx'}}
           run: |
@@ -456,6 +467,17 @@ jobs:
             role-session-name: ${{needs.main-setup.outputs.aws_prod_credentials_session_name}}
             aws-region: ${{ env.AWS_REGION }}
         
+        - name: Make project files directory
+          run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
+
+        - name: Project files clone
+          uses: actions/checkout@v2
+          with:
+            token: ${{ secrets.envPAT }}
+            repository: pallcorporation/beer-project-properties
+            ref: main
+            path: ${{env.PROJECT_FILES_DIRECTORY}}
+        
         - name: Create NX environment varibles file
           if: ${{inputs.deployment_type == 'nx'}}
           run: |
@@ -463,7 +485,6 @@ jobs:
             pip3 install jproperties
             mv .env .env_old
             python3 ${{env.PROJECT_FILES_DIRECTORY}}/create_env_file.py
-            cat .env
 
         - name: NX Build directory
           if: ${{inputs.deployment_type == 'nx'}}
