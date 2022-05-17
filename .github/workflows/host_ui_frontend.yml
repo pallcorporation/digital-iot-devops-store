@@ -515,12 +515,12 @@ jobs:
         - name: Application UI Version
           if: (inputs.repo_version == 'main')
           run: |
-            
+            branch_name="${{env.BRANCH_NAME}}"
             if [[ ${{inputs.repo_version}} == 'main' ]]
             then
-              UI_VERSION=$(aws s3 ls beer-ul-nx-workspace --recursive | sort | tail -n 1 | awk '{print $4}')
+              UI_VERSION=$(aws s3 ls beer-ul-nx-workspace/${branch_name}/ --recursive | sort | tail -n 1 | awk '{print $4}')
             else
-              UI_VERSION=$(${{inputs.repo_version}}.zip)
+              UI_VERSION=$(${branch_name}/${{inputs.repo_version}}.zip)
             fi
 
             echo "TARGET_UI_VERSION=${UI_VERSION}" >> $GITHUB_ENV
@@ -529,7 +529,7 @@ jobs:
         - name: Download from s3
           run: |
             mkdir deployment_stage
-            aws s3 cp s3://${{inputs.tools_bucket}}/${{env.BRANCH_NAME}}/${{env.TARGET_UI_VERSION}} ./
+            aws s3 cp s3://${{inputs.tools_bucket}}/${{env.TARGET_UI_VERSION}} ./
         
         - name: 'Unzip project'
           uses: montudor/action-zip@v1.0.0
