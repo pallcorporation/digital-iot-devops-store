@@ -123,6 +123,20 @@ jobs:
         id: aws_assume_role
         run: |
           echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
+
+        # - name: Github Tag with semantic versioning
+        #   id: version_number
+        #   uses: hennejg/github-tag-action@v4.3.1
+        #   with:
+        #     github_token: ${{ secrets.GITHUB_TOKEN }}
+        #     default_bump: minor
+        #     tag_prefix: v
+        #     release_branches: main
+
+        - name: Version number
+          run: |
+            echo "${{ steps.version_number.outputs.new_version }} is the new version"
+            echo "TAG_VERSION=${{ steps.version_number.outputs.new_version }}" >> $GITHUB_ENV
  
   AWS-WIN-EXE-BUILD:
     needs: setup
@@ -207,37 +221,11 @@ jobs:
              Compress-Archive -Path * -DestinationPath ${{ env.UPLOAD_NAME}}.zip  
              aws s3 cp ${{ env.UPLOAD_NAME}}.zip s3://${{needs.setup.outputs.bucket_name}}/packageUpdates/${{ env.UPLOAD_NAME}}/
 
-        # Next steps to upload file to S3 softwarepackages- for beta or prod
-        # if branch == beta || prod
-        #   upload ota/* zip to ^^above archive to packageUpdates/appname
 
-        # - name: Github Tag with semantic versioning
-        #   id: version_number
-        #   uses: hennejg/github-tag-action@v4.3.1
-        #   with:
-        #     github_token: ${{ secrets.GITHUB_TOKEN }}
-        #     default_bump: minor
-        #     tag_prefix: v
-        #     release_branches: main
 
-        # - name: Version number
-        #   run: |
-        #     echo "${{ steps.version_number.outputs.new_version }} is the new version"
-        #     echo "TAG_VERSION=${{ steps.version_number.outputs.new_version }}" >> $GITHUB_ENV
+      
         
-        # do a look up by branch for AWS account number
-        - name: Configure AWS credentials
-          uses: aws-actions/configure-aws-credentials@master
-          with:
-            role-to-assume: arn:aws:iam::142557150669:role/oeno-github-oidc-access-role
-            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
-            aws-region: ${{ env.AWS_REGION }}
-        
-        #Upload a file to AWS s3
-        - name:  Deploy to S3 - Copy Build folder to s3
-        #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
-          run: |
-             aws s3 cp readme.md s3://mitch-stage-clone-bucket
+
               
 
 
