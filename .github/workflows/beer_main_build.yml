@@ -30,7 +30,7 @@ env:
   PROJECT_FILES_GIT : "beer-project-properties.git"
   ORGANIZATION: "pallcorporation"
   PROJECT_FILES_NAME: "project.properties"
-  PROJECT_FILES_DIRECTORY: "project_file"
+  PROJECT_FILES_DIRECTORY: "beer-project-properties"
   IMAGE_REGISTRY: "ghcr.io"
   IMAGE_REGISTRY_USERNAME: ${{github.actor}}
   IMAGE_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
