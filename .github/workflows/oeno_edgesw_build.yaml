@@ -210,7 +210,8 @@ jobs:
 
         - name: Generate version info 
           run: |
-            python generateVersionInfo.py -v "${release_version}" -n "${{env.APP_NAME}}" -d "${{env.ARTIFACT_DESCRIPTION}}"
+            echo ${{ needs.setup.outputs.release_version }} app version
+            python generateVersionInfo.py -v "${{ needs.setup.outputs.release_version }}" -n "${{env.APP_NAME}}" -d "${{env.ARTIFACT_DESCRIPTION}}"
             
         - name: Build encrypted exe via Pyinstaller    
           run: |
