@@ -158,6 +158,10 @@ jobs:
         run: |
           echo "${{ steps.version_number_prod.outputs.new_version }} is the new version"
           echo "TAG_VERSION=${{ steps.version_number_prod.outputs.new_version }}" >> $GITHUB_ENV
+
+      - name: Version number
+        if: github.ref == 'refs/heads/dev'
+        run: echo "TAG_VERSION=0.0.0"
  
   AWS-WIN-EXE-BUILD:
     needs: setup
