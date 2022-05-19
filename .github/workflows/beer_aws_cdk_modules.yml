@@ -254,10 +254,10 @@ jobs:
           run: |
             pip install pyyaml
 
-        - name: Test cdk synth works
-          if: ${{ steps.skip_cdk.outputs.bypass_cdk !='true'}}
-          run: cdk synth
-          working-directory: ${{env.CDK_MODULE}}
+        #- name: Test cdk synth works
+        #  if: ${{ steps.skip_cdk.outputs.bypass_cdk !='true'}}
+        #  run: cdk synth
+        #  working-directory: ${{env.CDK_MODULE}}
         
         # Destroy AWS IAC cdk stack if advised
         - name: Destroying stack if required
