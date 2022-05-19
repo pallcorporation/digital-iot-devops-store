@@ -40,7 +40,6 @@ env:
   PROJECT_FILES_DIRECTORY: "project_file"
   CDK_MODULE: "cdk_checkedout"
   DEVOPS_STORE: "devops_store"
-  CODEBUILD_BUILD_NUMBER: "1" # semantic versioning injected here
   ARTIFACT_NAME: ${{ inputs.ARTIFACT_NAME }}
   APP_NAME: ${{ inputs.APP_NAME}}
   UPLOAD_NAME: ${{ inputs.UPLOAD_NAME }}
@@ -131,7 +130,7 @@ jobs:
         uses: hennejg/github-tag-action@v4.3.1
         with:
           github_token: ${{ secrets.envPAT }}
-          default_bump: minor
+          default_bump: patch
           tag_prefix: v
           release_branches: beta
       
@@ -141,7 +140,7 @@ jobs:
         uses: hennejg/github-tag-action@v4.3.1
         with:
           github_token: ${{ secrets.envPAT }}
-          default_bump: major
+          default_bump: minor
           tag_prefix: v
           release_branches: main
 
@@ -211,7 +210,7 @@ jobs:
 
         - name: Generate version info 
           run: |
-            python generateVersionInfo.py -v "${{env.CODEBUILD_BUILD_NUMBER}}" -n "${{env.APP_NAME}}" -d "${{env.ARTIFACT_DESCRIPTION}}"
+            python generateVersionInfo.py -v "${release_version}" -n "${{env.APP_NAME}}" -d "${{env.ARTIFACT_DESCRIPTION}}"
             
         - name: Build encrypted exe via Pyinstaller    
           run: |
