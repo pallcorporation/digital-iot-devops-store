@@ -124,6 +124,9 @@ jobs:
         run: |
           echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
 
+      - name: Git clone the repository
+        uses: actions/checkout@v2
+
       - name: Beta Tag
         if: github.ref == 'refs/heads/beta'
         id: version_number_beta
