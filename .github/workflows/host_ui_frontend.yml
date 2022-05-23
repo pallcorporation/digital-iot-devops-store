@@ -524,17 +524,19 @@ jobs:
             fi
 
             echo "TARGET_UI_VERSION=${UI_VERSION}" >> $GITHUB_ENV
+            
 
 
         - name: Download from s3
           run: |
             mkdir deployment_stage
-            aws s3 cp s3://${{inputs.tools_bucket}}/${{env.TARGET_UI_VERSION}} ./
+            aws s3 cp s3://${{inputs.tools_bucket}}/${{env.TARGET_UI_VERSION}} deploy.zip
+            
         
         - name: 'Unzip project'
           uses: montudor/action-zip@v1.0.0
           with:
-            args: unzip -qq ${{env.TARGET_UI_VERSION}} -d deployment_stage
+            args: unzip -qq deploy.zip -d deployment_stage
         
         - name: Configure AWS credentials ${{env.BRANCH_NAME}}
           uses: aws-actions/configure-aws-credentials@master
