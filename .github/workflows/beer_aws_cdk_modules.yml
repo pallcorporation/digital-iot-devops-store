@@ -263,7 +263,7 @@ jobs:
             cdk deploy \
             --all \
             --require-approval never \
-            --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
+  #          --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
           working-directory: ${{env.CDK_MODULE}}
         
         #- name: Cleanup API Gateway routes
