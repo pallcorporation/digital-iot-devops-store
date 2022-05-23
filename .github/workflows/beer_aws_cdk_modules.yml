@@ -158,7 +158,7 @@ jobs:
             path: ${{env.CDK_MODULE}}
 
         - name: Replace github username
-          if: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/integration' && github.ref != 'refs/heads/beta'github.ref != 'refs/heads/production' }}
+          if: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/integration' && github.ref != 'refs/heads/beta' && github.ref != 'refs/heads/production' }}
           run: |
             echo "def user():" > "github_user.py"
             echo "  user=""\""${{github.actor}}"\"" >> "github_user.py"
@@ -262,7 +262,7 @@ jobs:
             echo "We will run cdk deploy --all --require-approval never --role-arn ${{ steps.project_constants.outputs.cdk_deploy }}"
             cdk deploy \
             --all \
-            --require-approval never \
+            --require-approval never
   #          --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
           working-directory: ${{env.CDK_MODULE}}
         
