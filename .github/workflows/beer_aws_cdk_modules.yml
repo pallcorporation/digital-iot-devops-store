@@ -158,7 +158,7 @@ jobs:
             path: ${{env.CDK_MODULE}}
 
         - name: Replace github username
-          if: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/integration' && github.ref != 'refs/heads/beta' }}
+          if: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/integration' && github.ref != 'refs/heads/beta'github.ref != 'refs/heads/production' }}
           run: |
             echo "def user():" > "github_user.py"
             echo "  user=""\""${{github.actor}}"\"" >> "github_user.py"
