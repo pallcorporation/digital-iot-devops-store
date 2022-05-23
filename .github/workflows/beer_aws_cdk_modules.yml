@@ -262,8 +262,8 @@ jobs:
             echo "We will run cdk deploy --all --require-approval never --role-arn ${{ steps.project_constants.outputs.cdk_deploy }}"
             cdk deploy \
             --all \
-            --require-approval never
-  #          --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
+            --require-approval never \
+            --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
           working-directory: ${{env.CDK_MODULE}}
         
         #- name: Cleanup API Gateway routes
