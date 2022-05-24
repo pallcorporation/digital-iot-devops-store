@@ -291,6 +291,21 @@ jobs:
 
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
         
+        - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
+          if: contains( github.ref, 'users' )
+          id: project_constants_users
+          run: |
+            account_id="`grep aws_integration_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=env_id::${account_id}"
+            
+            oidc_role_name="`grep aws_integration_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=oidc_role::${oidc_role_name}"
+
+            cdk_deploy_role_arn="`grep aws_integration_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
+
+          working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
+        
         - name: Copy cdk config files
           run: |
             rm -r ${{env.CDK_MODULE}}/config_files/*
@@ -303,11 +318,25 @@ jobs:
           id: aws_assume_role
           run: |
             echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
-      
+        
+        - name: Arn to use (If Users)
+          if: contains( github.ref, 'users' )
+          id: aws_assume_role_users
+          run: |
+            echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants_users.outputs.env_id }}:role/${{ steps.project_constants_users.outputs.oidc_role}}"
+
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@master
           with:
             role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
+            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            aws-region: ${{ env.AWS_REGION }}
+        
+        - name: Configure AWS credentials if Users
+          if: contains( github.ref, 'users' )
+          uses: aws-actions/configure-aws-credentials@master
+          with:
+            role-to-assume: ${{steps.aws_assume_role_users.outputs.role_arn1}}
             role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
             aws-region: ${{ env.AWS_REGION }}
         
@@ -319,8 +348,7 @@ jobs:
             mv .env .env_old
             python3 ${{env.PROJECT_FILES_DIRECTORY}}/create_env_file.py
             cat .env
-
-
+            
         - name: Build nx Frontend
           if: ${{inputs.build_project_type == 'nx'}}
           run: |
@@ -336,6 +364,14 @@ jobs:
           run: |
             pip install pyyaml
             sudo npm install -g aws-cdk
+        
+        - name: Configure AWS credentials if Users
+          if: contains( github.ref, 'users' )
+          uses: aws-actions/configure-aws-credentials@master
+          with:
+            role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
+            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            aws-region: ${{ env.AWS_REGION }}
         
         - name: AWS function environment suffix
           id: get_aws_branch_name
