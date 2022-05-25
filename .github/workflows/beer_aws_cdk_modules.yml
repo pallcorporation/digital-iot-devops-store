@@ -265,7 +265,7 @@ jobs:
           if: ${{steps.appsync_graphql.outputs.graphql_found == 'true'}}
           run: |
             ls
-            rm appsync/all-schema.graphql
+            rm -f appsync/all-schema.graphql
             find appsync/appsync -type f -name '*.graphql' -exec cat {} + >> appsync/all-schema.graphql
             ls
             cat appsync/all-schema.graphql
