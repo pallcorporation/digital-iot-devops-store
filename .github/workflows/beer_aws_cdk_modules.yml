@@ -250,8 +250,28 @@ jobs:
             yes | cdk destroy --all --require-approval never --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
           working-directory: ${{env.CDK_MODULE}}
 
+        - name: Check if Graphql exists
+          id: appsync_graphql
+          run: |
+            DIR="appsync/"
+            ls
+            if [ -d "$DIR" ]; then
+              # Take action if $DIR exists. #
+              echo "Found config files in ${DIR}..."
+              echo "::set-output name=graphql_found::true"
+            fi
         
-        
+        - name: Merge Graphql Files
+          if: ${{steps.appsync_graphql.outputs.graphql_found == 'true'}}
+          run: |
+            ls
+            rm appsync/all-schema.graphql
+            find appsync/appsync -type f -name '*.graphql' -exec cat {} + >> appsync/all-schema.graphql
+            ls
+            cat appsync/all-schema.graphql
+            echo "GRAPHQL_DIRECTORY=appsync" >> $GITHUB_ENV
+            echo "SCHEMA_FILE_NAME=all-schema.graphql" >> $GITHUB_ENV
+
         # *****************PROJECT SPECIFIC ELEMENTS*****************
 
         # AWS IAC cdk deployment
