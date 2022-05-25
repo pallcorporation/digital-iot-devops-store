@@ -266,7 +266,7 @@ jobs:
           run: |
             ls
             rm -f appsync/all-schema.graphql
-            find appsync/appsync -type f -name '*.graphql' -exec cat {} + >> appsync/all-schema.graphql
+            find appsync/ -type f -name '*.graphql' -exec cat {} + >> appsync/all-schema.graphql
             ls
             cat appsync/all-schema.graphql
             echo "GRAPHQL_DIRECTORY=appsync" >> $GITHUB_ENV
