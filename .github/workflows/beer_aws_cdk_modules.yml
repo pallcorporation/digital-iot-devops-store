@@ -276,7 +276,7 @@ jobs:
         - name: Grant permissions to all files
           if: ${{steps.appsync_graphql.outputs.graphql_found == 'true'}}
           run: | 
-            chmod -R 755 appsync
+            chmod -R 777 ./
         # *****************PROJECT SPECIFIC ELEMENTS*****************
 
         # AWS IAC cdk deployment
