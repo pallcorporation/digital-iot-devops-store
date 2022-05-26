@@ -273,11 +273,10 @@ jobs:
             echo "GRAPHQL_DIRECTORY=appsync" >> $GITHUB_ENV
             echo "SCHEMA_FILE_NAME=all-schema.graphql" >> $GITHUB_ENV
         
-        - name: Get Path
+        - name: Grant permissions to all files
           if: ${{steps.appsync_graphql.outputs.graphql_found == 'true'}}
-          run: |
-            pwd
-          working-directory: ${{env.CDK_MODULE}}
+          run: | 
+            chmod -R 755 appsync
         # *****************PROJECT SPECIFIC ELEMENTS*****************
 
         # AWS IAC cdk deployment
