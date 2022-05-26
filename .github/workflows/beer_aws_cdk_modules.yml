@@ -272,7 +272,12 @@ jobs:
             cp all-schema.graphql appsync/all-schema.graphql
             echo "GRAPHQL_DIRECTORY=appsync" >> $GITHUB_ENV
             echo "SCHEMA_FILE_NAME=all-schema.graphql" >> $GITHUB_ENV
-
+            
+        - name: Merge Graphql Files
+          if: ${{steps.appsync_graphql.outputs.graphql_found == 'true'}}
+          run: |
+            ls
+          working-directory: appsync
         # *****************PROJECT SPECIFIC ELEMENTS*****************
 
         # AWS IAC cdk deployment
