@@ -157,9 +157,11 @@ jobs:
         - name: Build Changelog
           id: github_release
           uses: mikepenz/release-changelog-builder-action@v3.0.0
+          with:
+            configuration: "configs/configuration_repo.json"
           env:
             GITHUB_TOKEN: ${{ secrets.envPAT }}
-        
+
         - name: Echo changelog
           run: echo ${{steps.github_release.outputs.changelog}}
 
