@@ -153,6 +153,21 @@ jobs:
             echo "${{ steps.version_number.outputs.new_version }} is the new version"
             echo "TAG_VERSION=${{ steps.version_number.outputs.new_version }}" >> $GITHUB_ENV
         
+        - name: Build Changelog
+          id: github_release
+          uses: mikepenz/release-changelog-builder-action@v3
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        - name: Create Release
+          uses: actions/create-release@v3
+          with:
+            tag_name: ${{ steps.version_number.outputs.new_version }}
+            release_name: Bock ${{ steps.version_number.outputs.new_version }}
+            body: ${{steps.github_release.outputs.changelog}}
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
   Docker-Images:
     needs: main-setup
     if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type == 'image')
