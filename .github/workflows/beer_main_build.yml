@@ -157,7 +157,7 @@ jobs:
         - name: Release
           uses: softprops/action-gh-release@v1
           with:
-            tag_name: Bock ${{env.TAG_VERSION}}
+            tag_name: Bock${{env.TAG_VERSION}}
             generate_release_notes: true
             token: ${{ secrets.envPAT }}
         
