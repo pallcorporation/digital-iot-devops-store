@@ -157,7 +157,7 @@ jobs:
           id: build_changelog
           uses: mikepenz/release-changelog-builder-action@v2.9.0
           env:
-            token: ${{ secrets.envPAT }}
+            GITHUB_TOKEN: ${{ secrets.envPAT }}
         
         - name: Echo changelog
           run: |
