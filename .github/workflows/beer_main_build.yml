@@ -153,6 +153,15 @@ jobs:
           run: |
             echo "${{ steps.version_number.outputs.new_version }} is the new version"
             echo "TAG_VERSION=${{ steps.version_number.outputs.new_version }}" >> $GITHUB_ENV
+        - name: Create changelog
+          id: build_changelog
+          uses: mikepenz/release-changelog-builder-action@v2.9.0
+          env:
+            token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+        
+        - name: Echo changelog
+          run: |
+            echo ${{steps.build_changelog.outputs.changelog}}
         
         # - name: Create changelog text
         #   id: changelog
