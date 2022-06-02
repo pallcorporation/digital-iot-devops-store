@@ -85,6 +85,14 @@ jobs:
             ref: main
             path: ${{env.PROJECT_FILES_DIRECTORY}}
         
+        - name: Release assets clone
+          uses: actions/checkout@v2
+          with:
+            token: ${{ secrets.envPAT }}
+            repository: pallcorporation/beer-release-assets
+            ref: main
+            path: beer-release-assets
+        
         # Grant permissions to all files in directory
         - name: Grant permissions to all files
           run: chmod -R 755 ./  
@@ -135,11 +143,24 @@ jobs:
           id: aws_prod_assume_role
           run: |
             echo "::set-output name=role_arn1::arn:aws:iam::${{steps.project_constants.outputs.prod_account_id}}:role/${{ steps.project_constants.outputs.prod_oidc_role}}"
+        
+        - name: Jira Username & Secret name
+          run: |
+            echo "JIRA_API_USER=mitchell_boulay@pall.com" >> $GITHUB_ENV
+            echo "AWS_SECRET_NAME_JIRA=Jira-API-Token-MitchellBoulay" >> $GITHUB_ENV
 
-      
-      # https://github.com/marketplace/actions/github-tag-with-semantic-versioning
-       # - uses: actions/checkout@2
-       # -
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@master
+          with:
+            role-to-assume: ${{ steps.aws_assume_role.outputs.role_arn1 }}
+            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            aws-region: ${{ env.AWS_REGION }}
+        
+        - name: Get release name from jira
+          run: |
+            python3 beer-release-assets/current_brew_jira_release.py > release.txt
+            echo "RELEASE_NAME=$(cat release.txt)" >> $GITHUB_ENV
+
         - name: Github Tag with semantic versioning
           id: version_number
           uses: hennejg/github-tag-action@v4.3.1
@@ -153,11 +174,11 @@ jobs:
           run: |
             echo "${{ steps.version_number.outputs.new_version }} is the new version"
             echo "TAG_VERSION=${{ steps.version_number.outputs.new_version }}" >> $GITHUB_ENV
-
+        
         - name: Release
           uses: softprops/action-gh-release@v1
           with:
-            tag_name: Bock-v${{env.TAG_VERSION}}
+            tag_name: ${{env.RELEASE_NAME}}-v${{env.TAG_VERSION}}
             generate_release_notes: true
             token: ${{ secrets.envPAT }}
         
