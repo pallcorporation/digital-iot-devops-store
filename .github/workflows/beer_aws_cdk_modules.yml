@@ -94,6 +94,11 @@ jobs:
           if: contains( github.ref, 'beta' )
           run: |
             echo "BRANCH_NAME=beta" >> $GITHUB_ENV
+        
+        - name: Branch if Tools
+          if: contains( github.ref, 'tools' )
+          run: |
+            echo "BRANCH_NAME=tools" >> $GITHUB_ENV
             
         
         - name: Echo branch
