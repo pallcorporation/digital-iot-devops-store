@@ -144,26 +144,26 @@ jobs:
           run: |
             echo "::set-output name=role_arn1::arn:aws:iam::${{steps.project_constants.outputs.prod_account_id}}:role/${{ steps.project_constants.outputs.prod_oidc_role}}"
         
-        - name: Jira Username & Secret name
-          run: |
-            echo "JIRA_API_USER=mitchell_boulay@pall.com" >> $GITHUB_ENV
-            echo "AWS_SECRET_NAME_JIRA=Jira-API-Token-MitchellBoulay" >> $GITHUB_ENV
+        # - name: Jira Username & Secret name
+        #   run: |
+        #     echo "JIRA_API_USER=mitchell_boulay@pall.com" >> $GITHUB_ENV
+        #     echo "AWS_SECRET_NAME_JIRA=Jira-API-Token-MitchellBoulay" >> $GITHUB_ENV
 
-        - name: Configure AWS credentials
-          uses: aws-actions/configure-aws-credentials@master
-          with:
-            role-to-assume: ${{ steps.aws_assume_role.outputs.role_arn1 }}
-            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
-            aws-region: ${{ env.AWS_REGION }}
+        # - name: Configure AWS credentials
+        #   uses: aws-actions/configure-aws-credentials@master
+        #   with:
+        #     role-to-assume: ${{ steps.aws_assume_role.outputs.role_arn1 }}
+        #     role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+        #     aws-region: ${{ env.AWS_REGION }}
 
-        - name: Install release assets requirements
-          run: |
-            pip3 install -r beer-release-assets/requirements.txt
+        # - name: Install release assets requirements
+        #   run: |
+        #     pip3 install -r beer-release-assets/requirements.txt
 
-        - name: Get release name from jira
-          run: |
-            python3 beer-release-assets/current_brew_jira_release.py > release.txt
-            echo "RELEASE_NAME=$(cat release.txt)" >> $GITHUB_ENV
+        # - name: Get release name from jira
+        #   run: |
+        #     python3 beer-release-assets/current_brew_jira_release.py > release.txt
+        #     echo "RELEASE_NAME=$(cat release.txt)" >> $GITHUB_ENV
 
         - name: Github Tag with semantic versioning
           id: version_number
@@ -433,6 +433,9 @@ jobs:
           run: |
             ls
             zip -r ${{env.COMPRESSED_NX_TAGGED}} $BUILD_DIRECTORY/
+        
+        - name: Echo role name
+          run: echo ${{ needs.main-setup.outputs.aws_credentials_role }}
 
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@master
