@@ -155,7 +155,7 @@ jobs:
             role-to-assume: ${{ steps.aws_assume_role.outputs.role_arn1 }}
             role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
             aws-region: ${{ env.AWS_REGION }}
-            
+
         - name: Install release assets requirements
           run: |
             pip3 install -r beer-release-assets/requirements.txt
@@ -179,12 +179,12 @@ jobs:
             echo "${{ steps.version_number.outputs.new_version }} is the new version"
             echo "TAG_VERSION=${{ steps.version_number.outputs.new_version }}" >> $GITHUB_ENV
         
-        - name: Release
-          uses: softprops/action-gh-release@v1
-          with:
-            tag_name: ${{env.RELEASE_NAME}}-v${{env.TAG_VERSION}}
-            generate_release_notes: true
-            token: ${{ secrets.envPAT }}
+        # - name: Release
+        #   uses: softprops/action-gh-release@v1
+        #   with:
+        #     tag_name: ${{env.RELEASE_NAME}}-v${{env.TAG_VERSION}}
+        #     generate_release_notes: true
+        #     token: ${{ secrets.envPAT }}
         
         # - name: Create changelog text
         #   id: changelog
