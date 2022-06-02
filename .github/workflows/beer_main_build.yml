@@ -155,10 +155,13 @@ jobs:
             role-to-assume: ${{ steps.aws_assume_role.outputs.role_arn1 }}
             role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
             aws-region: ${{ env.AWS_REGION }}
-        
-        - name: Get release name from jira
+            
+        - name: Install release assets requirements
           run: |
             pip3 install -r beer-release-assets/requirements.txt
+
+        - name: Get release name from jira
+          run: |
             python3 beer-release-assets/current_brew_jira_release.py > release.txt
             echo "RELEASE_NAME=$(cat release.txt)" >> $GITHUB_ENV
 
