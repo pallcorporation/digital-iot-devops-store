@@ -158,6 +158,7 @@ jobs:
         
         - name: Get release name from jira
           run: |
+            pip3 install -r beer-release-assets/requirements.txt
             python3 beer-release-assets/current_brew_jira_release.py > release.txt
             echo "RELEASE_NAME=$(cat release.txt)" >> $GITHUB_ENV
 
