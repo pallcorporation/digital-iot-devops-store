@@ -263,7 +263,7 @@ jobs:
             npm install @openapitools/openapi-generator-cli
             
         - name: OpenAPIGenerator Check
-          if: ${{inputs.build_project_type == 'swagger1'}}
+          if: ${{inputs.build_project_type == 'swagger'}}
           run: |
             npx openapi-generator-cli generate -i swagger.yaml -g typescript-axios -o libs/api-client/src/generated
         
