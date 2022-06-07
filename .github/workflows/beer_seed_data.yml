@@ -133,6 +133,9 @@ jobs:
         - name: Grant permissions to all files
           run: | 
             chmod -R 755 ${{env.CDK_MODULE}}
+        - name: Install CDK
+          run: |   
+            pip3 install -r requirements.txt
 
         # - name: Install CDK
         #   if: ${{ steps.skip_cdk.outputs.bypass_cdk !='true'}}
