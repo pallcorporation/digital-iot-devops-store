@@ -138,10 +138,9 @@ jobs:
           if: ${{ steps.skip_cdk.outputs.bypass_cdk !='true'}}
           run: | 
             sudo npm -g install aws-cdk
-            cat ${{env.CDK_MODULE}}/requirements.txt
-            pip3 install -r  ${{env.CDK_MODULE}}/requirements.txt
+            pip3 install -r requirements.txt
         
-        - name: Run python seed script
+        - name: Run python delete tables script
           run: |
             python3 delete_tables.py
 
