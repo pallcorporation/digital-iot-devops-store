@@ -134,28 +134,28 @@ jobs:
           run: | 
             chmod -R 755 ${{env.CDK_MODULE}}
 
-        - name: Install CDK
-          if: ${{ steps.skip_cdk.outputs.bypass_cdk !='true'}}
-          run: | 
-            sudo npm -g install aws-cdk
-            cat ${{env.CDK_MODULE}}/requirements.txt
-            pip3 install -r  ${{env.CDK_MODULE}}/requirements.txt
+        # - name: Install CDK
+        #   if: ${{ steps.skip_cdk.outputs.bypass_cdk !='true'}}
+        #   run: | 
+        #     sudo npm -g install aws-cdk
+        #     cat ${{env.CDK_MODULE}}/requirements.txt
+        #     pip3 install -r  ${{env.CDK_MODULE}}/requirements.txt
         
-        - name: Run python delete tables script
-          run: |
-            python3 delete_tables.py
+        # - name: Run python delete tables script
+        #   run: |
+        #     python3 delete_tables.py
 
-        # AWS IAC cdk deployment
-        # Role to deploy as in defined in project.properties file
-        - name: Running cdk deploy
-          if: ${{steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
-          run: |
-            echo "We will run cdk deploy --all --require-approval never --role-arn ${{ steps.project_constants.outputs.cdk_deploy }}"
-            cdk deploy \
-            --all \
-            --require-approval never \
-            --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
-          working-directory: ${{env.CDK_MODULE}}
+        # # AWS IAC cdk deployment
+        # # Role to deploy as in defined in project.properties file
+        # - name: Running cdk deploy
+        #   if: ${{steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
+        #   run: |
+        #     echo "We will run cdk deploy --all --require-approval never --role-arn ${{ steps.project_constants.outputs.cdk_deploy }}"
+        #     cdk deploy \
+        #     --all \
+        #     --require-approval never \
+        #     --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
+        #   working-directory: ${{env.CDK_MODULE}}
 
         - name: Run python seed script
           run: |
