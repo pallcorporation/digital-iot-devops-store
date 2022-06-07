@@ -1,12 +1,8 @@
-name: CI
+name: Seed data
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
-  #push:
-  #  branches:
-  #    - dev
-  #    - integration
+
   workflow_call:
     inputs:
       branch_name:
@@ -49,36 +45,9 @@ jobs:
           run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
         
         # Get branch name to use for look up
-        - name: Branch if Dev
-          if: contains( github.ref, 'dev' )
+        - name: Environment
           run: |
-            echo "BRANCH_NAME=dev" >> $GITHUB_ENV
-        
-        - name: Branch if Integration
-          if: contains( github.ref, 'integration' )
-          run: |
-            echo "BRANCH_NAME=integration" >> $GITHUB_ENV
-
-        - name: Branch if users
-          if: contains( github.ref, 'users' )
-          run: |
-            echo "BRANCH_NAME=dev" >> $GITHUB_ENV
-
-        - name: Branch if Production
-          if: contains( github.ref, 'production' )
-          run: |
-            echo "BRANCH_NAME=production" >> $GITHUB_ENV
-        
-        - name: Branch if BETA
-          if: contains( github.ref, 'beta' )
-          run: |
-            echo "BRANCH_NAME=beta" >> $GITHUB_ENV
-        
-        - name: Branch if Tools
-          if: contains( github.ref, 'tools' )
-          run: |
-            echo "BRANCH_NAME=tools" >> $GITHUB_ENV
-            
+            echo "BRANCH_NAME=${{inputs.branch_name}}" >> $GITHUB_ENV
         
         - name: Echo branch
           run: echo "${BRANCH_NAME} is the branch name to use in lookup"
@@ -87,9 +56,6 @@ jobs:
         - name: Git clone the repository
           uses: actions/checkout@v2
         
-        - name: Make repo directory
-          if: ${{inputs.repo_name}}
-          run: mkdir ${{ inputs.repo_name }}_stage
           
         - name: Make project files directory
           run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
