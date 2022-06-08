@@ -219,7 +219,6 @@ jobs:
             cp -a ${{env.PROJECT_FILES_DIRECTORY}}/. ${{env.CDK_MODULE}}/
         
         
-        
         # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
         - name: Arn to use
           id: aws_assume_role
