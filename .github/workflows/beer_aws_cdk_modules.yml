@@ -225,11 +225,12 @@ jobs:
           id: aws_assume_role
           run: |
             echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
+            echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}" >> $GITHUB_ENV
       
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@master
           with:
-            role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
+            role-to-assume: ${{env.AWS_ASSUME_ROLE}}
             role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
             aws-region: ${{ env.AWS_REGION }}
         - name: Grant permissions to all files
@@ -287,13 +288,19 @@ jobs:
         # AWS IAC cdk deployment
         # Role to deploy as in defined in project.properties file
         - name: Running cdk deploy
-          if: ${{steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
+          if: ${{steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.skip_cdk.outputs.bypass_cdk !='true' && ((github.ref != 'refs/heads/production' || github.ref != 'refs/heads/beta') && github.repository != 'pallcorporation/beer-application-deployment')}}
           run: |
             echo "We will run cdk deploy --all --require-approval never --role-arn ${{ steps.project_constants.outputs.cdk_deploy }}"
             cdk deploy \
             --all \
             --require-approval never \
             --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
+          working-directory: ${{env.CDK_MODULE}}
+        
+        - name: Running cdk deploy if Beta or Production
+          if: ${{ (github.ref == 'refs/heads/production' || github.ref == 'refs/heads/beta')  && inputs.repo_name && github.repository == 'pallcorporation/beer-application-deployment' }}
+          run: |
+            cdk deploy --all --require-approval never
           working-directory: ${{env.CDK_MODULE}}
         
         #- name: Cleanup API Gateway routes
@@ -309,6 +316,7 @@ jobs:
           run: |
             API_DOMAIN_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.API_GATEWAY_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.API_GATEWAY_OUPUT_LOOKUP}}`].OutputValue' --output text)
             echo "::set-output name=API_DOMAIN_URL_OUTPUT::$API_DOMAIN_URL" 
+        
         - name: API Gateway URL echo
           if: github.repository != 'pallcorporation/beer-application-deployment'
           run: |
