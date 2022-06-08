@@ -121,7 +121,7 @@ jobs:
             ref: main
             path: ${{env.IAM_SERVICE_REPOSITORY}}
         
-         name: Set environment variables for python
+        - name: Set environment variables for python
           run: |
             if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'dev' ]]
             then
