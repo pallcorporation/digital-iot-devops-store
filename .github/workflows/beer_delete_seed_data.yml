@@ -146,10 +146,10 @@ jobs:
         
         - name: Run python delete tables script
           run: |
-            aws dynamodb delete-table --table-name company
-            aws dynamodb delete-table --table-name company_site
-            aws dynamodb delete-table --table-name group
-
+            (aws dynamodb delete-table --table-name company) || ( echo "table not found" )
+            (aws dynamodb delete-table --table-name company_site) || ( echo "table not found" )
+            (aws dynamodb delete-table --table-name group) || ( echo "table not found" )
+            
         # AWS IAC cdk deployment
         # Role to deploy as in defined in project.properties file
         - name: Running cdk deploy
