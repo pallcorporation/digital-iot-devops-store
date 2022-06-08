@@ -206,13 +206,6 @@ jobs:
 
             COGNITO_PASSWORD="`grep COGNITO_PASSWORD deploy_data.properties|cut -d'=' -f2`"
             echo "POSTMAN_PASSWORD=${COGNITO_PASSWORD}" >> $GITHUB_ENV
-
-        - name: Run python script to replace secrets
-          run: |
-            python3 ${{env.POSTMAN_COLLECTION_DIRECTORY}}/replace_secrets.py
-            ls
-
-            cat final_env_var.json
             
         # Grant permissions to all files in directory
         - name: Grant permissions to all files
