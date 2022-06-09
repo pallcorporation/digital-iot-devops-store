@@ -35,6 +35,7 @@ env:
   COGNITO_USER_POOL_ID_OUTPUT: beercognito0userpoolidoutput
   API_GATEWAY_STACKID_OUT: beer-apigateway-0-iot-apigw
   API_GATEWAY_URL_OUT: beerapigateway0iotapigwurloutput
+  COGNITO_CLIENT_ID_OUTPUT: beercognito0userpoolclientidoutput
   
 
 permissions:
@@ -163,17 +164,10 @@ jobs:
             ref: main
             path: ${{env.IAM_SERVICE_REPOSITORY}}
         
-        - name: Set environment variables for python
+        - name: Cognito User Pool query
+          id: get_user_pool_client_id
           run: |
-            if [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'dev' ]]
-            then
-              echo "COGNITO_USERPOOL_SECRET=${{secrets.COGNITO_DEV_USERPOOL_SECRET_PHRASE}}" >> $GITHUB_ENV
-            elif [[ ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}} == 'integration' ]]
-            then
-              echo "COGNITO_USERPOOL_SECRET=${{secrets.COGNITO_INTEGRATION_USERPOOL_SECRET_PHRASE}}" >> $GITHUB_ENV
-            else
-              echo "COGNITO_USERPOOL_SECRET=${{secrets.COGNITO_DEV_USERPOOL_SECRET_PHRASE}}" >> $GITHUB_ENV
-            fi
+            echo "COGNITO_CLIENT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.COGNITO_USER_POOL_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.COGNITO_CLIENT_ID_OUTPUT}}`].OutputValue' --output text)" >> $GITHUB_ENV
         
         - name: Postman required variables
           run: |
