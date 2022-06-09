@@ -147,16 +147,22 @@ jobs:
         - name: Delete company table
           run: |
             (aws dynamodb delete-table --table-name company) || ( echo "table not found" )
+        - name: Delete company stack
+          run: | 
             (aws cloudformation delete-stack --stack-name beer-dynamodb-0-company) || ( echo "stack not found" )
         
         - name: Delete company_site table
           run: |    
             (aws dynamodb delete-table --table-name company_site) || ( echo "table not found" )
+        - name: Delete company-site stack
+          run: | 
             (aws cloudformation delete-stack --stack-name beer-dynamodb-7-company-site) || ( echo "stack not found" )
         
         - name: Delete group table
           run: |    
             (aws dynamodb delete-table --table-name group) || ( echo "table not found" )
+        - name: Delete group stack
+          run: | 
             (aws cloudformation delete-stack --stack-name beer-dynamodb-10-group) || ( echo "stack not found" )
             
             
