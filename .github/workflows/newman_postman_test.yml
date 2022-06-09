@@ -59,6 +59,7 @@ env:
   COGNITO_USER_POOL_ID_OUTPUT: beercognito0userpoolidoutput
   API_GATEWAY_STACKID_OUT: beer-apigateway-0-iot-apigw
   API_GATEWAY_URL_OUT: beerapigateway0iotapigwurloutput
+  COGNITO_CLIENT_ID_OUTPUT: beercognito0userpoolclientidoutput
 
   
 
@@ -232,10 +233,15 @@ jobs:
           run: |
             echo "CREATE_POSTMAN_USER=True" >> $GITHUB_ENV
         
-        - name: Cognito User Pool query
+        - name: Cognito User Pool id query
           id: get_user_pool_id
           run: |
             echo "COGNITO_USERPOOL_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.COGNITO_USER_POOL_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.COGNITO_USER_POOL_ID_OUTPUT}}`].OutputValue' --output text)" >> $GITHUB_ENV
+        
+        - name: Cognito User Pool client query
+          id: get_user_pool_client_id
+          run: |
+            echo "COGNITO_CLIENT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.COGNITO_USER_POOL_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.COGNITO_CLIENT_ID_OUTPUT}}`].OutputValue' --output text)" >> $GITHUB_ENV
         
 
         - name: Run python script to seed policy to admins
