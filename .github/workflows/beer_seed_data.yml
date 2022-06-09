@@ -200,6 +200,9 @@ jobs:
 
             COGNITO_PASSWORD="`grep COGNITO_PASSWORD deploy_data.properties|cut -d'=' -f2`"
             echo "POSTMAN_PASSWORD=${COGNITO_PASSWORD}" >> $GITHUB_ENV
+
+            COGNITO_SECRET="`grep COGNITO_SECRET deploy_data.properties|cut -d'=' -f2`"
+            echo "COGNITO_CLIENT_SECRET=${COGNITO_SECRET}" >> $GITHUB_ENV
             
         # Grant permissions to all files in directory
         - name: Grant permissions to all files
