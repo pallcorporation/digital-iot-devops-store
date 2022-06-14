@@ -122,24 +122,15 @@ jobs:
         uses: scottbrenner/generate-changelog-action@master
         id: Changelog
 
-      - name: Release
+      - name: Create Release
         id: create_release
-        uses: softprops/action-gh-release@master
+        uses: actions/create-release@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.envPAT }} # This token is provided by Actions, you do not need to create your own token
         with:
-          body: ${{ steps.Changelog.outputs.changelog }}
-          token: ${{ secrets.envPAT }}
-          name: ${{env.RELEASE_NAME}} v${{ inputs.version_number }}
           tag_name: v${{ inputs.version_number }}
-
-      # - name: Create Release
-      #   id: create_release
-      #   uses: actions/create-release@latest
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.envPAT }} # This token is provided by Actions, you do not need to create your own token
-      #   with:
-      #     tag_name: v${{ inputs.version_number }}
-      #     release_name: ${{env.RELEASE_NAME}} v${{ inputs.version_number }}
-      #     body: |
-      #       ${{ steps.Changelog.outputs.changelog }}
-      #     draft: false
-      #     prerelease: false
+          release_name: ${{env.RELEASE_NAME}} v${{ inputs.version_number }}
+          body: |
+            ${{ steps.Changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
