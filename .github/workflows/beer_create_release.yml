@@ -131,15 +131,15 @@ jobs:
           name: ${{env.RELEASE_NAME}} v${{ inputs.version_number }}
           tag_name: v${{ inputs.version_number }}
     
-    - name: File name of chagelog
-      run:
-        echo "CHANGELOG_FILE=${{ github.event.repository.name }}_v${{ inputs.version_number }}.md" >> $GITHUB_ENV
+      - name: File name of chagelog
+        run:
+          echo "CHANGELOG_FILE=${{ github.event.repository.name }}_v${{ inputs.version_number }}.md" >> $GITHUB_ENV
 
-    - name: Copy release file to s3
-      run: echo ${{ steps.Changelog.outputs.changelog }} > ${{env.CHANGELOG_FILE}}
-    
-    # Upload artifacts to Git for easy access
-    - uses: actions/upload-artifact@v2
-      with:
-        name: ${{env.CHANGELOG_FILE}}
-        path: ${{env.CHANGELOG_FILE}}
+      - name: Copy release file to s3
+        run: echo ${{ steps.Changelog.outputs.changelog }} > ${{env.CHANGELOG_FILE}}
+      
+      # Upload artifacts to Git for easy access
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{env.CHANGELOG_FILE}}
+          path: ${{env.CHANGELOG_FILE}}
