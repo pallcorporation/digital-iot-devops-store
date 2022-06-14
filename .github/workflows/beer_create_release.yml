@@ -130,16 +130,16 @@ jobs:
           token: ${{ secrets.envPAT }}
           name: ${{env.RELEASE_NAME}} v${{ inputs.version_number }}
           tag_name: v${{ inputs.version_number }}
+    
+    - name: File name of chagelog
+      run:
+        echo "CHANGELOG_FILE=${{ github.event.repository.name }}_v${{ inputs.version_number }}.md" >> $GITHUB_ENV
 
-      # - name: Create Release
-      #   id: create_release
-      #   uses: actions/create-release@latest
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.envPAT }} # This token is provided by Actions, you do not need to create your own token
-      #   with:
-      #     tag_name: v${{ inputs.version_number }}
-      #     release_name: ${{env.RELEASE_NAME}} v${{ inputs.version_number }}
-      #     body: |
-      #       ${{ steps.Changelog.outputs.changelog }}
-      #     draft: false
-      #     prerelease: false
+    - name: Copy release file to s3
+      run: echo ${{ steps.Changelog.outputs.changelog }} > ${{env.CHANGELOG_FILE}}
+    
+    # Upload artifacts to Git for easy access
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ${{env.CHANGELOG_FILE}}
+        path: ${{env.CHANGELOG_FILE}}
