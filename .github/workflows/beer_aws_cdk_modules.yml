@@ -299,7 +299,7 @@ jobs:
         - name: Running cdk deploy #if Beta or Production
           #if: ${{ (github.ref == 'refs/heads/production' || github.ref == 'refs/heads/beta')  && inputs.repo_name && github.repository == 'pallcorporation/beer-application-deployment' }}
           run: |
-            cdk deploy --all --require-approval never
+            cdk deploy --all --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} --require-approval never
           working-directory: ${{env.CDK_MODULE}}
         
         #- name: Cleanup API Gateway routes
