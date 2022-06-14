@@ -1,0 +1,73 @@
+name: Create Release
+
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  workflow_call:
+    secrets:
+      envPAT:
+        required: true
+      teams_uri:
+        required: false
+
+env:
+  #BUCKET_NAME : "github-oidc-test-mitch"
+  AWS_REGION : "us-east-1"
+  PROJECT_FILES_GIT : "beer-project-properties.git"
+  ORGANIZATION: "pallcorporation"
+  PROJECT_FILES_NAME: "project.properties"
+  PROJECT_FILES_DIRECTORY: "beer-project-properties"
+  IMAGE_REGISTRY: "ghcr.io"
+  IMAGE_REGISTRY_USERNAME: ${{github.actor}}
+  IMAGE_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  NX_ARTIFACT_STORE: beer-ul-nx-workspace
+
+permissions:
+  id-token: write
+  contents: read    # This is required for actions/checkout@v1
+  packages: write
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+
+jobs:
+  build:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      
+      - name: Release assets clone
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/beer-release-assets
+          ref: main
+          path: beer-release-assets
+      
+      - name: Install release assets requirements
+        run: |
+          pip3 install -r beer-release-assets/requirements.txt
+      
+      - name: Get release name from jira
+        run: |
+          python3 beer-release-assets/current_brew_jira_release.py > release.txt
+          echo "RELEASE_NAME=$(cat release.txt)" >> $GITHUB_ENV
+
+      - name: Changelog
+        uses: scottbrenner/generate-changelog-action@master
+        id: Changelog
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.envPAT }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{env.RELEASE_NAME}} ${{ github.ref }}
+          body: |
+            ${{ steps.Changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
