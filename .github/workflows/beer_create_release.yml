@@ -145,5 +145,5 @@ jobs:
       # Upload artifacts to Git for easy access
       - uses: actions/upload-artifact@v2
         with:
-          name: ${{env.CHANGELOG_FILE}}
+          name: release_notes
           path: release_notes/
