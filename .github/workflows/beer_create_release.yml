@@ -6,6 +6,7 @@ on:
     inputs:
       version_number:
         required: true
+        type: string
     secrets:
       envPAT:
         required: true
