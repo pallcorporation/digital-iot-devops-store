@@ -138,10 +138,12 @@ jobs:
         run: echo ${{ steps.Changelog.outputs.changelog }}
         
       - name: Copy release file to s3
-        run: echo ${{ steps.Changelog.outputs.changelog }} > ${{env.CHANGELOG_FILE}}
+        run: |
+          mkdir release_notes
+          echo ${{ steps.Changelog.outputs.changelog }} > release_notes/${{env.CHANGELOG_FILE}}
       
       # Upload artifacts to Git for easy access
       - uses: actions/upload-artifact@v2
         with:
           name: ${{env.CHANGELOG_FILE}}
-          path: ${{env.CHANGELOG_FILE}}
+          path: release_notes/
