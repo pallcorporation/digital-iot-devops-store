@@ -122,12 +122,6 @@ jobs:
         uses: scottbrenner/generate-changelog-action@master
         id: Changelog
 
-      - name: "Build Changelog"
-        id: github_release
-        uses: mikepenz/release-changelog-builder-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.envPAT }}
-
       - name: Create Release
         id: create_release
         uses: actions/create-release@latest
@@ -137,6 +131,6 @@ jobs:
           tag_name: v${{ inputs.version_number }}
           release_name: ${{env.RELEASE_NAME}} v${{ inputs.version_number }}
           body: |
-            ${{steps.github_release.outputs.changelog}}
+            ${{ steps.Changelog.outputs.changelog }}
           draft: false
           prerelease: false
