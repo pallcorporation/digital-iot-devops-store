@@ -3,6 +3,9 @@ name: Create Release
 on:
   # Triggers the workflow on push or pull request events but only for the main branch
   workflow_call:
+    inputs:
+      version_number:
+        required: true
     secrets:
       envPAT:
         required: true
@@ -65,8 +68,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.envPAT }} # This token is provided by Actions, you do not need to create your own token
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{env.RELEASE_NAME}} ${{ github.ref }}
+          tag_name: ${{ inputs.version_number }}
+          release_name: ${{env.RELEASE_NAME}} ${{ inputs.version_number }}
           body: |
             ${{ steps.Changelog.outputs.changelog }}
           draft: false
