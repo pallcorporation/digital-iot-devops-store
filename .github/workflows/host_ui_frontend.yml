@@ -596,7 +596,7 @@ jobs:
           run: |
             if [[ ${{inputs.branch_name}} == 'production' ]]
             then
-              echo "AWS_ENV_NAME=production" >> $GITHUB_ENV
+              echo "AWS_ENV_NAME=prod" >> $GITHUB_ENV
             elif [[ ${{inputs.branch_name}} == 'beta' ]]
             then
               echo "AWS_ENV_NAME=beta" >> $GITHUB_ENV
