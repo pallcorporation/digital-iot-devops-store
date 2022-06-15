@@ -594,7 +594,7 @@ jobs:
         - name: AWS function environment suffix
           id: get_aws_branch_name
           run: |
-            if [[ ${{inputs.branch_name}} == 'prod' ]]
+            if [[ ${{inputs.branch_name}} == 'production' ]]
             then
               echo "AWS_ENV_NAME=production" >> $GITHUB_ENV
             elif [[ ${{inputs.branch_name}} == 'beta' ]]
