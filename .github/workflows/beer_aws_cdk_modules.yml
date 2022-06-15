@@ -287,7 +287,7 @@ jobs:
         # AWS IAC cdk deployment
         # Role to deploy as in defined in project.properties file
         - name: Running cdk deploy
-          if: ${{steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.skip_cdk.outputs.bypass_cdk !='true' && ((github.ref != 'refs/heads/production' || github.ref != 'refs/heads/beta'))}} #&& github.repository != 'pallcorporation/beer-application-deployment')}}
+          if: ${{steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.skip_cdk.outputs.bypass_cdk !='true' && ((github.ref != 'refs/heads/production' || github.ref != 'refs/heads/beta') && github.repository != 'pallcorporation/beer-application-deployment')}}
           run: |
             echo "We will run cdk deploy --all --require-approval never --role-arn ${{ steps.project_constants.outputs.cdk_deploy }}"
             cdk deploy \
@@ -297,7 +297,7 @@ jobs:
           working-directory: ${{env.CDK_MODULE}}
         
         - name: Running cdk deploy if Beta or Production
-          if: ${{ (github.ref == 'refs/heads/production' || github.ref == 'refs/heads/beta') }} # && inputs.repo_name && github.repository == 'pallcorporation/beer-application-deployment' }}
+          if: ${{ (github.ref == 'refs/heads/production' || github.ref == 'refs/heads/beta')  && inputs.repo_name && github.repository == 'pallcorporation/beer-application-deployment' }}
           run: |
             cdk deploy --all --require-approval never
           working-directory: ${{env.CDK_MODULE}}
