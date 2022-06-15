@@ -496,7 +496,7 @@ jobs:
         
         - name: Set ENV Variables
           run: |
-            echo "BUCKET_DIRECTORY=prod" >> $GITHUB_ENV
+            echo "BUCKET_DIRECTORY=production" >> $GITHUB_ENV
 
         - name: Image Repository name
           run: |
