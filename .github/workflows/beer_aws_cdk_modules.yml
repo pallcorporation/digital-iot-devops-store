@@ -299,7 +299,7 @@ jobs:
         - name: Running cdk deploy
           if: ${{steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
           run: |
-            cdk deploy --all --require-approval never
+            cdk deploy --all --require-approval never --verbose
           working-directory: ${{env.CDK_MODULE}}
         
         #- name: Cleanup API Gateway routes
