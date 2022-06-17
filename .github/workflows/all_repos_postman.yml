@@ -49,6 +49,7 @@ env:
   COGNITO_USER_POOL_ID_OUTPUT: beercognito0userpoolidoutput
   API_GATEWAY_STACKID_OUT: beer-apigateway-0-iot-apigw
   API_GATEWAY_URL_OUT: beerapigateway0iotapigwurloutput
+  COGNITO_CLIENT_ID_OUTPUT: beercognito0userpoolclientidoutput
 
 permissions:
       id-token: write
