@@ -150,13 +150,13 @@ jobs:
             
         # AWS IAC cdk deployment
         # Role to deploy as in defined in project.properties file
-        - name: Running cdk deploy
-          run: |
-            echo "We will run cdk deploy --all --require-approval never --role-arn ${{ steps.project_constants.outputs.cdk_deploy }}"
-            cdk deploy \
-            --all \
-            --require-approval never \
-            --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
-          working-directory: ${{env.CDK_MODULE}}
+        # - name: Running cdk deploy
+        #   run: |
+        #     echo "We will run cdk deploy --all --require-approval never --role-arn ${{ steps.project_constants.outputs.cdk_deploy }}"
+        #     cdk deploy \
+        #     --all \
+        #     --require-approval never \
+        #     --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
+        #   working-directory: ${{env.CDK_MODULE}}
 
     
