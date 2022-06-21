@@ -126,10 +126,11 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@master
         with:
-          body: ${{ steps.Changelog.outputs.changelog }}
+          generate_release_notes: True
           token: ${{ secrets.envPAT }}
           name: ${{env.RELEASE_NAME}} v${{ inputs.version_number }}
           tag_name: v${{ inputs.version_number }}
+          
     
       - name: File name of chagelog
         run:
