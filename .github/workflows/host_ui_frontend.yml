@@ -361,7 +361,7 @@ jobs:
         - name: Build nx Frontend
           if: ${{inputs.build_project_type == 'nx'}}
           run: |
-            npm ci
+            npm install --force
             if [[ ${BRANCH_NAME} == 'main' ]]
             then
               npx nx build
