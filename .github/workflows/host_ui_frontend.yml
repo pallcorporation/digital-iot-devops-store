@@ -270,7 +270,7 @@ jobs:
         - name: Build Storybok
           if: ${{inputs.build_project_type == 'storybook'}}
           run: |
-            npm ci
+            npm install --force
             NODE_ENV=development npx nx build-storybook ui-components
 
         # Read commit message and determine if to skip cdk work NODE_ENV=development && npx nx build-storybook ui-components
