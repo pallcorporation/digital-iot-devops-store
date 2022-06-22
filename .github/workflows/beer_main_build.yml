@@ -403,7 +403,7 @@ jobs:
           if: ${{inputs.deployment_type == 'nx'}}
           run: |
             echo "Building NX... $TAG_VERSION"
-            npm ci
+            npm install --force
             npx nx run beeriot-web:build:staging
         
         # Upload a file to AWS s3
@@ -550,7 +550,7 @@ jobs:
           if: ${{inputs.deployment_type == 'nx'}}
           run: |
             echo "Building NX... $TAG_VERSION"
-            npm ci
+            npm install --force
             npx nx run beeriot-web:build:staging
         
         # Upload a file to AWS s3
