@@ -229,9 +229,11 @@ jobs:
           - beer-be-company-service
           - beer-be-companysite-service
           - beer-be-consumable-service
-          - beer-be-iam-service
-          - beer-be-permission-service
+          - beer-be-document-service
           - beer-be-group-service
+          - beer-be-iam-service
+          - beer-be-module-service
+          - beer-be-permission-service
           - beer-be-settings-service
           - beer-be-system-service
           
