@@ -143,7 +143,7 @@ jobs:
             echo "USE_GITHUB_USER=True" >> $GITHUB_ENV
         
         - name: Branch if Main
-          if: contains( github.ref, 'main' )
+          if: ( contains( github.ref, 'production' ) && (github.repository == 'pallcorporation/beer-application-deployment' ))
           run: |
             echo "BRANCH_NAME=production" >> $GITHUB_ENV
         
