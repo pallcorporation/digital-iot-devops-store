@@ -193,7 +193,7 @@ jobs:
         
         - name: API Gateway output
           run: |
-            echo "API_GATEWAY_URL=https://$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.API_GATEWAY_STACKID_OUT}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.API_GATEWAY_URL_OUT}}`].OutputValue' --output text)" >> $GITHUB_ENV
+            echo "API_GATEWAY_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.API_GATEWAY_STACKID_OUT}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.API_GATEWAY_URL_OUT}}`].OutputValue' --output text)" >> $GITHUB_ENV
 
         - name: Make ${{env.IAM_SERVICE_REPOSITORY}}
           run: |
