@@ -155,6 +155,10 @@ jobs:
           repository: pallcorporation/beer-ul-release-notes
           ref: main
           path: beer-ul-release-notes
+      
+      - name: Publish release notes to Confluence
+        run: |
+          python3 beer-ul-release-notes/github.py
     
       - name: File name of chagelog
         run:
