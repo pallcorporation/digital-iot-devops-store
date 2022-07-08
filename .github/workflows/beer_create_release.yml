@@ -118,17 +118,21 @@ jobs:
           python3 beer-release-assets/current_brew_jira_release.py > release.txt
           echo "RELEASE_NAME=$(cat release.txt)" >> $GITHUB_ENV
 
+          cat release.properties
+
           release_name="`RELEASE_NAME release.properties|cut -d'=' -f2`"
           echo "RELEASE_NAME=${release_name}" >> $GITHUB_ENV
 
-          release_start_date="`RELEASE_START_DATE release.properties|cut -d'=' -f2`"
+          release_name="`grep RELEASE_NAME release.properties|cut -d'=' -f2`"
+          echo "RELEASE_NAME=${release_name}" >> $GITHUB_ENV
+
+          release_start_date="`grep RELEASE_START_DATE release.properties|cut -d'=' -f2`"
           echo "RELEASE_START_DATE=${release_start_date}" >> $GITHUB_ENV
 
-
-          release_end_date="`RELEASE_END_DATE release.properties|cut -d'=' -f2`"
+          release_end_date="`grep RELEASE_END_DATE release.properties|cut -d'=' -f2`"
           echo "RELEASE_END_DATE=${release_end_date}" >> $GITHUB_ENV
 
-          release_description="`RELEASE_DESCRIPTION release.properties|cut -d'=' -f2`"
+          release_description="`grep RELEASE_DESCRIPTION release.properties|cut -d'=' -f2`"
           echo "RELEASE_DESCRIPTION=${release_description}" >> $GITHUB_ENV
 
           echo "REPOSITORY_NAME=${{ github.event.repository.name }}" >> $GITHUB_ENV
