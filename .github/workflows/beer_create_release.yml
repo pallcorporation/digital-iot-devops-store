@@ -113,10 +113,27 @@ jobs:
         run: |
           pip3 install -r beer-release-assets/requirements.txt
       
-      - name: Get release name from jira
+      - name: Get release info from jira
         run: |
           python3 beer-release-assets/current_brew_jira_release.py > release.txt
           echo "RELEASE_NAME=$(cat release.txt)" >> $GITHUB_ENV
+
+          release_name="`RELEASE_NAME beer-release-assets/release.properties|cut -d'=' -f2`"
+          echo "RELEASE_NAME=${release_name}" >> $GITHUB_ENV
+
+          release_start_date="`RELEASE_START_DATE beer-release-assets/release.properties|cut -d'=' -f2`"
+          echo "RELEASE_START_DATE=${release_start_date}" >> $GITHUB_ENV
+
+
+          release_end_date="`RELEASE_END_DATE beer-release-assets/release.properties|cut -d'=' -f2`"
+          echo "RELEASE_END_DATE=${release_end_date}" >> $GITHUB_ENV
+
+          release_description="`RELEASE_DESCRIPTION beer-release-assets/release.properties|cut -d'=' -f2`"
+          echo "RELEASE_DESCRIPTION=${release_description}" >> $GITHUB_ENV
+
+          echo "REPOSITORY_NAME=${{ github.event.repository.name }}" >> $GITHUB_ENV
+          echo "VERSION_TAG=v${{ inputs.version_number }}" >> $GITHUB_ENV
+          echo "GITHUB_TOKEN=${{ secrets.envPAT }}" >> $GITHUB_ENV
 
       - name: Changelog
         uses: scottbrenner/generate-changelog-action@master
@@ -130,7 +147,18 @@ jobs:
           token: ${{ secrets.envPAT }}
           name: ${{env.RELEASE_NAME}} v${{ inputs.version_number }}
           tag_name: v${{ inputs.version_number }}
-          
+      
+      - name: Release notes clone
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/beer-ul-release-assets
+          ref: main
+          path: beer-ul-release-assets
+      
+      - name: Get release info from jira
+        run: |
+          python3 beer-ul-release-assets/github.py
     
       - name: File name of chagelog
         run:
