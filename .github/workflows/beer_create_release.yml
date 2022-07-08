@@ -152,13 +152,9 @@ jobs:
         uses: actions/checkout@v2
         with:
           token: ${{ secrets.envPAT }}
-          repository: pallcorporation/beer-ul-release-assets
+          repository: pallcorporation/beer-ul-release-notes
           ref: main
-          path: beer-ul-release-assets
-      
-      - name: Get release info from jira
-        run: |
-          python3 beer-ul-release-assets/github.py
+          path: beer-ul-release-notes
     
       - name: File name of chagelog
         run:
