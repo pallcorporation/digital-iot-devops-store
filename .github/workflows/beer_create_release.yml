@@ -120,9 +120,6 @@ jobs:
 
           cat release.properties
 
-          release_name="`RELEASE_NAME release.properties|cut -d'=' -f2`"
-          echo "RELEASE_NAME=${release_name}" >> $GITHUB_ENV
-
           release_name="`grep RELEASE_NAME release.properties|cut -d'=' -f2`"
           echo "RELEASE_NAME=${release_name}" >> $GITHUB_ENV
 
