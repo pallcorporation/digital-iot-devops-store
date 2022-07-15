@@ -80,6 +80,17 @@ jobs:
           id: date
           run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
         
+        - name: Check if postman collections exists
+          id: postman_collections
+          run: |
+            DIR="postman/"
+            ls
+            if [ -d "$DIR" ]; then
+              # Take action if $DIR exists. #
+              echo "Installing config files in ${DIR}..."
+              echo "::set-output name=postman_collections_found::true"
+            fi
+        
         # Get branch name to use for look up
         - name: Branch if Dev
           if: contains( github.ref, 'dev' )
@@ -243,6 +254,7 @@ jobs:
         
 
         - name: Run python script to seed policy to admins
+          if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
           run: |
             ls
             rm -rf ${{env.ADMIN_USERS_POLICY_SEED}}/super-user-policy.json
@@ -252,10 +264,12 @@ jobs:
             python3 ${{env.ADMIN_USERS_POLICY_SEED}}/admins.py
         
         - name: Run python script to Confirm or create envrionment admin user
+          if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
           run: |
             python3 ${{env.ADMIN_USERS_POLICY_SEED}}/create_environment_user.py
 
         - name: Read output file from seed
+          if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
           run: |
             cat deploy_data.properties
 
@@ -266,12 +280,13 @@ jobs:
             echo "POSTMAN_PASSWORD=${COGNITO_PASSWORD}" >> $GITHUB_ENV
 
         - name: Run python script to replace secrets
+          if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
           run: |
             python3 ${{env.POSTMAN_COLLECTION_DIRECTORY}}/replace_secrets.py
             ls
             
         - name: Move postman files (authorizer test)
-          if: ${{env.REPO_NAME == 'beer-be-api-authorizer' }}
+          if: ${{env.REPO_NAME == 'beer-be-api-authorizer' && steps.postman_collections.outputs.postman_collections_found == 'true'}}
           run: |
             mv beer-be-company-service/postman/* postman
         
@@ -280,19 +295,11 @@ jobs:
           uses: actions/setup-node@v2.1.2
         
         - name: Install newman
+          if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
           run: |
             npm install -g newman
         
-        - name: Check if postman collections exists
-          id: postman_collections
-          run: |
-            DIR="postman/"
-            ls
-            if [ -d "$DIR" ]; then
-              # Take action if $DIR exists. #
-              echo "Installing config files in ${DIR}..."
-              echo "::set-output name=postman_collections_found::true"
-            fi
+        
         
         - name: Collections found
           run: |
@@ -304,7 +311,7 @@ jobs:
             newman run ./postman/collection.json -e ./final_env_var.json
         
         - name: Python script to disable & delete created postman user
-          if: always()
+          if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
           run: |
             echo "DELETE_POSTMAN_USER=True"
             python3 ${{env.ADMIN_USERS_POLICY_SEED}}/delete_user.py
