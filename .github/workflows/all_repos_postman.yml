@@ -64,6 +64,7 @@ jobs:
       cognito_secret1: ${{ steps.cognito_secret.outputs.cognito_secret }}
       postman_username: ${{ env.POSTMAN_USERNAME }}
       postman_password: ${{ env.POSTMAN_PASSWORD }}
+      cognito_userid: ${{ env.POSTMAN_COGNITO_USER_ID }}
       branch_name: ${{env.BRANCH_NAME}}
     steps:
       # Get current time stamp to use as reference elsewhere
@@ -215,11 +216,15 @@ jobs:
           COGNITO_PASSWORD="`grep COGNITO_PASSWORD deploy_data.properties|cut -d'=' -f2`"
           echo "POSTMAN_PASSWORD=${COGNITO_PASSWORD}" >> $GITHUB_ENV
 
+          COGNITO_USER_ID="`grep COGNITO_USER_ID deploy_data.properties|cut -d'=' -f2`"
+          echo "POSTMAN_COGNITO_USER_ID=${COGNITO_USER_ID}" >> $GITHUB_ENV
+
   AT:
     needs: Project-Admins
     runs-on: ubuntu-latest
     outputs:
       postman_username: ${{ env.POSTMAN_USERNAME }}
+      cognito_userid: ${{ env.COGNITO_ID}}
     strategy:
       matrix:
         microservice-repos:
@@ -248,6 +253,7 @@ jobs:
         run: |
           echo "POSTMAN_USERNAME=${{ needs.Project-Admins.outputs.postman_username }}" >> $GITHUB_ENV
           echo "POSTMAN_PASSWORD=${{ needs.Project-Admins.outputs.postman_password }}" >> $GITHUB_ENV
+          echo "COGNITO_ID=${{ needs.Project-Admins.outputs.cognito_userid }}" >> $GITHUB_ENV
       
       # Clone repositories prior to work
       - name: Git clone the repository
@@ -438,6 +444,7 @@ jobs:
       - name: Postman variables
         run: |
           echo "POSTMAN_USERNAME=${{ needs.at.outputs.postman_username }}" >> $GITHUB_ENV
+          echo "COGNITO_USERID=${{ needs.at.outputs.cognito_userid }}" >> $GITHUB_ENV
 
       - name: Project files clone
         uses: actions/checkout@v2
