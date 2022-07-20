@@ -69,9 +69,28 @@ permissions:
       packages: write
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
-jobs:  
-  AWS-CDK-Deployment:
-    if: github.repository != 'pallcorporation/digital-iot-devops-store'
+jobs:
+  Check-postman:
+    runs-on: ubuntu-latest
+    outputs:
+      postman_collection: ${{ steps.postman_collections.outputs.postman_collections_found }}
+    steps:
+      # Clone repositories prior to work
+      - name: Git clone the repository
+        uses: actions/checkout@v2
+      - name: Check if postman collections exists
+        id: postman_collections
+        run: |
+          DIR="postman/"
+          ls
+          if [ -d "$DIR" ]; then
+            # Take action if $DIR exists. #
+            echo "Installing config files in ${DIR}..."
+            echo "::set-output name=postman_collections_found::true"
+          fi
+  Run-Postman-Collection:
+    needs: Check-postman
+    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && ${{ needs.Project-Admins.outputs.postman_username == 'true'}}}})
     runs-on: ubuntu-latest
       
     steps:
@@ -79,17 +98,6 @@ jobs:
         - name: Get current date
           id: date
           run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
-        
-        - name: Check if postman collections exists
-          id: postman_collections
-          run: |
-            DIR="postman/"
-            ls
-            if [ -d "$DIR" ]; then
-              # Take action if $DIR exists. #
-              echo "Installing config files in ${DIR}..."
-              echo "::set-output name=postman_collections_found::true"
-            fi
         
         # Get branch name to use for look up
         - name: Branch if Dev
@@ -118,18 +126,6 @@ jobs:
         
         - name: Make Newman directory
           run: mkdir ${{env.POSTMAN_COLLECTION_DIRECTORY}}
-
-        - name: Make postman directory (authorizer test)
-          if: ${{env.REPO_NAME == 'beer-be-api-authorizer' }}
-          run: |
-            DIR="postman/"
-            if [ -d "$DIR" ]; then
-              # Take action if $DIR exists. #
-              echo "Installing config files in ${DIR}..."
-              echo "::set-output name=postman_collections_found::true"
-            else
-              mkdir postman
-            fi
             
         - name: Postman repo clone
           uses: actions/checkout@v2
@@ -252,24 +248,23 @@ jobs:
           run: |
             echo "COGNITO_CLIENT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.COGNITO_USER_POOL_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.COGNITO_CLIENT_ID_OUTPUT}}`].OutputValue' --output text)" >> $GITHUB_ENV
         
-
-        - name: Run python script to seed policy to admins
-          if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
+        - name: Replace super user policy
           run: |
-            ls
             rm -rf ${{env.ADMIN_USERS_POLICY_SEED}}/super-user-policy.json
             cp ${{env.IAM_SERVICE_REPOSITORY}}/seeding-data/super-user-policy.jsonc ${{env.ADMIN_USERS_POLICY_SEED}}/super-user-policy.json
+        - name: Install Boto3 & pytz
+          run: |
             pip3 install boto3
             pip3 install pytz
+        - name: Run python script to seed policy to admins
+          run: |
             python3 ${{env.ADMIN_USERS_POLICY_SEED}}/admins.py
         
         - name: Run python script to Confirm or create envrionment admin user
-          if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
           run: |
             python3 ${{env.ADMIN_USERS_POLICY_SEED}}/create_environment_user.py
 
         - name: Read output file from seed
-          if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
           run: |
             cat deploy_data.properties
 
@@ -279,14 +274,16 @@ jobs:
             COGNITO_PASSWORD="`grep COGNITO_PASSWORD deploy_data.properties|cut -d'=' -f2`"
             echo "POSTMAN_PASSWORD=${COGNITO_PASSWORD}" >> $GITHUB_ENV
 
+            COGNITO_USER_ID="`grep COGNITO_USER_ID deploy_data.properties|cut -d'=' -f2`"
+            echo "POSTMAN_COGNITO_USER_ID=${COGNITO_USER_ID}" >> $GITHUB_ENV
+
         - name: Run python script to replace secrets
-          if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
           run: |
             python3 ${{env.POSTMAN_COLLECTION_DIRECTORY}}/replace_secrets.py
             ls
             
         - name: Move postman files (authorizer test)
-          if: ${{env.REPO_NAME == 'beer-be-api-authorizer' && steps.postman_collections.outputs.postman_collections_found == 'true'}}
+          if: ${{env.REPO_NAME == 'beer-be-api-authorizer'}}
           run: |
             mv beer-be-company-service/postman/* postman
         
@@ -295,23 +292,15 @@ jobs:
           uses: actions/setup-node@v2.1.2
         
         - name: Install newman
-          if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
           run: |
             npm install -g newman
         
-        
-        
-        - name: Collections found
-          run: |
-            echo ${{steps.postman_collections.outputs.postman_collections_found}}
-
         - name: run newman
-          if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
           run: |
             newman run ./postman/collection.json -e ./final_env_var.json
         
         - name: Python script to disable & delete created postman user
-          if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
+          if: always()
           run: |
             echo "DELETE_POSTMAN_USER=True"
             python3 ${{env.ADMIN_USERS_POLICY_SEED}}/delete_user.py
