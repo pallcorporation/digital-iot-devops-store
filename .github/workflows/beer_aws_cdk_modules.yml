@@ -80,15 +80,15 @@ jobs:
           run: |
             echo "BRANCH_NAME=integration" >> $GITHUB_ENV
 
+        - name: Branch if Production
+          if: ( contains( github.ref, 'production' ) && (github.repository == 'pallcorporation/beer-application-deployment' ))
+          run: |
+            echo "BRANCH_NAME=production" >> $GITHUB_ENV
+        
         - name: Branch if users
           if: contains( github.ref, 'users' )
           run: |
             echo "BRANCH_NAME=dev" >> $GITHUB_ENV
-
-        - name: Branch if Production
-          if: contains( github.ref, 'production' )
-          run: |
-            echo "BRANCH_NAME=production" >> $GITHUB_ENV
         
         - name: Branch if BETA
           if: contains( github.ref, 'beta' )
@@ -239,7 +239,7 @@ jobs:
         - name: Install CDK
           if: ${{ steps.skip_cdk.outputs.bypass_cdk !='true'}}
           run: | 
-            sudo npm -g install aws-cdk
+            sudo npm -g install aws-cdk@2.30.0
             cat ${{env.CDK_MODULE}}/requirements.txt
             pip3 install -r  ${{env.CDK_MODULE}}/requirements.txt
 
@@ -284,10 +284,10 @@ jobs:
             chmod -R 777 ./
         # *****************PROJECT SPECIFIC ELEMENTS*****************
 
-        # AWS IAC cdk deployment
-        # Role to deploy as in defined in project.properties file
+        # # AWS IAC cdk deployment
+        # # Role to deploy as in defined in project.properties file
         # - name: Running cdk deploy
-        #   if: ${{steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.skip_cdk.outputs.bypass_cdk !='true' && ((github.ref != 'refs/heads/production' || github.ref != 'refs/heads/beta') && github.repository != 'pallcorporation/beer-application-deployment')}}
+        #   if: ${{steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
         #   run: |
         #     echo "We will run cdk deploy --all --require-approval never --role-arn ${{ steps.project_constants.outputs.cdk_deploy }}"
         #     cdk deploy \
@@ -296,10 +296,10 @@ jobs:
         #     --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
         #   working-directory: ${{env.CDK_MODULE}}
         
-        - name: Running cdk deploy if Beta or Production
-          #if: ${{ (github.ref == 'refs/heads/production' || github.ref == 'refs/heads/beta')  && inputs.repo_name && github.repository == 'pallcorporation/beer-application-deployment' }}
+        - name: Running cdk deploy
+          if: ${{steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
           run: |
-            cdk deploy --all --require-approval never
+            cdk deploy --all --require-approval never --force
           working-directory: ${{env.CDK_MODULE}}
         
         #- name: Cleanup API Gateway routes
@@ -310,14 +310,14 @@ jobs:
         #  working-directory: ${{env.CDK_MODULE}}
         
         - name: API Gateway url
-          if: github.repository != 'pallcorporation/beer-application-deployment'
+          if: ${{github.repository != 'pallcorporation/beer-application-deployment' || github.repository != 'pallcorporation/beer-aws-github-oidc-federation'}}
           id: get_api_url
           run: |
-            API_DOMAIN_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.API_GATEWAY_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.API_GATEWAY_OUPUT_LOOKUP}}`].OutputValue' --output text)
+            API_DOMAIN_URL=$((aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.API_GATEWAY_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.API_GATEWAY_OUPUT_LOOKUP}}`].OutputValue' --output text) || (echo "Not found"))
             echo "::set-output name=API_DOMAIN_URL_OUTPUT::$API_DOMAIN_URL" 
         
         - name: API Gateway URL echo
-          if: github.repository != 'pallcorporation/beer-application-deployment'
+          if: ${{github.repository != 'pallcorporation/beer-application-deployment' || github.repository != 'pallcorporation/beer-aws-github-oidc-federation'}}
           run: |
             echo "${{ steps.get_api_url.outputs.API_DOMAIN_URL_OUTPUT}} is the url"
             echo "API_GATEWAY_URL=${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}}" >> $GITHUB_ENV

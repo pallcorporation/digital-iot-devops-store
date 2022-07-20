@@ -113,10 +113,28 @@ jobs:
         run: |
           pip3 install -r beer-release-assets/requirements.txt
       
-      - name: Get release name from jira
+      - name: Get release info from jira
         run: |
           python3 beer-release-assets/current_brew_jira_release.py > release.txt
           echo "RELEASE_NAME=$(cat release.txt)" >> $GITHUB_ENV
+
+          cat release.properties
+
+          release_name="`grep RELEASE_NAME release.properties|cut -d'=' -f2`"
+          echo "RELEASE_NAME=${release_name}" >> $GITHUB_ENV
+
+          release_start_date="`grep RELEASE_START_DATE release.properties|cut -d'=' -f2`"
+          echo "RELEASE_START_DATE=${release_start_date}" >> $GITHUB_ENV
+
+          release_end_date="`grep RELEASE_END_DATE release.properties|cut -d'=' -f2`"
+          echo "RELEASE_END_DATE=${release_end_date}" >> $GITHUB_ENV
+
+          release_description="`grep RELEASE_DESCRIPTION release.properties|cut -d'=' -f2`"
+          echo "RELEASE_DESCRIPTION=${release_description}" >> $GITHUB_ENV
+
+          echo "REPOSITORY_NAME=${{ github.event.repository.name }}" >> $GITHUB_ENV
+          echo "VERSION_TAG=v${{ inputs.version_number }}" >> $GITHUB_ENV
+          echo "GITHUB_TOKEN=${{ secrets.envPAT }}" >> $GITHUB_ENV
 
       - name: Changelog
         uses: scottbrenner/generate-changelog-action@master
@@ -126,10 +144,22 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@master
         with:
-          body: ${{ steps.Changelog.outputs.changelog }}
+          generate_release_notes: True
           token: ${{ secrets.envPAT }}
           name: ${{env.RELEASE_NAME}} v${{ inputs.version_number }}
           tag_name: v${{ inputs.version_number }}
+      
+      - name: Release notes clone
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/beer-ul-release-notes
+          ref: main
+          path: beer-ul-release-notes
+      
+      - name: Publish release notes to Confluence
+        run: |
+          python3 beer-ul-release-notes/github.py
     
       - name: File name of chagelog
         run:

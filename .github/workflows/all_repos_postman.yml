@@ -49,6 +49,7 @@ env:
   COGNITO_USER_POOL_ID_OUTPUT: beercognito0userpoolidoutput
   API_GATEWAY_STACKID_OUT: beer-apigateway-0-iot-apigw
   API_GATEWAY_URL_OUT: beerapigateway0iotapigwurloutput
+  COGNITO_CLIENT_ID_OUTPUT: beercognito0userpoolclientidoutput
 
 permissions:
       id-token: write
@@ -63,6 +64,7 @@ jobs:
       cognito_secret1: ${{ steps.cognito_secret.outputs.cognito_secret }}
       postman_username: ${{ env.POSTMAN_USERNAME }}
       postman_password: ${{ env.POSTMAN_PASSWORD }}
+      cognito_userid: ${{ env.POSTMAN_COGNITO_USER_ID }}
       branch_name: ${{env.BRANCH_NAME}}
     steps:
       # Get current time stamp to use as reference elsewhere
@@ -181,11 +183,16 @@ jobs:
           echo "CREATE_POSTMAN_USER=True" >> $GITHUB_ENV
 
 
-      - name: Cognito User Pool query
+      - name: Cognito User Pool id query
         id: get_user_pool_id
         run: |
-          echo "COGNITO_USERPOOL_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.COGNITO_USER_POOL_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.COGNITO_USER_POOL_ID_OUTPUT}}`].OutputValue' --output text)" >> $GITHUB_ENV      
-
+          echo "COGNITO_USERPOOL_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.COGNITO_USER_POOL_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.COGNITO_USER_POOL_ID_OUTPUT}}`].OutputValue' --output text)" >> $GITHUB_ENV
+        
+      - name: Cognito User Pool client query
+        id: get_user_pool_client_id
+        run: |
+          echo "COGNITO_CLIENT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.COGNITO_USER_POOL_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.COGNITO_CLIENT_ID_OUTPUT}}`].OutputValue' --output text)" >> $GITHUB_ENV
+        
       - name: Run python script to seed policy to admins
         run: |
           ls
@@ -209,11 +216,15 @@ jobs:
           COGNITO_PASSWORD="`grep COGNITO_PASSWORD deploy_data.properties|cut -d'=' -f2`"
           echo "POSTMAN_PASSWORD=${COGNITO_PASSWORD}" >> $GITHUB_ENV
 
+          COGNITO_USER_ID="`grep COGNITO_USER_ID deploy_data.properties|cut -d'=' -f2`"
+          echo "POSTMAN_COGNITO_USER_ID=${COGNITO_USER_ID}" >> $GITHUB_ENV
+
   AT:
     needs: Project-Admins
     runs-on: ubuntu-latest
     outputs:
       postman_username: ${{ env.POSTMAN_USERNAME }}
+      cognito_userid: ${{ env.COGNITO_ID}}
     strategy:
       matrix:
         microservice-repos:
@@ -223,9 +234,11 @@ jobs:
           - beer-be-company-service
           - beer-be-companysite-service
           - beer-be-consumable-service
-          - beer-be-iam-service
-          - beer-be-permission-service
+          - beer-be-document-service
           - beer-be-group-service
+          - beer-be-iam-service
+          - beer-be-module-service
+          - beer-be-permission-service
           - beer-be-settings-service
           - beer-be-system-service
           
@@ -240,6 +253,7 @@ jobs:
         run: |
           echo "POSTMAN_USERNAME=${{ needs.Project-Admins.outputs.postman_username }}" >> $GITHUB_ENV
           echo "POSTMAN_PASSWORD=${{ needs.Project-Admins.outputs.postman_password }}" >> $GITHUB_ENV
+          echo "COGNITO_ID=${{ needs.Project-Admins.outputs.cognito_userid }}" >> $GITHUB_ENV
       
       # Clone repositories prior to work
       - name: Git clone the repository
@@ -430,6 +444,7 @@ jobs:
       - name: Postman variables
         run: |
           echo "POSTMAN_USERNAME=${{ needs.at.outputs.postman_username }}" >> $GITHUB_ENV
+          echo "COGNITO_USERID=${{ needs.at.outputs.cognito_userid }}" >> $GITHUB_ENV
 
       - name: Project files clone
         uses: actions/checkout@v2

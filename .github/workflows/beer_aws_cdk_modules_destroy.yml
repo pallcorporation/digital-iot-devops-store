@@ -1,12 +1,8 @@
-name: CI
+name: Destroy stacks
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
-  #push:
-  #  branches:
-  #    - dev
-  #    - integration
+  
   workflow_call:
     inputs:
       branch_name:
@@ -69,18 +65,6 @@ jobs:
           id: date
           run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
         
-        - name: Uninstall AWS CLI
-          run: |
-            
-            AWS_INSTALL=$(which aws)
-            sudo rm ${AWS_INSTALL}
-            sudo rm ${AWS_INSTALL}_completer
-            sudo rm -rf /usr/local/aws-cli
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.5.7.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install
-
-        
         # Get branch name to use for look up
         - name: Branch if Dev
           if: contains( github.ref, 'dev' )
@@ -92,20 +76,25 @@ jobs:
           run: |
             echo "BRANCH_NAME=integration" >> $GITHUB_ENV
 
+        - name: Branch if Production
+          if: ( contains( github.ref, 'production' ) && (github.repository == 'pallcorporation/beer-application-deployment' ))
+          run: |
+            echo "BRANCH_NAME=production" >> $GITHUB_ENV
+        
         - name: Branch if users
           if: contains( github.ref, 'users' )
           run: |
             echo "BRANCH_NAME=dev" >> $GITHUB_ENV
-
-        - name: Branch if Production
-          if: contains( github.ref, 'production' )
-          run: |
-            echo "BRANCH_NAME=production" >> $GITHUB_ENV
         
         - name: Branch if BETA
           if: contains( github.ref, 'beta' )
           run: |
             echo "BRANCH_NAME=beta" >> $GITHUB_ENV
+        
+        - name: Branch if Tools
+          if: contains( github.ref, 'tools' )
+          run: |
+            echo "BRANCH_NAME=tools" >> $GITHUB_ENV
             
         
         - name: Echo branch
@@ -170,7 +159,7 @@ jobs:
             path: ${{env.CDK_MODULE}}
 
         - name: Replace github username
-          if: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/integration' && github.ref != 'refs/heads/beta' }}
+          if: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/integration' && github.ref != 'refs/heads/beta' && github.ref != 'refs/heads/production' && github.ref != 'refs/heads/tools' }}
           run: |
             echo "def user():" > "github_user.py"
             echo "  user=""\""${{github.actor}}"\"" >> "github_user.py"
@@ -226,19 +215,20 @@ jobs:
             cp -a ${{env.PROJECT_FILES_DIRECTORY}}/. ${{env.CDK_MODULE}}/
         
         
-        
         # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
         - name: Arn to use
           id: aws_assume_role
           run: |
             echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
+            echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}" >> $GITHUB_ENV
       
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@master
           with:
-            role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
+            role-to-assume: ${{env.AWS_ASSUME_ROLE}}
             role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
             aws-region: ${{ env.AWS_REGION }}
+
         - name: Grant permissions to all files
           run: | 
             chmod -R 755 ${{env.CDK_MODULE}}
@@ -246,57 +236,12 @@ jobs:
         - name: Install CDK
           if: ${{ steps.skip_cdk.outputs.bypass_cdk !='true'}}
           run: | 
-            sudo npm -g install aws-cdk@2.22.0
+            sudo npm -g install aws-cdk@2.30.0
             cat ${{env.CDK_MODULE}}/requirements.txt
             pip3 install -r  ${{env.CDK_MODULE}}/requirements.txt
 
-        - name: Install yaml
-          run: |
-            pip install pyyaml
-
-        #- name: Test cdk synth works
-        #  if: ${{ steps.skip_cdk.outputs.bypass_cdk !='true'}}
-        #  run: cdk synth
-        #  working-directory: ${{env.CDK_MODULE}}
-        
-        # Destroy AWS IAC cdk stack if advised
         - name: Destroying stack if required
           if: ${{steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack == 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
           run: |
-            yes | cdk destroy --all --require-approval never --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
+            yes | cdk destroy --all --require-approval never
           working-directory: ${{env.CDK_MODULE}}
-
-        
-        
-        # *****************PROJECT SPECIFIC ELEMENTS*****************
-
-        # AWS IAC cdk deployment
-        # Role to deploy as in defined in project.properties file
-        - name: Running cdk deploy
-          if: ${{steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
-          run: |
-            echo "We will run cdk deploy --all --require-approval never --role-arn ${{ steps.project_constants.outputs.cdk_deploy }}"
-            cdk deploy \
-            --all \
-            --require-approval never \
-            --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
-          working-directory: ${{env.CDK_MODULE}}
-        
-        #- name: Cleanup API Gateway routes
-        #  if: ${{steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.skip_cdk.outputs.bypass_cdk !='true' && github.ref == 'refs/heads/dev' && github.ref != 'refs/heads/dev'}}
-        #  run: |
-        #    python3 src/aws_modules/APIGatewayv2/apigateway_cleanup.py
-             
-        #  working-directory: ${{env.CDK_MODULE}}
-        
-        - name: API Gateway url
-          if: github.repository != 'pallcorporation/beer-application-deployment'
-          id: get_api_url
-          run: |
-            API_DOMAIN_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.API_GATEWAY_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.API_GATEWAY_OUPUT_LOOKUP}}`].OutputValue' --output text)
-            echo "::set-output name=API_DOMAIN_URL_OUTPUT::$API_DOMAIN_URL" 
-        - name: API Gateway URL echo
-          if: github.repository != 'pallcorporation/beer-application-deployment'
-          run: |
-            echo "${{ steps.get_api_url.outputs.API_DOMAIN_URL_OUTPUT}} is the url"
-            echo "API_GATEWAY_URL=${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}}" >> $GITHUB_ENV

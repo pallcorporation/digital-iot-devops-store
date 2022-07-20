@@ -143,7 +143,7 @@ jobs:
             echo "USE_GITHUB_USER=True" >> $GITHUB_ENV
         
         - name: Branch if Main
-          if: contains( github.ref, 'main' )
+          if: ( contains( github.ref, 'production' ) && (github.repository == 'pallcorporation/beer-application-deployment' ))
           run: |
             echo "BRANCH_NAME=production" >> $GITHUB_ENV
         
@@ -559,19 +559,16 @@ jobs:
             aws-region: ${{ env.AWS_REGION }}
         
         - name: Application UI Version
-          if: (inputs.repo_version == 'main')
           run: |
             branch_name="${{env.BRANCH_NAME}}"
             if [[ ${{inputs.repo_version}} == 'main' ]]
             then
               UI_VERSION=$(aws s3 ls beer-ul-nx-workspace/${branch_name}/ --recursive | sort | tail -n 1 | awk '{print $4}')
+              echo "TARGET_UI_VERSION=${UI_VERSION}" >> $GITHUB_ENV
             else
-              UI_VERSION=$(${branch_name}/${{inputs.repo_version}}.zip)
+              echo "TARGET_UI_VERSION=${{env.BRANCH_NAME}}/${{inputs.repo_version}}.zip" >> $GITHUB_ENV
             fi
-
-            echo "TARGET_UI_VERSION=${UI_VERSION}" >> $GITHUB_ENV
             
-
 
         - name: Download from s3
           run: |
@@ -594,9 +591,9 @@ jobs:
         - name: AWS function environment suffix
           id: get_aws_branch_name
           run: |
-            if [[ ${{inputs.branch_name}} == 'prod' ]]
+            if [[ ${{inputs.branch_name}} == 'production' ]]
             then
-              echo "AWS_ENV_NAME=production" >> $GITHUB_ENV
+              echo "AWS_ENV_NAME=prod" >> $GITHUB_ENV
             elif [[ ${{inputs.branch_name}} == 'beta' ]]
             then
               echo "AWS_ENV_NAME=beta" >> $GITHUB_ENV

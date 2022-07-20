@@ -144,37 +144,19 @@ jobs:
             cat ${{env.CDK_MODULE}}/requirements.txt
             pip3 install -r  ${{env.CDK_MODULE}}/requirements.txt
         
-        - name: Delete company table
+        - name: Delete Dynamodb Tables
           run: |
-            (aws dynamodb delete-table --table-name company) || ( echo "table not found" )
-        - name: Delete company stack
-          run: | 
-            (aws cloudformation delete-stack --stack-name beer-dynamodb-0-company) || ( echo "stack not found" )
-        
-        - name: Delete company_site table
-          run: |    
-            (aws dynamodb delete-table --table-name company_site) || ( echo "table not found" )
-        - name: Delete company-site stack
-          run: | 
-            (aws cloudformation delete-stack --stack-name beer-dynamodb-7-company-site) || ( echo "stack not found" )
-        
-        - name: Delete group table
-          run: |    
-            (aws dynamodb delete-table --table-name group) || ( echo "table not found" )
-        - name: Delete group stack
-          run: | 
-            (aws cloudformation delete-stack --stack-name beer-dynamodb-10-group) || ( echo "stack not found" )
-            
+            python3 delete_tables.py
             
         # AWS IAC cdk deployment
         # Role to deploy as in defined in project.properties file
-        - name: Running cdk deploy
-          run: |
-            echo "We will run cdk deploy --all --require-approval never --role-arn ${{ steps.project_constants.outputs.cdk_deploy }}"
-            cdk deploy \
-            --all \
-            --require-approval never \
-            --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
-          working-directory: ${{env.CDK_MODULE}}
+        # - name: Running cdk deploy
+        #   run: |
+        #     echo "We will run cdk deploy --all --require-approval never --role-arn ${{ steps.project_constants.outputs.cdk_deploy }}"
+        #     cdk deploy \
+        #     --all \
+        #     --require-approval never \
+        #     --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
+        #   working-directory: ${{env.CDK_MODULE}}
 
     

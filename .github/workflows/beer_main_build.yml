@@ -463,7 +463,7 @@ jobs:
           with:
             github-token: ${{ secrets.envPAT }} # this will use the runner's token.
             ms-teams-webhook-uri: ${{ secrets.teams_uri }}
-            notification-summary: "Build Successful &#x2705; : ${{env.IMAGE_REPO_NAME}} v${{env.TAG_VERSION}}"
+            notification-summary: "Beta Build Successful &#x2705; : ${{env.IMAGE_REPO_NAME}} v${{env.TAG_VERSION}}"
             notification-color: 00FF00
             timezone: America/New_York
         
@@ -473,7 +473,7 @@ jobs:
           with:
             github-token: ${{ secrets.envPAT }} # this will use the runner's token.
             ms-teams-webhook-uri: ${{ secrets.teams_uri }}
-            notification-summary: "Build Error BETA &#x274C; : ${{env.IMAGE_REPO_NAME}} Please check workflow"
+            notification-summary: "Beta Build Error BETA &#x274C; : ${{env.IMAGE_REPO_NAME}} Please check workflow"
             notification-color: FF0000
             timezone: America/New_York
         
@@ -487,7 +487,7 @@ jobs:
         #    echo ${{steps.github_release.outputs.changelog}}
   Frontend-React-Build-Prod:
     needs: [main-setup,Frontend-React-Build-Beta]
-    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main1' && inputs.deployment_type == 'nx')
+    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type == 'nx')
     runs-on: ubuntu-latest          
     steps:
         - name: Get current date
@@ -496,7 +496,7 @@ jobs:
         
         - name: Set ENV Variables
           run: |
-            echo "BUCKET_DIRECTORY=prod" >> $GITHUB_ENV
+            echo "BUCKET_DIRECTORY=production" >> $GITHUB_ENV
 
         - name: Image Repository name
           run: |
@@ -607,7 +607,7 @@ jobs:
           with:
             github-token: ${{ secrets.envPAT }} # this will use the runner's token.
             ms-teams-webhook-uri: ${{ secrets.teams_uri }}
-            notification-summary: "Build Successful &#x2705; : ${{env.IMAGE_REPO_NAME}} v${{env.TAG_VERSION}}"
+            notification-summary: "Prod Build Successful &#x2705; : ${{env.IMAGE_REPO_NAME}} v${{env.TAG_VERSION}}"
             notification-color: 00FF00
             timezone: America/New_York
         
@@ -617,7 +617,7 @@ jobs:
           with:
             github-token: ${{ secrets.envPAT }} # this will use the runner's token.
             ms-teams-webhook-uri: ${{ secrets.teams_uri }}
-            notification-summary: "Build Error PROD &#x274C; : ${{env.IMAGE_REPO_NAME}} Please check workflow"
+            notification-summary: "Prod Build Error PROD &#x274C; : ${{env.IMAGE_REPO_NAME}} Please check workflow"
             notification-color: FF0000
             timezone: America/New_York
         
