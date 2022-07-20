@@ -564,13 +564,11 @@ jobs:
             if [[ ${{inputs.repo_version}} == 'main' ]]
             then
               UI_VERSION=$(aws s3 ls beer-ul-nx-workspace/${branch_name}/ --recursive | sort | tail -n 1 | awk '{print $4}')
+              echo "TARGET_UI_VERSION=${UI_VERSION}" >> $GITHUB_ENV
             else
               echo "TARGET_UI_VERSION=${{env.BRANCH_NAME}}/${{inputs.repo_version}}.zip" >> $GITHUB_ENV
             fi
-
-            echo "TARGET_UI_VERSION=${UI_VERSION}" >> $GITHUB_ENV
             
-
 
         - name: Download from s3
           run: |
