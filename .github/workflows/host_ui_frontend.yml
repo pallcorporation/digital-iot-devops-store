@@ -559,7 +559,6 @@ jobs:
             aws-region: ${{ env.AWS_REGION }}
         
         - name: Application UI Version
-          if: (inputs.repo_version == 'main')
           run: |
             branch_name="${{env.BRANCH_NAME}}"
             if [[ ${{inputs.repo_version}} == 'main' ]]
