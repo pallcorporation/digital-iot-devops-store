@@ -276,6 +276,7 @@ jobs:
 
             COGNITO_USER_ID="`grep COGNITO_USER_ID deploy_data.properties|cut -d'=' -f2`"
             echo "POSTMAN_COGNITO_USER_ID=${COGNITO_USER_ID}" >> $GITHUB_ENV
+            echo "COGNITO_USERID=${COGNITO_USER_ID}" >> $GITHUB_ENV
 
         - name: Run python script to replace secrets
           run: |
