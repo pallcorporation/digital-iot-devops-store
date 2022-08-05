@@ -87,7 +87,9 @@ jobs:
       - name: Set teams URI to environment Variable
         run: |
           echo "TEAMS_URI=${{secrets.teams_uri}}" >> $GITHUB_ENV
-
+      - name: Install dependencies
+        run: pip3 install -r requirements.txt
+        
       - name: Run python script to read Cloudwatch logs
         run: |
           python3 app.py
