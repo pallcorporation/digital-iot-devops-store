@@ -1,0 +1,95 @@
+name: Beer Cloudwatch Monitoring API automated tests
+on:
+  
+  workflow_call:
+    inputs:
+      branch_name:
+        required: true
+        type: string
+
+    secrets:
+      envPAT:
+        required: true
+      teams_uri:
+        required: false
+      
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+env:
+  AWS_REGION : "us-east-1"
+  PROJECT_FILES_GIT : "beer-project-properties.git"
+  PROJECT_FILES_NAME: "project.properties"
+  PROJECT_FILES_DIRECTORY: "beer-project-properties"
+  LOGS_MONITORING_REPO: "beer-be-logs-monitoring"
+  
+permissions:
+      id-token: write
+      contents: read    # This is required for actions/checkout@v1 !
+      packages: write
+
+jobs:
+  Project-Admins:
+    runs-on: ubuntu-latest
+    steps:
+      # Get current time stamp to use as reference elsewhere
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+      
+      - name: Git clone the repository
+        uses: actions/checkout@v2
+
+      - name: Branch name
+        id: get_branch_name
+        run: |
+          echo "BRANCH_NAME=${{inputs.branch_name}}" >> $GITHUB_ENV
+      
+
+      
+      - name: Project files clone
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/beer-project-properties
+          ref: main
+          path: ${{env.PROJECT_FILES_DIRECTORY}}
+      
+      - name: Get project constants from project.properties repo
+        id: project_constants
+        run: |
+          account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "::set-output name=env_id::${account_id}"
+          echo $account_id is the account id
+          echo "AWS_ACCOUNT=${account_id}" >> $GITHUB_ENV
+          
+
+          oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "::set-output name=oidc_role::${oidc_role_name}"
+
+          cdk_deploy_role_arn="`grep aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
+          
+        working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
+      
+      # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
+      - name: Arn to use
+        id: aws_assume_role
+        run: |
+          echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
+    
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
+          role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Set teams URI to environment Variable
+        run: |
+          echo "TEAMS_URI=${{secrets.teams_uri}}" >> $GITHUB_ENV
+          
+      - name: Run python script to read Cloudwatch logs
+        run: |
+          python3 ${{env.LOGS_MONITORING_REPO}}/app.py
+      
+      
