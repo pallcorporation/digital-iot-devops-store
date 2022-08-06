@@ -57,6 +57,7 @@ jobs:
           echo "BRANCH_NAME=integration" >> $GITHUB_ENV
 
       - name: Branch if Production
+        if: contains( github.ref, 'production' )
         run: |
           echo "BRANCH_NAME=production" >> $GITHUB_ENV
       
