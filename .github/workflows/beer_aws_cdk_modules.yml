@@ -223,7 +223,7 @@ jobs:
           run: |
             version_number="`grep aws_cdk ${{env.AWS_CDK_LIBRARY_FILE}}|cut -d'=' -f2`"
             echo "::set-output name=cdk_version::${version_number}"
-            echo "AWS_CDK_LIBRARY_VERSION=${cdk_version}" >> $GITHUB_ENV
+            echo "AWS_CDK_LIBRARY_VERSION=${version_number}" >> $GITHUB_ENV
 
           working-directory: ${{env.AWS_CDK_LIBRARY_DIRECTORY}}
         
