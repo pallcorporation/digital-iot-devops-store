@@ -71,6 +71,7 @@ permissions:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   Check-postman:
+    if: (github.repository != 'pallcorporation/digital-iot-devops-store')
     runs-on: ubuntu-latest
     outputs:
       postman_collection: ${{ steps.postman_collections.outputs.postman_collections_found }}
@@ -90,7 +91,7 @@ jobs:
           fi
   Run-Postman-Collection:
     needs: Check-postman
-    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && ${{ needs.Project-Admins.outputs.postman_username == 'true'}}}})
+    if: (${{ needs.Check-postman.outputs.postman_username == 'true'}}}})
     runs-on: ubuntu-latest
       
     steps:
