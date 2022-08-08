@@ -43,6 +43,8 @@ env:
   PROJECT_FILES_GIT : "beer-project-properties.git"
   ORGANIZATION: "pallcorporation"
   PROJECT_FILES_NAME: "project.properties"
+  AWS_CDK_LIBRARY_FILE: "aws_cdk_library.properties"
+  AWS_CDK_LIBRARY_DIRECTORY: "aws_cdk_version"
   PROJECT_FILES_DIRECTORY: "project_file"
   IMAGE_REGISTRY: "ghcr.io"
   IMAGE_REGISTRY_USERNAME: ${{github.actor}}
@@ -100,7 +102,6 @@ jobs:
           run: |
             echo "BRANCH_NAME=tools" >> $GITHUB_ENV
             
-        
         - name: Echo branch
           run: echo "${BRANCH_NAME} is the branch name to use in lookup"
         
@@ -123,6 +124,9 @@ jobs:
         
         - name: Make project files directory
           run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
+        
+        - name: Make AWS cdk library directory
+          run: mkdir ${{env.AWS_CDK_LIBRARY_DIRECTORY}}
         
         - name: Make cdk directory
           run: mkdir ${{env.CDK_MODULE}}
@@ -161,6 +165,24 @@ jobs:
             repository: pallcorporation/digital-iot-devops-cdk-modules
             ref: main
             path: ${{env.CDK_MODULE}}
+        
+        - name: CDK Library version
+          id: get_cdk_clone_version
+          run: |
+            if [[ ${BRANCH_NAME} == 'production' ]]
+            then
+              echo "CDK_CLONE_VERSION=main" >> $GITHUB_ENV
+            else
+              echo "CDK_CLONE_VERSION=${{env.BRANCH_NAME}}" >> $GITHUB_ENV
+            fi
+        
+        - name: AWS CDK library version
+          uses: actions/checkout@v2
+          with:
+            token: ${{ secrets.envPAT }}
+            repository: pallcorporation/digital-iot-devops-aws-cdk-library
+            ref: ${{env.CDK_CLONE_VERSION}}
+            path: ${{env.AWS_CDK_LIBRARY_DIRECTORY}}
 
         - name: Replace github username
           if: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/integration' && github.ref != 'refs/heads/beta' && github.ref != 'refs/heads/production' && github.ref != 'refs/heads/tools' }}
@@ -172,7 +194,6 @@ jobs:
             rm ${{env.CDK_MODULE}}/src/github_user.py
             cp github_user.py ${{env.CDK_MODULE}}/src/
 
-            
         # Grant permissions to all files in directory
         - name: Grant permissions to all files
           run: chmod -R 755 ./
@@ -195,22 +216,25 @@ jobs:
             oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
             echo "::set-output name=oidc_role::${oidc_role_name}"
 
-            cdk_deploy_role_arn="`grep aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
-            
-            aws_bucket="`grep aws_frontend_bucket ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=aws_bucket_name::${aws_bucket}"
-            echo $aws_bucket
-
-            cloud_front_id="`grep aws_${BRANCH_NAME}_cloudfront_id ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=aws_cloud_front_id::${cloud_front_id}"
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
         
-        # Read if to destroy stack from input
-        - name: Destroy CDK Stack
-          id: get_cdk_destroy_stack
+        - name: Get AWS CDK Version
+          id: aws_install_version
           run: |
-            echo "##[set-output name=cdk_destroy_stack;]$(echo ${{inputs.destroy_stack}})"
+            version_number="`grep aws_cdk ${{env.AWS_CDK_LIBRARY_FILE}}|cut -d'=' -f2`"
+            echo "::set-output name=cdk_version::${version_number}"
+            echo "AWS_CDK_LIBRARY_VERSION=${cdk_version}" >> $GITHUB_ENV
+
+          working-directory: ${{env.AWS_CDK_LIBRARY_DIRECTORY}}
+        
+        - run: echo "Deploying version ${{env.AWS_CDK_LIBRARY_VERSION}} of AWS cdk"
+
+        - name: Install CDK
+          if: ${{ steps.skip_cdk.outputs.bypass_cdk !='true'}}
+          run: | 
+            sudo npm -g install aws-cdk@${{env.AWS_CDK_LIBRARY_VERSION}}
+            cat ${{env.CDK_MODULE}}/requirements.txt
+            pip3 install -r  ${{env.CDK_MODULE}}/requirements.txt
         
         - name: Copy cdk config files
           run: |
@@ -235,25 +259,6 @@ jobs:
         - name: Grant permissions to all files
           run: | 
             chmod -R 755 ${{env.CDK_MODULE}}
-
-        - name: Install CDK
-          if: ${{ steps.skip_cdk.outputs.bypass_cdk !='true'}}
-          run: | 
-            sudo npm -g install aws-cdk@2.30.0
-            cat ${{env.CDK_MODULE}}/requirements.txt
-            pip3 install -r  ${{env.CDK_MODULE}}/requirements.txt
-
-        #- name: Test cdk synth works
-        #  if: ${{ steps.skip_cdk.outputs.bypass_cdk !='true'}}
-        #  run: cdk synth
-        #  working-directory: ${{env.CDK_MODULE}}
-        
-        # Destroy AWS IAC cdk stack if advised
-        - name: Destroying stack if required
-          if: ${{steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack == 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
-          run: |
-            yes | cdk destroy --all --require-approval never --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
-          working-directory: ${{env.CDK_MODULE}}
 
         - name: Check if Graphql exists
           id: appsync_graphql
@@ -283,18 +288,6 @@ jobs:
           run: | 
             chmod -R 777 ./
         # *****************PROJECT SPECIFIC ELEMENTS*****************
-
-        # # AWS IAC cdk deployment
-        # # Role to deploy as in defined in project.properties file
-        # - name: Running cdk deploy
-        #   if: ${{steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
-        #   run: |
-        #     echo "We will run cdk deploy --all --require-approval never --role-arn ${{ steps.project_constants.outputs.cdk_deploy }}"
-        #     cdk deploy \
-        #     --all \
-        #     --require-approval never \
-        #     --role-arn arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.cdk_deploy }} 
-        #   working-directory: ${{env.CDK_MODULE}}
         
         - name: Running cdk deploy
           if: ${{steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
