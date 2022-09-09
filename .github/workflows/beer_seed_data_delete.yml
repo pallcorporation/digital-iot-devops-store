@@ -208,6 +208,6 @@ jobs:
         - name: Grant permissions to all files
           run: chmod -R 755 ./
 
-        - name: Run python seed script
+        - name: Run python delete seed script
           run: |
             python3 batch_delete_seeds.py
