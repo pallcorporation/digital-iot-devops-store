@@ -606,3 +606,18 @@ jobs:
         - name: Copy to ${{env.BRANCH_NAME}} s3
           run: |
             aws s3 sync ./deployment_stage/dist/apps/beeriot-web s3://${{env.HOSTING_BUCKET}}
+        
+        - name: Cloudfront id output
+          run: |
+            echo "CF_ID_OUTPUT=${{inputs.in_cloudfront_output}}cfoutput" >> $GITHUB_ENV
+        
+        - name: Stack id to query
+          run: |
+            echo "IN_STACK_ID=${{inputs.in_stack_id}}" >> $GITHUB_ENV
+
+        - name: Invalidate cloudfront cache
+        #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
+          run: |
+            echo ${CF_ID_OUTPUT} is the output id
+            CLOUDFRONT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${IN_STACK_ID} --query "Stacks[0].Outputs[?OutputKey=='${CF_ID_OUTPUT}'].OutputValue" --output text)
+            aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_ID --paths '/*'
