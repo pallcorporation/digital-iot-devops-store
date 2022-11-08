@@ -287,7 +287,7 @@ jobs:
             echo "IMAGE_REPO_NAME=${{ github.event.repository.name }}" >> $GITHUB_ENV
 
         - name: Check if need to create Step Function Json
-          if: ${IMAGE_REPO_NAME} == 'beer-be-filterrun-pipeline-orchestrator'
+          if: ${{env.IMAGE_REPO_NAME}} == 'beer-be-filterrun-pipeline-orchestrator'
           run: |
             mkdir workflow_dir
             echo "WORKFLOW_FILE=updated-filterrun-workflow.json">>$GITHUB_ENV
