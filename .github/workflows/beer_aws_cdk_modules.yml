@@ -282,6 +282,13 @@ jobs:
             cp all-schema.graphql appsync/all-schema.graphql
             echo "GRAPHQL_DIRECTORY=appsync" >> $GITHUB_ENV
             echo "SCHEMA_FILE_NAME=all-schema.graphql" >> $GITHUB_ENV
+        - name: Image Repository name
+          run: |
+            echo "IMAGE_REPO_NAME=${{ github.event.repository.name }}" >> $GITHUB_ENV
+
+        - name: Check if need to create Step Function Json
+          if: ${IMAGE_REPO_NAME} == 'beer-be-filterrun-pipeline-orchestrator'
+          run: python3 make_fiterrun_workflow_json.py
         
         - name: Grant permissions to all files
           if: ${{steps.appsync_graphql.outputs.graphql_found == 'true'}}
