@@ -52,6 +52,8 @@ env:
   CDK_MODULE: "cdk_checkedout"
   API_GATEWAY_STACK_ID: beer-apigateway-0-iot-apigw
   API_GATEWAY_OUPUT_LOOKUP: beerapigateway0iotapigwurloutput
+  WORKFLOW_FILE: updated-filterrun-workflow.json
+  WORKFLOW_DIRECTORY: workflow_dir
   
 
 permissions:
@@ -289,9 +291,8 @@ jobs:
         - name: Check if need to create Step Function Json
           if: ${{env.IMAGE_REPO_NAME}} == 'beer-be-filterrun-pipeline-orchestrator'
           run: |
-            echo "WORKFLOW_FILE=updated-filterrun-workflow.json" >> $GITHUB_ENV
-            echo "WORKFLOW_DIRECTORY=workflow_dir" >> $GITHUB_ENV
-            mkdir ${{env.workflow_dir}}
+            mkdir ${{env.WORKFLOW_DIRECTORY}}
+            
         - name: Make filterrun workflow JSON
           if: ${{env.IMAGE_REPO_NAME}} == 'beer-be-filterrun-pipeline-orchestrator'
           run: |
