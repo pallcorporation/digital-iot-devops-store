@@ -309,7 +309,8 @@ jobs:
         - name: Make filterrun workflow JSON
           if: ${{steps.stepfunction_workflow.outputs.stepfunction_found == 'true'}}
           run: |
-            python3 ${{env.CDK_MODULE}}/src/aws_modules/StepFunction/make_fiterrun_workflow_json.py
+            mv ${{env.CDK_MODULE}}/src/aws_modules/StepFunction/make_fiterrun_workflow_json.py make_fiterrun_workflow_json.py
+            python3 make_fiterrun_workflow_json.py
             
         - name: Grant permissions to all files
           if: ${{steps.appsync_graphql.outputs.graphql_found == 'true'}}
