@@ -28,6 +28,9 @@ on:
 
       repo_version:
         type: string
+
+      docker_image_lambda_function_exception:
+        type: string
       
     secrets:
       envPAT:
@@ -153,6 +156,11 @@ jobs:
           run: |
             echo "DOCKER_IMAGE_TAG=${{steps.findandreplace_version1.outputs.value}}" >> $GITHUB_ENV
             echo "DOCKER_IMAGE_REPOSITORY=${{inputs.repo_name}}" >> $GITHUB_ENV
+        
+        - name: Set environment variables for CDK stack
+          if: ${{inputs.docker_image_lambda_function_exception}}
+          run: |
+            echo "FUNCTION_IMAGE_EXCEPTION=true" >> $GITHUB_ENV
         
         - name: Project files clone
           uses: actions/checkout@v2
