@@ -137,7 +137,7 @@ jobs:
 
         - name: Remove cdk directory 
           if: ${{inputs.repo_name}}
-          run: rm -rf ${{env.CDK_MODULE}}
+          run: rm -rf cdk_config
 
         - name: Move files (if from application deployment)
           if: ${{inputs.repo_name}}
