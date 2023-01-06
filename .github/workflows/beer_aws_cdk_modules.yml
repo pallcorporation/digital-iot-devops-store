@@ -111,6 +111,7 @@ jobs:
         
         # Clone repositories prior to work
         - name: Git clone the repository
+          if: ${{github.repository != 'pallcorporation/beer-application-deployment' || github.repository != 'pallcorporation/beer-ul-invoke-all-lambdas'}}
           uses: actions/checkout@v2
         
         - name: Make repo directory
@@ -134,10 +135,6 @@ jobs:
         
         - name: Make cdk directory
           run: mkdir ${{env.CDK_MODULE}}
-
-        - name: Remove cdk directory 
-          if: ${{inputs.repo_name}}
-          run: rm -rf cdk_config
 
         - name: Move files (if from application deployment)
           if: ${{inputs.repo_name}}
