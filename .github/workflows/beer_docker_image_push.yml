@@ -73,7 +73,7 @@ jobs:
         - name: Check out ${{ inputs.repo_name }}
           uses: actions/checkout@v2
           with:
-            token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+            token: ${{ secrets.envPAT }}
             repository: pallcorporation/${{ inputs.repo_name }}
             ref: ${{ inputs.repo_version }}
             path: ${{ inputs.repo_name }}_stage
@@ -90,7 +90,7 @@ jobs:
         - name: Project files clone
           uses: actions/checkout@v2
           with:
-            token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+            token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-project-properties
             ref: main
             path: ${{env.PROJECT_FILES_DIRECTORY}}
@@ -98,7 +98,7 @@ jobs:
         - name: CDK Modules clone
           uses: actions/checkout@v2
           with:
-            token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+            token: ${{ secrets.envPAT }}
             repository: pallcorporation/digital-iot-devops-cdk-modules
             ref: main
             path: ${{env.CDK_MODULE}}
