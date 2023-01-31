@@ -90,7 +90,7 @@ jobs:
             echo "BRANCH_NAME=integration" >> $GITHUB_ENV
 
         - name: Branch if Production
-          if: ( contains( github.ref, 'production' ) && (github.repository == 'pallcorporation/beer-application-deployment' || github.repository == 'pallcorporation/beer-aws-github-oidc-federation' ))
+          if: ( contains( github.ref, 'production' ) && (github.repository == 'pallcorporation/beer-application-deployment' || github.repository == 'pallcorporation/beer-aws-github-oidc-federation'|| github.repository == 'pallcorporation/beer-be-iac-apigateway' ))
           run: |
             echo "BRANCH_NAME=production" >> $GITHUB_ENV
         
