@@ -184,6 +184,11 @@ jobs:
           run: |
             echo "BUILD_DIRECTORY=dist/storybook/ui-components" >> $GITHUB_ENV
         
+        - name: Build directory nextjs
+          if: ${{inputs.build_project_type == 'nextjs' }}
+          run: |
+            echo "BUILD_DIRECTORY=out" >> $GITHUB_ENV
+        
         - name: Build directory echo
           run: echo $BUILD_DIRECTORY
         # Clone repositories prior to work
@@ -368,7 +373,12 @@ jobs:
             else
               npx nx run beeriot-web:build:staging
             fi
-        
+        - name: Build NextJS
+          if: ${{inputs.build_project_type == 'nextjs'}}
+          run: |
+            npm install
+            npm run publish
+
         - name: Install yaml
           run: |
             pip install pyyaml
