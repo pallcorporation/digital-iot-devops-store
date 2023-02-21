@@ -16,6 +16,9 @@ on:
       destroy_stack:
         type: boolean
         default: false
+      timestream_init_db:
+        type: boolean
+        default: false
 
       deployment_type:
         type: string
@@ -332,12 +335,10 @@ jobs:
             cdk deploy --all --require-approval never --force
           working-directory: ${{env.CDK_MODULE}}
         
-        #- name: Cleanup API Gateway routes
-        #  if: ${{steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.skip_cdk.outputs.bypass_cdk !='true' && github.ref == 'refs/heads/dev' && github.ref != 'refs/heads/dev'}}
-        #  run: |
-        #    python3 src/aws_modules/APIGatewayv2/apigateway_cleanup.py
-             
-        #  working-directory: ${{env.CDK_MODULE}}
+        - name: Running timetream init DB
+          if: ${{inputs.timestream_init_db}}
+          run: |
+            python3 ${{inputs.timestream_init_db}}
         
         - name: API Gateway url
           if: ${{github.repository != 'pallcorporation/beer-application-deployment' || github.repository != 'pallcorporation/beer-aws-github-oidc-federation'}}
