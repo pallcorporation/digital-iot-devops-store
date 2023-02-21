@@ -17,8 +17,7 @@ on:
         type: boolean
         default: false
       timestream_init_db:
-        type: boolean
-        default: false
+        type: string
 
       deployment_type:
         type: string
