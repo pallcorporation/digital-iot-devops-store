@@ -313,7 +313,7 @@ jobs:
         - name: run newman
           if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
           run: |
-            newman run ./postman/collection.json -e ./final_env_var.json --delay 1000
+            newman run ./postman/collection.json -e ./final_env_var.json
         
         - name: Python script to disable & delete created postman user
           if: always()
