@@ -241,6 +241,13 @@ jobs:
           - beer-be-permission-service
           - beer-be-settings-service
           - beer-be-system-service
+          - beer-be-alert-service
+          - beer-be-user-service
+          - beer-be-analytics-service
+          - beer-be-exec-summary-service
+          - beer-be-support-service
+          - beer-be-brand-service
+          - beer-be-filterrun-service
           
       fail-fast: false
     steps:
