@@ -168,6 +168,9 @@ jobs:
             elif [[ ${{inputs.branch_name}} == 'dev' ]]
             then
               echo "AWS_ENV_NAME=dev" >> $GITHUB_ENV
+            elif [[ ${{inputs.branch_name}} == 'tools' ]]
+            then
+              echo "AWS_ENV_NAME=tools" >> $GITHUB_ENV
             else
               echo "AWS_ENV_NAME=dev" >> $GITHUB_ENV
             fi
