@@ -151,6 +151,11 @@ jobs:
           run: |
             echo "BRANCH_NAME=beta" >> $GITHUB_ENV
         
+        - name: Branch if Tools
+          if: contains( github.ref, 'tools' )
+          run: |
+            echo "BRANCH_NAME=tools" >> $GITHUB_ENV
+        
         - name: Lambda function environment suffix
           id: get_aws_branch_name
           run: |
