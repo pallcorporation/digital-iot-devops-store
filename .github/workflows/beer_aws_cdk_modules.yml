@@ -78,8 +78,8 @@ jobs:
         # Get current time stamp to use as reference elsewhere
         - name: Get current date
           id: date
-          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
-        
+          run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
+
         # Get branch name to use for look up
         - name: Branch if Dev
           if: contains( github.ref, 'dev' )
@@ -211,24 +211,16 @@ jobs:
         # Grant permissions to all files in directory
         - name: Grant permissions to all files
           run: chmod -R 755 ./
-
-        # Read commit message and determine if to skip cdk work
-        - name: Read if to skip cdk deployment based on commit message
-          id: skip_cdk
-          if: "contains(github.event.head_commit.message, '+cdk-skip')"
-          run: |
-            echo "We will skip cdk execution"
-            echo "::set-output name=bypass_cdk::true"
         
         # Read of project files and set to variables
         - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
           id: project_constants
           run: |
             account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=env_id::${account_id}"
+            echo "AWS_ENVIRONMENT=${account_id}" >> $GITHUB_ENV
             
             oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=oidc_role::${oidc_role_name}"
+            echo "oidc_role=${oidc_role_name}" >> $GITHUB_ENV
 
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
         
@@ -236,7 +228,6 @@ jobs:
           id: aws_install_version
           run: |
             version_number="`grep aws_cdk ${{env.AWS_CDK_LIBRARY_FILE}}|cut -d'=' -f2`"
-            echo "::set-output name=cdk_version::${version_number}"
             echo "AWS_CDK_LIBRARY_VERSION=${version_number}" >> $GITHUB_ENV
 
           working-directory: ${{env.AWS_CDK_LIBRARY_DIRECTORY}}
@@ -244,7 +235,6 @@ jobs:
         - run: echo "Deploying version ${{env.AWS_CDK_LIBRARY_VERSION}} of AWS cdk"
 
         - name: Install CDK
-          if: ${{ steps.skip_cdk.outputs.bypass_cdk !='true'}}
           run: | 
             sudo npm -g install aws-cdk@${{env.AWS_CDK_LIBRARY_VERSION}}
             cat ${{env.CDK_MODULE}}/requirements.txt
@@ -261,14 +251,13 @@ jobs:
         - name: Arn to use
           id: aws_assume_role
           run: |
-            echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
-            echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}" >> $GITHUB_ENV
+            echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/${{ env.oidc_role}}" >> $GITHUB_ENV
       
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@master
           with:
             role-to-assume: ${{env.AWS_ASSUME_ROLE}}
-            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
             aws-region: ${{ env.AWS_REGION }}
         - name: Grant permissions to all files
           run: | 
@@ -282,7 +271,7 @@ jobs:
             if [ -d "$DIR" ]; then
               # Take action if $DIR exists. #
               echo "Found config files in ${DIR}..."
-              echo "::set-output name=graphql_found::true"
+              echo "graphql_found=true" >> $GITHUB_ENV
             fi
         
         - name: Check if Step function exists
@@ -293,11 +282,12 @@ jobs:
             if [ -d "$DIR" ]; then
               # Take action if $DIR exists. #
               echo "Found config files in ${DIR}..."
-              echo "::set-output name=stepfunction_found::true"
+              echo "stepfunction_found=true" >> $GITHUB_ENV
+
             fi
         
         - name: Merge Graphql Files
-          if: ${{steps.appsync_graphql.outputs.graphql_found == 'true'}}
+          if: ${{env.graphql_found == 'true'}}
           run: |
             ls
             rm -f all-schema.graphql
@@ -312,24 +302,23 @@ jobs:
             echo "IMAGE_REPO_NAME=${{ github.event.repository.name }}" >> $GITHUB_ENV
 
         - name: Check if need to create Step Function Json
-          if: ${{steps.stepfunction_workflow.outputs.stepfunction_found == 'true'}}
+          if: ${{env.stepfunction_found == 'true'}}
           run: |
             mkdir ${{env.WORKFLOW_DIRECTORY}}
             
         - name: Make filterrun workflow JSON
-          if: ${{steps.stepfunction_workflow.outputs.stepfunction_found == 'true'}}
+          if: ${{env.stepfunction_found == 'true'}}
           run: |
             mv ${{env.CDK_MODULE}}/src/aws_modules/StepFunction/make_fiterrun_workflow_json.py make_fiterrun_workflow_json.py
             python3 make_fiterrun_workflow_json.py
             
         - name: Grant permissions to all files
-          if: ${{steps.appsync_graphql.outputs.graphql_found == 'true'}}
+          if: ${{env.graphql_found == 'true'}}
           run: | 
             chmod -R 777 ./
         # *****************PROJECT SPECIFIC ELEMENTS*****************
         
         - name: Running cdk deploy
-          if: ${{steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.skip_cdk.outputs.bypass_cdk !='true'}}
           run: |
             cdk deploy --all --require-approval never --force
           working-directory: ${{env.CDK_MODULE}}
@@ -344,10 +333,9 @@ jobs:
           id: get_api_url
           run: |
             API_DOMAIN_URL=$((aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.API_GATEWAY_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.API_GATEWAY_OUPUT_LOOKUP}}`].OutputValue' --output text) || (echo "Not found"))
-            echo "::set-output name=API_DOMAIN_URL_OUTPUT::$API_DOMAIN_URL" 
+            echo "API_DOMAIN_URL_OUTPUT=${API_DOMAIN_URL}" >> $GITHUB_ENV
         
         - name: API Gateway URL echo
           if: ${{github.repository != 'pallcorporation/beer-application-deployment' || github.repository != 'pallcorporation/beer-aws-github-oidc-federation'}}
           run: |
-            echo "${{ steps.get_api_url.outputs.API_DOMAIN_URL_OUTPUT}} is the url"
-            echo "API_GATEWAY_URL=${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}}" >> $GITHUB_ENV
+            echo "${{ env.API_DOMAIN_URL_OUTPUT}} is the url"
