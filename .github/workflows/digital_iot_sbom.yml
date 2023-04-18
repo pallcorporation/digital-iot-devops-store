@@ -43,7 +43,7 @@ jobs:
           uses: actions/checkout@v2
 
         - name: Make project files directory
-          run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
+          run: mkdir ${{env.SBOM_CLIENT}}
 
         - name: Cybellum Repository Clone
           uses: actions/checkout@v2
