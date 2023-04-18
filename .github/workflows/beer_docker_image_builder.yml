@@ -278,7 +278,7 @@ jobs:
           id: ecr_login
           run: |
             (aws ecr describe-repositories --repository-names ${IMAGE_REPO_NAME} && echo "repo_created=false">>$GITHUB_ENV ) || ( aws ecr create-repository --repository-name ${IMAGE_REPO_NAME} && echo "repo_created=true">>$GITHUB_ENV )
-            aws ecr get-login-password --region ${{ env.AWS_REGION }}| docker login --username AWS --password-stdin ${env.PC_AWS_ENVRIONMENT}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+            aws ecr get-login-password --region ${{ env.AWS_REGION }}| docker login --username AWS --password-stdin ${{env.PC_AWS_ENVRIONMENT}}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
         - name: created repo
           run: |
