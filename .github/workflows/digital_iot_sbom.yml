@@ -79,11 +79,19 @@ jobs:
         - name: Install SBOM packages
           run: ./client/install_client.sh
           working-directory: ${{env.SBOM_CLIENT_DIRECTORY}}
-          
-        - name: Install SBOM python requirements.txt
-          run: pip3 install -r src/requirements.txt
-          working-directory: ${{ env.SBOM_CLIENT_DIRECTORY }}
+        
+        - name: Zip ${{ env.SOURCE_DIRECTORY }}
+          run: |
+            tar -czvf ${{ env.SOURCE_DIRECTORY }}.tar.gz ${{ env.SOURCE_DIRECTORY }}
 
-        - name: Execute SBOM python script
-          run: python3 src/main.py
-          working-directory: ${{ env.SBOM_CLIENT_DIRECTORY}}
+        - name: Run SBOM script 
+          run: |
+            python3 -m cybellum_client_ci.ci_integration_scan_firmware_script ${{ env.SOURCE_DIRECTORY }}.tar.gz ${{env.SBOM_ENDPOINT}} 443 ${{env.SBOM_USERNAME}} ${{env.SBOM_PASSWORD}} ${{ env.SOURCE_DIRECTORY }} 1.0.1 --vulnerabilities --va_auto_start --component-type other_medical_device    
+            
+        # - name: Install SBOM python requirements.txt
+        #   run: pip3 install -r src/requirements.txt
+        #   working-directory: ${{ env.SBOM_CLIENT_DIRECTORY }}
+
+        # - name: Execute SBOM python script
+        #   run: python3 src/main.py
+        #   working-directory: ${{ env.SBOM_CLIENT_DIRECTORY}}
