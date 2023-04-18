@@ -175,10 +175,10 @@ jobs:
           id: project_constants_tools
           run: |
             account_id="`grep aws_tools_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "TOOLS_AWS_ENVRIONMENT=${account_id}" >> $GITHUB_ENV
+            echo "PC_AWS_ENVRIONMENT=${account_id}" >> $GITHUB_ENV
 
             oidc_role_name="`grep aws_tools_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "TOOLS_oidc_role=${oidc_role_name}" >> $GITHUB_ENV
+            echo "pc_oidc_role=${oidc_role_name}" >> $GITHUB_ENV
 
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
 
@@ -192,7 +192,7 @@ jobs:
           id: aws_assume_role_tools
           if: ${{ env.reponamepassed }}
           run: |
-            echo "tools_role_arn1=arn:aws:iam::${{ env.TOOLS_AWS_ENVRIONMENT }}:role/${{ env.TOOLS_oidc_role}}" >> $GITHUB_ENV
+            echo "tools_role_arn1=arn:aws:iam::${{ env.PC_AWS_ENVRIONMENT }}:role/${{ env.pc_oidc_role}}" >> $GITHUB_ENV
 
         
         - name: Configure AWS credentials
@@ -258,8 +258,8 @@ jobs:
         - name: ECR Registry
           run: |            
             if [ ${{inputs.repo_name}} != "" ]; then
-              echo DOCKER_TAG_VERSION="${{ env.TOOLS_AWS_ENVRIONMENT }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:${TAG_VERSION}" >> $GITHUB_ENV
-              echo DOCKER_TAG_LATEST="${{ env.TOOLS_AWS_ENVRIONMENT }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:latest" >> $GITHUB_ENV
+              echo DOCKER_TAG_VERSION="${{ env.PC_AWS_ENVRIONMENT }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:${TAG_VERSION}" >> $GITHUB_ENV
+              echo DOCKER_TAG_LATEST="${{ env.PC_AWS_ENVRIONMENT }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:latest" >> $GITHUB_ENV
             else
               echo DOCKER_TAG_VERSION="${{ env.PC_AWS_ENVRIONMENT }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:${TAG_VERSION}" >> $GITHUB_ENV
               echo DOCKER_TAG_LATEST="${{ env.PC_AWS_ENVRIONMENT }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:latest" >> $GITHUB_ENV
@@ -278,7 +278,7 @@ jobs:
           id: ecr_login
           run: |
             (aws ecr describe-repositories --repository-names ${IMAGE_REPO_NAME} && echo "repo_created=false">>$GITHUB_ENV ) || ( aws ecr create-repository --repository-name ${IMAGE_REPO_NAME} && echo "repo_created=true">>$GITHUB_ENV )
-            aws ecr get-login-password --region ${{ env.AWS_REGION }}| docker login --username AWS --password-stdin ${AWS_ENVRIONMENT}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+            aws ecr get-login-password --region ${{ env.AWS_REGION }}| docker login --username AWS --password-stdin ${env.PC_AWS_ENVRIONMENT}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
         - name: created repo
           run: |
