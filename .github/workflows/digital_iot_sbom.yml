@@ -1,0 +1,62 @@
+name: SBOM Operations
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches:
+      - main
+
+  workflow_call:
+    secrets:
+      envPAT:
+        required: true
+      teams_uri:
+        required: false
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+env:
+  SBOM_CLIENT: sbom_client
+
+
+permissions:
+      id-token: write
+      contents: read    # This is required for actions/checkout@v1
+      packages: write
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:  
+  main-setup:
+    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main')
+    #permissions: write-all
+    runs-on: ubuntu-latest
+    
+    steps:
+        - name: Get current date
+          id: date
+          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+        
+        # Clone repositories prior to work
+        - name: Git clone the repository
+          uses: actions/checkout@v2
+
+        - name: Make project files directory
+          run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
+
+        - name: Cybellum Repository Clone
+          uses: actions/checkout@v2
+          with:
+            token: ${{ secrets.envPAT }}
+            repository: pallcorporation/digital-iot-devops-cybellum-client
+            ref: main
+            path: ${{env.SBOM_CLIENT}}
+        
+        # Grant permissions to all files in directory
+        - name: Grant permissions to all files
+          run: chmod -R 755 ./  
+          
+        - name: Install SBOM packages
+          run: ./client/install_client.sh
+          working-directory: ${{env.SBOM_CLIENT}}
