@@ -46,9 +46,20 @@ jobs:
           id: date
           run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
         
+        - name: Source directory
+          run: echo "SOURCE_DIRECTORY=${{ github.event.repository.name }}" >> $GITHUB_ENV
+        
         # Clone repositories prior to work
         - name: Git clone the repository
           uses: actions/checkout@v2
+        
+        - name: Check out ${{ github.event.repository.name }}
+          uses: actions/checkout@v2
+          with:
+            token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+            repository: pallcorporation/${{ github.event.repository.name }}
+            ref: main
+            path: ${{ env.SOURCE_DIRECTORY }}
 
         - name: Make project files directory
           run: mkdir ${{env.SBOM_CLIENT_DIRECTORY}}
