@@ -56,7 +56,7 @@ jobs:
         - name: Check out ${{ github.event.repository.name }}
           uses: actions/checkout@v2
           with:
-            token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+            token: ${{ secrets.envPAT }}
             repository: pallcorporation/${{ github.event.repository.name }}
             ref: main
             path: ${{ env.SOURCE_DIRECTORY }}
