@@ -79,7 +79,11 @@ jobs:
         - name: Install SBOM packages
           run: ./client/install_client.sh
           working-directory: ${{env.SBOM_CLIENT_DIRECTORY}}
-        
+          
+        - name: Install SBOM python requirements.txt
+          run: pip3 install -r src/requirements.txt
+          working-directory: ${{ env.SBOM_CLIENT_DIRECTORY }}
+
         - name: Execute SBOM python script
           run: python3 src/main.py
           working-directory: ${{ env.SBOM_CLIENT_DIRECTORY}}
