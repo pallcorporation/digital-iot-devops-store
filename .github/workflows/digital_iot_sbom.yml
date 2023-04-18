@@ -70,5 +70,5 @@ jobs:
           working-directory: ${{env.SBOM_CLIENT_DIRECTORY}}
         
         - name: Execute SBOM python script
-          run: python3 src/app.py
+          run: python3 src/main.py
           working-directory: ${{ env.SBOM_CLIENT_DIRECTORY}}
