@@ -53,6 +53,15 @@ jobs:
         - name: Git clone the repository
           uses: actions/checkout@v2
         
+        - name: Set up Python 3.8
+          uses: actions/setup-python@v2
+          with:
+            python-version: 3.8
+
+        - name: Display Python version
+          run: |
+            python --version
+        
         - name: Check out ${{ github.event.repository.name }}
           uses: actions/checkout@v2
           with:
@@ -86,7 +95,7 @@ jobs:
 
         - name: Run SBOM script 
           run: |
-            python3 -m cybellum_client_ci.ci_integration_scan_firmware_script ${{ env.SOURCE_DIRECTORY }}.tar.gz ${{env.SBOM_ENDPOINT}} 443 ${{env.SBOM_USERNAME}} ${{env.SBOM_PASSWORD}} ${{ env.SOURCE_DIRECTORY }} 1.0.1 --vulnerabilities --va_auto_start --component-type other_medical_device    
+            python -m cybellum_client_ci.ci_integration_scan_firmware_script ${{ env.SOURCE_DIRECTORY }}.tar.gz ${{env.SBOM_ENDPOINT}} 443 ${{env.SBOM_USERNAME}} ${{env.SBOM_PASSWORD}} ${{ env.SOURCE_DIRECTORY }} 1.0.1 --vulnerabilities --va_auto_start --component-type other_medical_device    
             
         # - name: Install SBOM python requirements.txt
         #   run: pip3 install -r src/requirements.txt
