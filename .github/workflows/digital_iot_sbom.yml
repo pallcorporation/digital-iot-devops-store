@@ -13,13 +13,21 @@ on:
         required: true
       teams_uri:
         required: false
+      sbom_username:
+        required: true
+      sbom_password:
+        required: true
+      sbom_url:
+        required: true
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 env:
   SBOM_CLIENT: sbom_client
-
+  SBOM_USERNAME: ${{ secrets.sbom_username}}
+  SBOM_PASSWORD: ${{ secrets.sbom_password}}
+  SBOM_ENDPOINT: ${{ secrets.sbom_url}}
 
 permissions:
       id-token: write
