@@ -55,34 +55,17 @@ jobs:
         # Get current time stamp to use as reference elsewhere
         - name: Get current date
           id: date
-          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
-        
-        # Read commit message and determine if to skip docker work
-        - name: Read if to skip image build & deployment based on commit message
-          id: skip_dk_build
-          if: "contains(github.event.head_commit.message, '+image-skip')"
-          run: |
-            echo "We will node installation"
-            echo "::set-output name=bypass_dk_build::true"
+          run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
         
         - name: Check if input is null for repo name
           if: ${{inputs.repo_name}}
           id: repo_name_passed
           run: |
             if [ ${{inputs.repo_name}} != "" ]; then
-              echo ::set-output name=reponamepassed::true
+              echo "reponamepassed=true">> $GITHUB_ENV
             else
-              echo ::set-output name=reponamepassed::false
+              echo "reponamepassed=false">> $GITHUB_ENV
             fi
-
-        #- name: Login to docker
-        #  if: |
-        #    ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true'}}
-        #  uses: docker/login-action@v1
-        #  with:
-        #    registry: ${{env.IMAGE_REGISTRY}}
-        #    username: ${{env.IMAGE_REGISTRY_USERNAME}}
-        #    password: ${{env.IMAGE_REGISTRY_TOKEN}}
         
         # Clone repositories prior to work
         - name: Git clone the repository
@@ -102,7 +85,7 @@ jobs:
             path: ${{ inputs.repo_name }}_stage
         
         - name: Move files (if from application deployment)
-          if: ${{ steps.repo_name_passed.outputsreponamepassed }}
+          if: ${{ env.reponamepassed }}
           run: mv ${{ inputs.repo_name }}_stage/* .
 
         - name: Make project files directory
@@ -117,7 +100,7 @@ jobs:
             path: ${{env.PROJECT_FILES_DIRECTORY}}
         
         - name: Move files (if from application deployment)
-          if: ${{ steps.repo_name_passed.outputsreponamepassed }}
+          if: ${{ env.reponamepassed }}
           run: mv ${{ inputs.repo_name }}_stage/* .
 
         
@@ -180,33 +163,22 @@ jobs:
           id: project_constants
           run: |
             account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=env_id::${account_id}"
-            echo "AWS_ENVRIONMENT=${account_id}" >> $GITHUB_ENV
+            echo "PC_AWS_ENVRIONMENT=${account_id}" >> $GITHUB_ENV
             
-            oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=oidc_role::${oidc_role_name}"
+            oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"            
+            echo "pc_oidc_role=${oidc_role_name}" >> $GITHUB_ENV
 
-            cdk_deploy_role_arn="`grep aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
-            
-            aws_bucket="`grep aws_frontend_bucket ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=aws_bucket_name::${aws_bucket}"
-            echo $aws_bucket
-
-            cloud_front_id="`grep aws_${BRANCH_NAME}_cloudfront_id ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=aws_cloud_front_id::${cloud_front_id}"
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
         
         - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
-          if: ${{ steps.repo_name_passed.outputsreponamepassed }}
+          if: ${{ env.reponamepassed }}
           id: project_constants_tools
           run: |
             account_id="`grep aws_tools_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=env_id::${account_id}"
-            echo "AWS_ENVRIONMENT=${account_id}" >> $GITHUB_ENV
+            echo "PC_AWS_ENVRIONMENT=${account_id}" >> $GITHUB_ENV
 
             oidc_role_name="`grep aws_tools_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=oidc_role::${oidc_role_name}"
+            echo "pc_oidc_role=${oidc_role_name}" >> $GITHUB_ENV
 
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
 
@@ -215,42 +187,42 @@ jobs:
         - name: Arn to use
           id: aws_assume_role
           run: |
-            echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
-
+            echo "role_arn1=arn:aws:iam::${{ env.PC_AWS_ENVRIONMENT }}:role/${{ env.pc_oidc_role}}" >> $GITHUB_ENV
         - name: Arn to use (If Application deployment)
           id: aws_assume_role_tools
-          if: ${{ steps.repo_name_passed.outputsreponamepassed }}
+          if: ${{ env.reponamepassed }}
           run: |
-            echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants_tools.outputs.env_id }}:role/${{ steps.project_constants_tools.outputs.oidc_role}}"
+            echo "tools_role_arn1=arn:aws:iam::${{ env.PC_AWS_ENVRIONMENT }}:role/${{ env.pc_oidc_role}}" >> $GITHUB_ENV
+
         
         - name: Configure AWS credentials
           id: aws_oidc_credentials
-          if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.repo_name_passed.outputsreponamepassed !='true' }}
+          if: ${{env.reponamepassed !='true' }}
           uses: aws-actions/configure-aws-credentials@master
           with:
-            role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
-            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            role-to-assume: ${{env.role_arn1}}
+            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
             aws-region: ${{ env.AWS_REGION }}
         
         - name: Configure AWS credentials (If Application deployment)
           id: aws_oidc_credentials_tools
-          if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.repo_name_passed.outputsreponamepassed =='true'}}
+          if: ${{env.reponamepassed =='true'}}
           uses: aws-actions/configure-aws-credentials@master
           with:
-            role-to-assume: ${{steps.aws_assume_role_tools.outputs.role_arn1}}
-            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            role-to-assume: ${{env.tools_role_arn1}}
+            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
             aws-region: ${{ env.AWS_REGION }}
 
         - name: Version number
           #if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '+tag-skip') != true
           run: |
-            echo "${{ steps.date.outputs.date }} is the new version"
-            echo "TAG_VERSION=${{ steps.date.outputs.date }}" >> $GITHUB_ENV
+            echo "${{ env.date }} is the new version"
+            echo "TAG_VERSION=${{ env.date }}" >> $GITHUB_ENV
         
         - name: Version number (If application deployment)
           if: ${{inputs.repo_name}}
           run: |
-            echo "${{ steps.date.outputs.date }} is the new version"
+            echo "${{ env.date }} is the new version"
             echo "TAG_VERSION=${{ inputs.repo_version }}" >> $GITHUB_ENV
  
         # Node installation (if required)
@@ -258,7 +230,6 @@ jobs:
           uses: actions/setup-node@v2.1.2
 
         - name: Install yaml
-          if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true'}}
           run: |
             pip install pyyaml
         
@@ -287,37 +258,33 @@ jobs:
         - name: ECR Registry
           run: |            
             if [ ${{inputs.repo_name}} != "" ]; then
-              echo DOCKER_TAG_VERSION="${{ steps.project_constants_tools.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:${TAG_VERSION}" >> $GITHUB_ENV
-              echo DOCKER_TAG_LATEST="${{ steps.project_constants_tools.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:latest" >> $GITHUB_ENV
+              echo DOCKER_TAG_VERSION="${{ env.PC_AWS_ENVRIONMENT }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:${TAG_VERSION}" >> $GITHUB_ENV
+              echo DOCKER_TAG_LATEST="${{ env.PC_AWS_ENVRIONMENT }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:latest" >> $GITHUB_ENV
             else
-              echo DOCKER_TAG_VERSION="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:${TAG_VERSION}" >> $GITHUB_ENV
-              echo DOCKER_TAG_LATEST="${{ steps.project_constants.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:latest" >> $GITHUB_ENV
+              echo DOCKER_TAG_VERSION="${{ env.PC_AWS_ENVRIONMENT }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:${TAG_VERSION}" >> $GITHUB_ENV
+              echo DOCKER_TAG_LATEST="${{ env.PC_AWS_ENVRIONMENT }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:latest" >> $GITHUB_ENV
             fi
         
         - name: ECR Registry name
           run: echo ${DOCKER_TAG_VERSION} is the docker version
             
         - name: Build Docker images
-          if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true'}}
           id: build_images
           run: |
             docker build -t $DOCKER_TAG_VERSION .
             docker tag $DOCKER_TAG_VERSION $DOCKER_TAG_LATEST
 
         - name: ECR Login
-          if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true'}}
           id: ecr_login
           run: |
-            (aws ecr describe-repositories --repository-names ${IMAGE_REPO_NAME} && echo "::set-output name=repo_created::false" ) || ( aws ecr create-repository --repository-name ${IMAGE_REPO_NAME} && echo "::set-output name=repo_created::true" )
-            aws ecr get-login-password --region ${{ env.AWS_REGION }}| docker login --username AWS --password-stdin ${AWS_ENVRIONMENT}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+            (aws ecr describe-repositories --repository-names ${IMAGE_REPO_NAME} && echo "repo_created=false">>$GITHUB_ENV ) || ( aws ecr create-repository --repository-name ${IMAGE_REPO_NAME} && echo "repo_created=true">>$GITHUB_ENV )
+            aws ecr get-login-password --region ${{ env.AWS_REGION }}| docker login --username AWS --password-stdin ${{env.PC_AWS_ENVRIONMENT}}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
         - name: created repo
-          if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true'}}
           run: |
-            echo "${{ steps.ecr_login.outputs.repo_created }} did we create repo"
+            echo "${{ env.repo_created }} did we create repo"
 
         - name: Push docker image to ECR
-          if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true'}}
           run: |
             docker push $DOCKER_TAG_VERSION
             docker push $DOCKER_TAG_LATEST
@@ -332,17 +299,6 @@ jobs:
             echo LAMBDA_FUNCTION_NAME="${{inputs.lambd_function_name}}-${{github.actor}}-${{ env.AWS_ENV_NAME }}" >> $GITHUB_ENV
 
         - name: Update function with new image built
-          if: ${{ steps.repo_name_passed.outputsreponamepassed !='true' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' && steps.ecr_login.outputs.repo_created =='false' && steps.skip_dk_build.outputs.bypass_dk_build !='true'}} 
+          if: ${{ env.reponamepassed !='true' && env.repo_created =='false'}} 
           run: |
             (aws lambda update-function-code --region ${{ env.AWS_REGION }} --function-name $LAMBDA_FUNCTION_NAME --image-uri $DOCKER_TAG_VERSION ) || ( echo "Function not found" )
-
-    outputs:
-      #env_name: ${{ steps.branch_check.outputs.env_id }}tt
-      cdk_check: ${{ steps.check_cdk.outputs.cdk_found}}
-      env_name: ${{ steps.project_constants.outputs.env_id }}
-      oidc_role: ${{ steps.project_constants.outputs.oidc_role}}
-      skip_cdk: ${{ steps.skip_cdk.outputs.bypass_cdk}}
-      cdk_deploy_name: ${{ steps.project_constants.outputs.cdk_deploy}}
-      cdk_destroy_stack_bool: ${{ steps.project_constants.outputs.cdk_destroy_stack}}
-      branch_name: ${BRANCH_NAME}
-      aws_upload_bucket: ${{steps.project_constants.outputs.aws_bucket_name}} 
