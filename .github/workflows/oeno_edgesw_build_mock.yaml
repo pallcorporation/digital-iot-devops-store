@@ -1,0 +1,77 @@
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push 
+  push:
+   branches:
+     - dev
+     - beta
+     - main
+  workflow_call:
+    inputs:
+      APP_NAME:
+        type: string
+
+    secrets:
+      envPAT:
+        required: true
+        
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+  
+permissions:
+      id-token: write
+      contents: read    # This is required for actions/checkout@v1
+      packages: write
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  setup:
+    if: github.repository != 'pallcorporation/digital-iot-devops-store'
+    runs-on: ubuntu-latest
+    outputs:
+      release_version: ${{ env.TAG_VERSION }}
+    steps:
+      # Get current time stamp to use as reference elsewhere
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+
+      - name: Beta Tag
+        if: github.ref == 'refs/heads/beta'
+        id: version_number_beta
+        uses: hennejg/github-tag-action@v4.3.1
+        with:
+          github_token: ${{ secrets.envPAT }}
+          default_bump: patch
+          tag_prefix: v
+          release_branches: beta
+      
+      - name: Prod Tag
+        if: github.ref == 'refs/heads/main'
+        id: version_number_prod
+        uses: hennejg/github-tag-action@v4.3.1
+        with:
+          github_token: ${{ secrets.envPAT }}
+          default_bump: minor
+          tag_prefix: v
+          release_branches: main
+
+      - name: Version number
+        if: github.ref == 'refs/heads/beta'
+        run: |
+          echo "${{ steps.version_number_beta.outputs.new_version }} is the new version"
+          echo "TAG_VERSION=${{ steps.version_number_beta.outputs.new_version }}" >> $GITHUB_ENV
+
+      - name: Version number
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "${{ steps.version_number_prod.outputs.new_version }} is the new version"
+          echo "TAG_VERSION=${{ steps.version_number_prod.outputs.new_version }}" >> $GITHUB_ENV
+
+      - name: Version number
+        if: github.ref == 'refs/heads/dev'
+        run: echo "TAG_VERSION=0.0.0" >> $GITHUB_ENV
+ 
