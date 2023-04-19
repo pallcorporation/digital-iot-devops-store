@@ -155,15 +155,14 @@ jobs:
       - name: Version number
         id: release_version
         run: |
-          if [[ "${{env.BRANCH_NAME}}" == "production" ]]
-          then
+          if [[ "${{ env.BRANCH_NAME }}" == "production" ]]; then
             echo "TAG_VERSION=${{ steps.version_number_prod.outputs.new_version }}" >> $GITHUB_OUTPUT
-          elif [["${{env.BRANCH_NAME}} "== "beta"]]
-          then
+          elif [[ "${{ env.BRANCH_NAME }}" == "beta" ]]; then
             echo "TAG_VERSION=${{ steps.version_number_beta.outputs.new_version }}" >> $GITHUB_OUTPUT
           else
             echo "TAG_VERSION=${{ env.date }}" >> $GITHUB_OUTPUT
           fi
+
           
   AWS-WIN-EXE-BUILD:
     needs: setup
