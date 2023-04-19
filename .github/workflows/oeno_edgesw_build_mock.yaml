@@ -9,6 +9,10 @@ on:
      - beta
      - main
   workflow_call:
+    outputs:
+      release_version:
+        description: "Version of the release"
+        value: ${{ jobs.setup.outputs.output1}}
     inputs:
       APP_NAME:
         type: string
@@ -31,6 +35,8 @@ jobs:
   setup:
     if: github.repository != 'pallcorporation/digital-iot-devops-store'
     runs-on: ubuntu-latest
+    outputs:
+      output1: ${{ steps.release_version.outputs.RELEASE_VERSION }}
     
     steps:
       # Get current time stamp to use as reference elsewhere
@@ -39,10 +45,6 @@ jobs:
         run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
 
       - name: Version number
+        id: release_version
         run: |
-          echo "TAG_VERSION=${{ env.date }}" >> $GITHUB_OUTPUT
-
-      - name: Version number
-        if: github.ref == 'refs/heads/dev'
-        run: echo "TAG_VERSION=0.0.0" >> $GITHUB_OUTPUT
- 
+          echo "RELEASE_VERSION=${{ env.date }}" >> $GITHUB_OUTPUT
