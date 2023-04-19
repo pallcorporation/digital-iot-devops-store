@@ -31,8 +31,7 @@ jobs:
   setup:
     if: github.repository != 'pallcorporation/digital-iot-devops-store'
     runs-on: ubuntu-latest
-    outputs:
-      release_version: ${{ env.TAG_VERSION }}
+    
     steps:
       # Get current time stamp to use as reference elsewhere
       - name: Get current date
@@ -63,15 +62,15 @@ jobs:
         if: github.ref == 'refs/heads/beta'
         run: |
           echo "${{ steps.version_number_beta.outputs.new_version }} is the new version"
-          echo "TAG_VERSION=${{ steps.version_number_beta.outputs.new_version }}" >> $GITHUB_ENV
+          echo "TAG_VERSION=${{ steps.version_number_beta.outputs.new_version }}" >> $GITHUB_OUTPUT
 
       - name: Version number
         if: github.ref == 'refs/heads/main'
         run: |
           echo "${{ steps.version_number_prod.outputs.new_version }} is the new version"
-          echo "TAG_VERSION=${{ steps.version_number_prod.outputs.new_version }}" >> $GITHUB_ENV
+          echo "TAG_VERSION=${{ steps.version_number_prod.outputs.new_version }}" >> $GITHUB_OUTPUT
 
       - name: Version number
         if: github.ref == 'refs/heads/dev'
-        run: echo "TAG_VERSION=0.0.0" >> $GITHUB_ENV
+        run: echo "TAG_VERSION=0.0.0" >> $GITHUB_OUTPUT
  
