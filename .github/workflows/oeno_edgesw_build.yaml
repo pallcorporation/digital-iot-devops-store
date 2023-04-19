@@ -93,7 +93,7 @@ jobs:
           
       
       - name: Echo branch
-        run: echo "${BRANCH_NAME} is the branch name to use in lookup"
+        run: echo "${{env.BRANCH_NAME}} is the branch name to use in lookup"
 
       - name: Project files clone
         uses: actions/checkout@v2
@@ -106,19 +106,19 @@ jobs:
       - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
         id: project_constants
         run: |
-          account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          account_id="`grep aws_${{env.BRANCH_NAME}}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
           echo "::set-output name=env_id::${account_id}"
           echo $account_id is the account id
           echo "AWS_ACCOUNT=${account_id}" >> $GITHUB_ENV
           
-          oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          oidc_role_name="`grep aws_${{env.BRANCH_NAME}}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
           echo $oidc_role_name is the role name
           echo "::set-output name=oidc_role::${oidc_role_name}"
 
-          cdk_deploy_role_arn="`grep aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          cdk_deploy_role_arn="`grep aws_${{env.BRANCH_NAME}}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
           echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
 
-          bucket_name="`grep aws_${BRANCH_NAME}_software_bucket ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          bucket_name="`grep aws_${{env.BRANCH_NAME}}_software_bucket ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
           echo $bucket_name is the bucket name
           echo "::set-output name=bucket_name::${bucket_name}"
           
@@ -153,7 +153,6 @@ jobs:
           release_branches: main
 
       - name: Version number
-        if: github.ref == 'refs/heads/beta'
         id: release_version
         run: |
           if [[ ${env.BRANCH_NAME} == 'production' ]]
@@ -192,7 +191,7 @@ jobs:
             echo "BRANCH_NAME=beta" >> $GITHUB_ENV
                     
         - name: Echo branch
-          run: echo "${BRANCH_NAME} is the branch name to use in lookup"
+          run: echo "${{env.BRANCH_NAME}} is the branch name to use in lookup"
 
         # do a look up by branch for AWS account number
         - name: Configure AWS credentials
