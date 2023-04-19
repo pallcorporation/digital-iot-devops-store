@@ -43,7 +43,7 @@ permissions:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:  
   main-setup:
-    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main')
+    if: (github.repository != 'pallcorporation/digital-iot-devops-store')
     #permissions: write-all
     runs-on: ubuntu-latest
     
