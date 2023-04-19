@@ -74,7 +74,7 @@ jobs:
       # Get current time stamp to use as reference elsewhere
       - name: Get current date
         id: date
-        run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+        run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
       
       - name: Branch if Dev
         if: contains( github.ref, 'dev' )
@@ -155,14 +155,14 @@ jobs:
       - name: Version number
         id: release_version
         run: |
-          if [[ ${{env.BRANCH_NAME}} == 'production' ]]
+          if [[ ${{env.BRANCH_NAME}} == production ]]
           then
             echo "TAG_VERSION=${{ steps.version_number_prod.outputs.new_version }}" >> $GITHUB_OUTPUT
-          elif [[${{env.BRANCH_NAME}} =='beta']]
+          elif [[${{env.BRANCH_NAME}} == beta]]
           then
             echo "TAG_VERSION=${{ steps.version_number_beta.outputs.new_version }}" >> $GITHUB_OUTPUT
           else
-            echo "TAG_VERSION=0.0.0" >> $GITHUB_OUTPUT
+            echo "TAG_VERSION=${{ env.date }}" >> $GITHUB_OUTPUT
           fi
           
   AWS-WIN-EXE-BUILD:
@@ -170,7 +170,11 @@ jobs:
     if: github.repository != 'pallcorporation/digital-iot-devops-store'
     runs-on: windows-2019
       
-    steps:      
+    steps:
+        - name: Get current date
+          id: date
+          run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
+
         - name: Git clone the repository
           uses: actions/checkout@v2
 
@@ -179,7 +183,7 @@ jobs:
           if: contains( github.ref, 'dev' )
           run: |
             echo "BRANCH_NAME=dev" >> $GITHUB_ENV
-        
+          
         - name: Branch if Main
           if: contains( github.ref, 'main' )
           run: |
@@ -189,7 +193,7 @@ jobs:
           if: contains( github.ref, 'beta' )
           run: |
             echo "BRANCH_NAME=beta" >> $GITHUB_ENV
-                    
+            
         - name: Echo branch
           run: echo "${{env.BRANCH_NAME}} is the branch name to use in lookup"
 
@@ -198,7 +202,7 @@ jobs:
           uses: aws-actions/configure-aws-credentials@master
           with:
             role-to-assume: ${{ needs.setup.outputs.aws_assume_role }}
-            role-session-name: ${{ github.event.repository.name }}-${{ needs.setup.outputs.date_timestamp }}
+            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
             aws-region: ${{ env.AWS_REGION }}
                 
         - name: Set up build env
