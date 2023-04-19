@@ -9,6 +9,10 @@ on:
      - beta
      - main
   workflow_call:
+    outputs:
+      release_version:
+        description: "Version of the release"
+        value: ${{ jobs.setup.outputs.release_version}}
     inputs:
       APP_NAME:
         type: string
@@ -64,7 +68,8 @@ jobs:
       branch_name: ${{ env.BRANCH_NAME }}
       bucket_name: ${{ steps.project_constants.outputs.bucket_name }}
       date_timestamp: ${{ steps.project_constants.outputs.date}}
-      release_version: ${{ env.TAG_VERSION }}
+      release_version: ${{ steps.release_version.outputs.TAG_VERSION }}
+      
     steps:
       # Get current time stamp to use as reference elsewhere
       - name: Get current date
@@ -149,20 +154,18 @@ jobs:
 
       - name: Version number
         if: github.ref == 'refs/heads/beta'
+        id: release_version
         run: |
-          echo "${{ steps.version_number_beta.outputs.new_version }} is the new version"
-          echo "TAG_VERSION=${{ steps.version_number_beta.outputs.new_version }}" >> $GITHUB_ENV
-
-      - name: Version number
-        if: github.ref == 'refs/heads/main'
-        run: |
-          echo "${{ steps.version_number_prod.outputs.new_version }} is the new version"
-          echo "TAG_VERSION=${{ steps.version_number_prod.outputs.new_version }}" >> $GITHUB_ENV
-
-      - name: Version number
-        if: github.ref == 'refs/heads/dev'
-        run: echo "TAG_VERSION=0.0.0" >> $GITHUB_ENV
- 
+          if [[ ${env.BRANCH_NAME} == 'production' ]]
+          then
+            echo "TAG_VERSION=${{ steps.version_number_prod.outputs.new_version }}" >> $GITHUB_OUTPUT
+          elif [[${env.BRANCH_NAME} =='beta']]
+          then
+            echo "TAG_VERSION=${{ steps.version_number_beta.outputs.new_version }}" >> $GITHUB_OUTPUT
+          else
+            echo "TAG_VERSION=0.0.0" >> $GITHUB_OUTPUT
+          fi
+          
   AWS-WIN-EXE-BUILD:
     needs: setup
     if: github.repository != 'pallcorporation/digital-iot-devops-store'

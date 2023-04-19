@@ -1,0 +1,50 @@
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push 
+  push:
+   branches:
+     - dev
+     - beta
+     - main
+  workflow_call:
+    outputs:
+      release_version:
+        description: "Version of the release"
+        value: ${{ jobs.setup.outputs.output1}}
+    inputs:
+      APP_NAME:
+        type: string
+
+    secrets:
+      envPAT:
+        required: true
+        
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+  
+permissions:
+      id-token: write
+      contents: read    # This is required for actions/checkout@v1
+      packages: write
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  setup:
+    if: github.repository != 'pallcorporation/digital-iot-devops-store'
+    runs-on: ubuntu-latest
+    outputs:
+      output1: ${{ steps.release_version.outputs.RELEASE_VERSION }}
+    
+    steps:
+      # Get current time stamp to use as reference elsewhere
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
+
+      - name: Version number
+        id: release_version
+        run: |
+          echo "RELEASE_VERSION=${{ env.date }}" >> $GITHUB_OUTPUT
