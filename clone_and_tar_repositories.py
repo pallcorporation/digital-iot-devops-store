@@ -13,6 +13,10 @@ output_zip = f"{destination_directory}_archive"
 output_tar = f"{destination_directory}_archive.tar.gz"
 # brewpro_v0.0.1_archive.tar.gz
 filename = os.getenv('FILENAME', 'deployment.json')
+current_file_path = os.path.abspath(__file__)
+application_deployment_path = os.path.join(current_file_path, '..', '..', 'application_deployment')
+deployment_json_path = os.path.join(application_deployment_path, filename)
+
 
 def create_tar_archive(source_dir, output_tar):
     with tarfile.open(output_tar, "w:gz") as tar:
@@ -59,7 +63,7 @@ def flatten_json(data, flattened_data=[]):
 
 if __name__ == '__main__':
 
-    with open(filename, 'r') as data_file_ref:
+    with open(deployment_json_path, 'r') as data_file_ref:
         data = json.load(data_file_ref)
 
     json_data = flatten_json(data)
