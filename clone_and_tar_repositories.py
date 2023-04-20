@@ -12,7 +12,7 @@ destination_directory = f"{destination_directory}_{release_version}"
 output_zip = f"{destination_directory}_archive"
 output_tar = f"{destination_directory}_archive.tar.gz"
 # brewpro_v0.0.1_archive.tar.gz
-filename = os.getenv('FILENAME', 'deployment.json')
+filename = os.getenv('DEPLOYMENT_FILENAME', 'deployment.json')
 
 
 def create_tar_archive(source_dir, output_tar):
