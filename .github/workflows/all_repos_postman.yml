@@ -61,7 +61,7 @@ jobs:
   Project-Admins:
     runs-on: ubuntu-latest
     outputs:
-      cognito_secret1: ${{ steps.cognito_secret.outputs.cognito_secret }}
+
       postman_username: ${{ env.POSTMAN_USERNAME }}
       postman_password: ${{ env.POSTMAN_PASSWORD }}
       cognito_userid: ${{ env.POSTMAN_COGNITO_USER_ID }}
@@ -70,7 +70,7 @@ jobs:
       # Get current time stamp to use as reference elsewhere
       - name: Get current date
         id: date
-        run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+        run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
 
       - name: Branch name
         id: get_branch_name
@@ -131,36 +131,24 @@ jobs:
         id: project_constants
         run: |
           account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-          echo "::set-output name=env_id::${account_id}"
-          echo $account_id is the account id
-          echo "AWS_ACCOUNT=${account_id}" >> $GITHUB_ENV
+          echo "AWS_ENVIRONMENT=${account_id}" >> $GITHUB_ENV
           
-
           oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-          echo "::set-output name=oidc_role::${oidc_role_name}"
+          echo "oidc_role=${oidc_role_name}" >> $GITHUB_ENV
 
-          cdk_deploy_role_arn="`grep aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-          echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
-          
-          aws_bucket="`grep aws_frontend_bucket ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-          echo "::set-output name=aws_bucket_name::${aws_bucket}"
-          echo $aws_bucket
-
-          cloud_front_id="`grep aws_${BRANCH_NAME}_cloudfront_id ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-          echo "::set-output name=aws_cloud_front_id::${cloud_front_id}"
         working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
       
       # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
       - name: Arn to use
         id: aws_assume_role
         run: |
-          echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
+          echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/${{ env.oidc_role}}" >> $GITHUB_ENV
     
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@master
         with:
-          role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
-          role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+          role-to-assume: ${{env.AWS_ASSUME_ROLE}}
+          role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
           aws-region: ${{ env.AWS_REGION }}
       
       - name: Set environment Cognito secret variables for python
@@ -169,13 +157,10 @@ jobs:
           if [[ ${BRANCH_NAME} == 'dev' ]]
           then
             echo "COGNITO_USERPOOL_SECRET=${{secrets.cognito_dev_user_pool_secret}}" >> $GITHUB_ENV
-            echo "::set-output name=cognito_secret::${{secrets.cognito_dev_user_pool_secret}}"
 
           elif [[ ${BRANCH_NAME} == 'integration' ]]
           then
-            echo "COGNITO_USERPOOL_SECRET=${{secrets.cognito_integration_user_pool_secret}}" >> $GITHUB_ENV
-            echo "::set-output name=cognito_secret::${{secrets.cognito_integration_user_pool_secret}}"
-          
+            echo "COGNITO_USERPOOL_SECRET=${{secrets.cognito_integration_user_pool_secret}}" >> $GITHUB_ENV          
           fi
       
       - name: Postman required variables
@@ -254,7 +239,7 @@ jobs:
       # Get current time stamp to use as reference elsewhere
       - name: Get current date
         id: date
-        run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+        run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
       
       - name: Postman variables
         run: |
@@ -300,36 +285,24 @@ jobs:
         id: project_constants
         run: |
           account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-          echo "::set-output name=env_id::${account_id}"
-          echo $account_id is the account id
-          echo "AWS_ACCOUNT=${account_id}" >> $GITHUB_ENV
+          echo "AWS_ENVIRONMENT=${account_id}" >> $GITHUB_ENV
           
-
           oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-          echo "::set-output name=oidc_role::${oidc_role_name}"
+          echo "oidc_role=${oidc_role_name}" >> $GITHUB_ENV
 
-          cdk_deploy_role_arn="`grep aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-          echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
-          
-          aws_bucket="`grep aws_frontend_bucket ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-          echo "::set-output name=aws_bucket_name::${aws_bucket}"
-          echo $aws_bucket
-
-          cloud_front_id="`grep aws_${BRANCH_NAME}_cloudfront_id ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-          echo "::set-output name=aws_cloud_front_id::${cloud_front_id}"
         working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
       
       # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
       - name: Arn to use
         id: aws_assume_role
         run: |
-          echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
+          echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/${{ env.oidc_role}}" >> $GITHUB_ENV
     
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@master
         with:
-          role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
-          role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+          role-to-assume: ${{env.AWS_ASSUME_ROLE}}
+          role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
           aws-region: ${{ env.AWS_REGION }}
 
       # Grant permissions to all files in directory
@@ -344,7 +317,8 @@ jobs:
           if [ -d "$DIR" ]; then
             # Take action if $DIR exists. #
             echo "Installing config files in ${DIR}..."
-            echo "::set-output name=postman_collections_found::true"
+
+            echo "POSTMAN_COLLECTIONS_FOUND=true" >> $GITHUB_ENV
           fi
 
       # Node installation (if required)
@@ -356,7 +330,7 @@ jobs:
           npm install -g newman
           
       - name: Copy file to use
-        if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
+        if: ${{env.POSTMAN_COLLECTIONS_FOUND == 'true'}}
         run: |
           cp ${BRANCH_NAME}_env_var.json env_var.json
 
@@ -366,11 +340,9 @@ jobs:
           if [[ ${BRANCH_NAME} == 'dev' ]]
           then
             echo "COGNITO_USERPOOL_SECRET=${{secrets.cognito_dev_user_pool_secret}}" >> $GITHUB_ENV
-            echo "::set-output name=cognito_secret::${{secrets.cognito_dev_user_pool_secret}}"
           elif [[ ${BRANCH_NAME} == 'integration' ]]
           then
             echo "COGNITO_USERPOOL_SECRET=${{secrets.cognito_integration_user_pool_secret}}" >> $GITHUB_ENV
-            echo "::set-output name=cognito_secret::${{secrets.cognito_integration_user_pool_secret}}"
           fi
       
       - name: API Gateway output
@@ -415,7 +387,7 @@ jobs:
       # Get current time stamp to use as reference elsewhere
       - name: Get current date
         id: date
-        run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+        run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
       - name: Branch name
         id: get_branch_name
         run: |
@@ -466,30 +438,23 @@ jobs:
         id: project_constants
         run: |
           account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-          echo "::set-output name=env_id::${account_id}"
-          echo $account_id is the account id
-          echo "AWS_ACCOUNT=${account_id}" >> $GITHUB_ENV
-          
+          echo "AWS_ENVIRONMENT=${account_id}" >> $GITHUB_ENV
 
           oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-          echo "::set-output name=oidc_role::${oidc_role_name}"
-
-          cdk_deploy_role_arn="`grep aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-          echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
+          echo "oidc_role=${oidc_role_name}" >> $GITHUB_ENV
 
         working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
       
-      # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
       - name: Arn to use
         id: aws_assume_role
         run: |
-          echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
+          echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/${{ env.oidc_role}}" >> $GITHUB_ENV
     
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@master
         with:
-          role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
-          role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+          role-to-assume: ${{env.AWS_ASSUME_ROLE}}
+          role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
           aws-region: ${{ env.AWS_REGION }}
           
       - name: Cognito User Pool query
