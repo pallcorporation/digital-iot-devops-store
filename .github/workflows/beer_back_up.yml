@@ -89,7 +89,7 @@ jobs:
         - name: Arn to use
           id: aws_assume_role
           run: |
-            echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ env.tools_account_id }}:role/${{ env.oidc_role}}" >> $GITHUB_ENV
+            echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ env.tools_account_id }}:role/${{ env.oidc_role_name}}" >> $GITHUB_ENV
 
         - name: Image Repository name
           run: |
