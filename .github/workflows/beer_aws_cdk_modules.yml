@@ -220,7 +220,7 @@ jobs:
             echo "AWS_ENVIRONMENT=${account_id}" >> $GITHUB_ENV
             
             oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "oidc_role=${oidc_role_name}" >> $GITHUB_ENV
+            echo "OIDC_ROLE_NAME=${oidc_role_name}" >> $GITHUB_ENV
 
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
         
@@ -251,7 +251,7 @@ jobs:
         - name: Arn to use
           id: aws_assume_role
           run: |
-            echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/${{ env.oidc_role}}" >> $GITHUB_ENV
+            echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/${{ env.OIDC_ROLE_NAME}}" >> $GITHUB_ENV
       
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@master

@@ -323,7 +323,7 @@ jobs:
 
       # Node installation (if required)
       - name: Setup node.js environment
-        uses: actions/setup-node@v2.1.2
+        uses: actions/setup-node@v3.6.0
       
       - name: Install newman
         run: |
@@ -362,10 +362,10 @@ jobs:
         
       - name: Collections found
         run: |
-          echo ${{steps.postman_collections.outputs.postman_collections_found}}
+          echo ${{env.POSTMAN_COLLECTIONS_FOUND}}
 
       - name: run newman
-        if: ${{steps.postman_collections.outputs.postman_collections_found == 'true'}}
+        if: ${{env.POSTMAN_COLLECTIONS_FOUND == 'true'}}
         run: |
           newman run ./${{ matrix.microservice-repos }}/postman/collection.json -e ./final_env_var.json
       

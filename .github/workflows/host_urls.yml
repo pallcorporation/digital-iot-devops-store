@@ -77,7 +77,7 @@ jobs:
         # Get current time stamp to use as reference elsewhere
         - name: Get current date
           id: date
-          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+          run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
         
         # Get branch name to use for look up
         - name: Branch name
@@ -125,17 +125,10 @@ jobs:
           id: project_constants
           run: |
             account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=env_id::${account_id}"
+            echo "AWS_ENVIRONMENT=${account_id}" >> $GITHUB_ENV
             
             oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=oidc_role::${oidc_role_name}"
-
-            cdk_deploy_role_arn="`grep aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
-            
-            aws_bucket="`grep aws_frontend_bucket ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=aws_bucket_name::${aws_bucket}"
-            echo $aws_bucket
+            echo "OIDC_ROLE_NAME=${oidc_role_name}" >> $GITHUB_ENV
 
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
         
@@ -149,13 +142,13 @@ jobs:
         - name: Arn to use
           id: aws_assume_role
           run: |
-            echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
+            echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/${{ env.OIDC_ROLE_NAME}}" >> $GITHUB_ENV
       
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@master
           with:
-            role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
-            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            role-to-assume: ${{env.AWS_ASSUME_ROLE}}
+            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
             aws-region: ${{ env.AWS_REGION }}
         
         - name: Install yaml
@@ -178,28 +171,22 @@ jobs:
 
         # Upload a file to AWS s3
         - name:  Deploy to S3 - Copy Build folder to s3
-        #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.skip_npm.outputs.bypass_npm !='true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
           run: |
             aws s3 cp urls.json s3://${{inputs.hosting_bucket}}-${{env.AWS_ENV_NAME}}
         #    aws cloudfront create-invalidation --distribution-id E11LJKZLIMW93N --paths '/*'
         # Build & deploy docker image
         - name: Invalidate cloudfront cache
-        #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
           run: |
             CLOUDFRONT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{inputs.in_stack_id}} --query 'Stacks[0].Outputs[?OutputKey==`${{inputs.in_cloudfront_output}}`].OutputValue' --output text)
             aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_ID --paths '/*'
         
         - name: Domain url
           id: domain_url
-        #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
           run: |
             DOMAIN_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{inputs.in_stack_id}} --query 'Stacks[0].Outputs[?OutputKey==`${{inputs.in_cloudfront_url_output_to_query}}`].OutputValue' --output text)
-            echo "::set-output name=DOMAIN_URL_OUTPUT::$DOMAIN_URL" 
+            echo "DOMAIN_URL_OUTPUT=${DOMAIN_URL}" >> $GITHUB_ENV
             
         - name: Echo Domain URL
           run: |
-            echo "::warning::${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}} is the cloudfront url"
+            echo "::warning::${{ env.DOMAIN_URL_OUTPUT}} is the cloudfront url"
 
-
-    outputs:
-      domain_url: ${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}}

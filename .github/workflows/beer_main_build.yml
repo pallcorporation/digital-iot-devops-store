@@ -52,26 +52,26 @@ jobs:
     #permissions: write-all
     runs-on: ubuntu-latest
     outputs:
-      data: ${{ steps.date.outputs.date }}
+      data: ${{ env.date }}
       repo_version: ${{ steps.version_number.outputs.new_version }}     
-      tools_account: ${{steps.project_constants.outputs.tools_account_id}}
-      aws_credentials_role: ${{steps.aws_assume_role.outputs.role_arn1}}
-      aws_credentials_session_name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
-      AWS_BETA_ACCOUNT_ID: ${{steps.project_constants.outputs.beta_account_id }}
-      AWS_PRODUCTION_ACCOUNT_ID: ${{steps.project_constants.outputs.prod_account_id }}
+      tools_account: ${{env.tools_account_id}}
+      aws_credentials_role: ${{env.role_arn1}}
+      aws_credentials_session_name: ${{ github.event.repository.name }}-${{ env.date }}
+      AWS_BETA_ACCOUNT_ID: ${{env.beta_account_id }}
+      AWS_PRODUCTION_ACCOUNT_ID: ${{env.prod_account_id }}
 
-      aws_beta_credentials_role: ${{steps.aws_beta_assume_role.outputs.role_arn1}}
-      aws_prod_credentials_role: ${{steps.aws_prod_assume_role.outputs.role_arn1}}
-      aws_beta_credentials_session_name: ${{ github.event.repository.name }}-beta-${{ steps.date.outputs.date }}
-      aws_prod_credentials_session_name: ${{ github.event.repository.name }}-prod-${{ steps.date.outputs.date }}
+      aws_beta_credentials_role: ${{env.beta_role_arn1}}
+      aws_prod_credentials_role: ${{env.prod_role_arn1}}
+      aws_beta_credentials_session_name: ${{ github.event.repository.name }}-beta-${{ env.date }}
+      aws_prod_credentials_session_name: ${{ github.event.repository.name }}-prod-${{ env.date }}
 
 
-      AWS_BETA_ACCOUNT_DEPLOY: ${{steps.project_constants.outputs.beta_account_deploy }}
-      AWS_PRODUCTION_ACCOUNT_DEPLOY: ${{steps.project_constants.outputs.prod_account_deploy }}
+      AWS_BETA_ACCOUNT_DEPLOY: ${{env.beta_account_deploy }}
+      AWS_PRODUCTION_ACCOUNT_DEPLOY: ${{env.prod_account_deploy }}
     steps:
         - name: Get current date
           id: date
-          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+          run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
         
         # Clone repositories prior to work
         - name: Git clone the repository
@@ -105,28 +105,28 @@ jobs:
           id: project_constants
           run: |
             account_id="`grep aws_tools_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=tools_account_id::${account_id}"
+            echo "tools_account_id=${account_id}" >> $GITHUB_ENV
 
             oidc_role="`grep aws_tools_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=oidc_role_name::${oidc_role}"
+            echo "oidc_role_name=${oidc_role}" >> $GITHUB_ENV
 
             beta_account="`grep aws_beta_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=beta_account_id::${beta_account}"
+            echo "beta_account_id=${beta_account}" >> $GITHUB_ENV
 
             prod_account="`grep aws_production_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=prod_account_id::${prod_account}"
+            echo "prod_account_id=${prod_account}" >> $GITHUB_ENV
 
             beta_oidc_role="`grep aws_beta_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=beta_oidc_role::${beta_oidc_role}"
+            echo "beta_oidc_role=${beta_oidc_role}" >> $GITHUB_ENV
 
             prod_oidc_role="`grep aws_production_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=prod_oidc_role::${prod_oidc_role}"
+            echo "prod_oidc_role=${prod_oidc_role}" >> $GITHUB_ENV
 
             beta_account_cdk_deploy="`grep aws_beta_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=beta_account_deploy::${beta_account_cdk_deploy}"
+            echo "beta_account_deploy=${beta_account_cdk_deploy}" >> $GITHUB_ENV
 
             prod_account_cdk_deploy="`grep aws_production_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=prod_account_deploy::${prod_account_cdk_deploy}"
+            echo "prod_account_deploy=${prod_account_cdk_deploy}" >> $GITHUB_ENV
 
 
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
@@ -135,38 +135,17 @@ jobs:
         - name: Tools Arn to use
           id: aws_assume_role
           run: |
-            echo "::set-output name=role_arn1::arn:aws:iam::${{steps.project_constants.outputs.tools_account_id}}:role/${{ steps.project_constants.outputs.oidc_role_name}}"
+            echo "role_arn1=arn:aws:iam::${{env.tools_account_id}}:role/${{ env.oidc_role_name}}"  >> $GITHUB_ENV
         
         - name: Beta Arn to use
           id: aws_beta_assume_role
           run: |
-            echo "::set-output name=role_arn1::arn:aws:iam::${{steps.project_constants.outputs.beta_account_id}}:role/${{ steps.project_constants.outputs.beta_oidc_role}}"
+            echo "beta_role_arn1=arn:aws:iam::${{env.beta_account_id}}:role/${{ env.beta_oidc_role}}" >> $GITHUB_ENV
         
         - name: Prod Arn to use
           id: aws_prod_assume_role
           run: |
-            echo "::set-output name=role_arn1::arn:aws:iam::${{steps.project_constants.outputs.prod_account_id}}:role/${{ steps.project_constants.outputs.prod_oidc_role}}"
-        
-        # - name: Jira Username & Secret name
-        #   run: |
-        #     echo "JIRA_API_USER=mitchell_boulay@pall.com" >> $GITHUB_ENV
-        #     echo "AWS_SECRET_NAME_JIRA=Jira-API-Token-MitchellBoulay" >> $GITHUB_ENV
-
-        # - name: Configure AWS credentials
-        #   uses: aws-actions/configure-aws-credentials@master
-        #   with:
-        #     role-to-assume: ${{ steps.aws_assume_role.outputs.role_arn1 }}
-        #     role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
-        #     aws-region: ${{ env.AWS_REGION }}
-
-        # - name: Install release assets requirements
-        #   run: |
-        #     pip3 install -r beer-release-assets/requirements.txt
-
-        # - name: Get release name from jira
-        #   run: |
-        #     python3 beer-release-assets/current_brew_jira_release.py > release.txt
-        #     echo "RELEASE_NAME=$(cat release.txt)" >> $GITHUB_ENV
+            echo "prod_role_arn1=arn:aws:iam::${{env.prod_account_id}}:role/${{ env.prod_oidc_role}}" >> $GITHUB_ENV
 
         - name: Github Tag with semantic versioning
           id: version_number
@@ -182,29 +161,6 @@ jobs:
             echo "${{ steps.version_number.outputs.new_version }} is the new version"
             echo "TAG_VERSION=${{ steps.version_number.outputs.new_version }}" >> $GITHUB_ENV
         
-        # - name: Release
-        #   uses: softprops/action-gh-release@v1
-        #   with:
-        #     tag_name: ${{env.RELEASE_NAME}}-v${{env.TAG_VERSION}}
-        #     generate_release_notes: true
-        #     token: ${{ secrets.envPAT }}
-        
-        # - name: Create changelog text
-        #   id: changelog
-        #   uses: loopwerk/tag-changelog@v1
-        #   with:
-        #     token: ${{ secrets.envPAT }}
-        #     exclude_types: other,doc,chore
-
-        # - name: Create Release
-        #   uses: actions/create-release@v1.1.4
-        #   with:
-        #     tag_name: ${{ steps.version_number.outputs.new_version }}
-        #     release_name: Bock ${{ steps.version_number.outputs.new_version }}
-        #     body: ${{ steps.changelog.outputs.changes }}
-        #   env:
-        #     GITHUB_TOKEN: ${{ secrets.envPAT }}
-        
   Docker-Images:
     needs: main-setup
     if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type == 'image')
@@ -212,7 +168,7 @@ jobs:
     steps:
         - name: Get current date
           id: date
-          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+          run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
         
         # Clone repositories prior to work
         - name: Git clone the repository
@@ -236,7 +192,7 @@ jobs:
         
         - name: Login to docker
           if: |
-            ${{ steps.skip_dk_build.outputs.bypass_dk_build !='true' && inputs.deployment_type == 'image' }}
+            ${{ inputs.deployment_type == 'image' }}
           uses: docker/login-action@v1
           with:
             registry: ${{env.IMAGE_REGISTRY}}
@@ -264,10 +220,10 @@ jobs:
           run: |
             (aws ecr describe-repositories \
             --repository-names ${IMAGE_REPO_NAME} \
-            && echo "::set-output name=repo_created::false" ) || \
+            && echo "repo_created=false">>$GITHUB_ENV) || \
             ( aws ecr create-repository \
             --repository-name ${IMAGE_REPO_NAME} \
-            && echo "::set-output name=repo_created::true" )
+            && echo "repo_created=true">>$GITHUB_ENV )
 
             aws ecr get-login-password \
             --region ${{ env.AWS_REGION }}| docker login \
@@ -345,7 +301,7 @@ jobs:
     steps:
         - name: Get current date
           id: date
-          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+          run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
 
         - name: Set ENV Variables
           run: |
@@ -366,7 +322,7 @@ jobs:
         
         # Installing npm
         - name: Setup node.js environment
-          uses: actions/setup-node@v2.1.2
+          uses: actions/setup-node@v3.6.0
         
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@master
@@ -477,14 +433,6 @@ jobs:
             notification-color: FF0000
             timezone: America/New_York
         
-        #- name: Build Changelog
-        #  id: github_release
-        #  uses: mikepenz/release-changelog-builder-action@v1
-        #  env:
-        #    GITHUB_TOKEN: ${{ secrets.envPAT }}
-        #- name: Print Changelog
-        #  run: |
-        #    echo ${{steps.github_release.outputs.changelog}}
   Frontend-React-Build-Prod:
     needs: [main-setup,Frontend-React-Build-Beta]
     if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type == 'nx')
@@ -492,7 +440,7 @@ jobs:
     steps:
         - name: Get current date
           id: date
-          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+          run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
         
         - name: Set ENV Variables
           run: |
@@ -513,7 +461,7 @@ jobs:
         
         # Installing npm
         - name: Setup node.js environment
-          uses: actions/setup-node@v2.1.2
+          uses: actions/setup-node@v3.6.0
         
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@master
@@ -620,15 +568,7 @@ jobs:
             notification-summary: "Prod Build Error PROD &#x274C; : ${{env.IMAGE_REPO_NAME}} Please check workflow"
             notification-color: FF0000
             timezone: America/New_York
-        
-        #- name: Build Changelog
-        #  id: github_release
-        #  uses: mikepenz/release-changelog-builder-action@v1
-        #  env:
-        #    GITHUB_TOKEN: ${{ secrets.envPAT }}
-        #- name: Print Changelog
-        #  run: |
-        #    echo ${{steps.github_release.outputs.changelog}}
+  
   
   All-Other-Build-Types:
     needs: main-setup
@@ -637,7 +577,7 @@ jobs:
     steps:
         - name: Get current date
           id: date
-          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+          run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
 
         - name: Image Repository name
           run: |

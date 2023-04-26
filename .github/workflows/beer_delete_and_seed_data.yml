@@ -53,7 +53,7 @@ jobs:
         # Get current time stamp to use as reference elsewhere
         - name: Get current date
           id: date
-          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+          run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
         
         # Get branch name to use for look up
         - name: Environment
@@ -118,32 +118,24 @@ jobs:
           id: project_constants
           run: |
             account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=env_id::${account_id}"
+            echo "AWS_ENVIRONMENT=${account_id}" >> $GITHUB_ENV
             
             oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=oidc_role::${oidc_role_name}"
+            echo "OIDC_ROLE_NAME=${oidc_role_name}" >> $GITHUB_ENV
 
-            cdk_deploy_role_arn="`grep aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
-            
-            aws_bucket="`grep aws_frontend_bucket ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=aws_bucket_name::${aws_bucket}"
-            echo $aws_bucket
 
-            cloud_front_id="`grep aws_${BRANCH_NAME}_cloudfront_id ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=aws_cloud_front_id::${cloud_front_id}"
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
         # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
         - name: Arn to use
           id: aws_assume_role
           run: |
-            echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
+            echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/${{ env.OIDC_ROLE_NAME}}" >> $GITHUB_ENV
       
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@master
           with:
-            role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
-            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            role-to-assume: ${{env.AWS_ASSUME_ROLE}}
+            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
             aws-region: ${{ env.AWS_REGION }}
         
         - name: API Gateway output

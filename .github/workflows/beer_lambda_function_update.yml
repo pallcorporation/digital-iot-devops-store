@@ -55,24 +55,16 @@ jobs:
         # Get current time stamp to use as reference elsewhere
         - name: Get current date
           id: date
-          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
-        
-        # Read commit message and determine if to skip docker work
-        - name: Read if to skip image build & deployment based on commit message
-          id: skip_dk_build
-          if: "contains(github.event.head_commit.message, '+image-skip')"
-          run: |
-            echo "We will node installation"
-            echo "::set-output name=bypass_dk_build::true"
-        
+          run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
+              
         - name: Check if input is null for repo name
           if: ${{inputs.repo_name}}
           id: repo_name_passed
           run: |
             if [ ${{inputs.repo_name}} != "" ]; then
-              echo ::set-output name=reponamepassed::true
+              echo "reponamepassed=true">>$GITHUB_ENV
             else
-              echo ::set-output name=reponamepassed::false
+              echo "reponamepassed=false">>$GITHUB_ENV
             fi
 
         - name: Make project files directory
@@ -117,24 +109,22 @@ jobs:
           id: project_constants
           run: |
             account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=env_id::${account_id}"
-            echo "AWS_ENVRIONMENT=${account_id}" >> $GITHUB_ENV
+            echo "AWS_ENVIRONMENT=${account_id}" >> $GITHUB_ENV
             
             oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=oidc_role::${oidc_role_name}"
+            echo "oidc_role=${oidc_role_name}" >> $GITHUB_ENV 
 
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
         
         - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
-          if: ${{ steps.repo_name_passed.outputsreponamepassed }}
+          if: ${{ env.reponamepassed }}
           id: project_constants_tools
           run: |
             account_id="`grep aws_tools_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=env_id::${account_id}"
-            echo "AWS_ENVRIONMENT=${account_id}" >> $GITHUB_ENV
+            echo "AWS_ENVIRONMENT=${account_id}" >> $GITHUB_ENV
             
             oidc_role_name="`grep aws_tools_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=oidc_role::${oidc_role_name}"
+            echo "oidc_role=${oidc_role_name}" >> $GITHUB_ENV
 
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
 
@@ -142,21 +132,20 @@ jobs:
         - name: Arn to use
           id: aws_assume_role
           run: |
-            echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
+            echo "OCID_ROLE_ARN=arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/${{ env.oidc_role}}" >> $GITHUB_ENV
 
         - name: Arn to use (If Application deployment)
           id: aws_assume_role_tools
-          if: ${{ steps.repo_name_passed.outputsreponamepassed }}
+          if: ${{ env.reponamepassed }}
           run: |
-            echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants_tools.outputs.env_id }}:role/${{ steps.project_constants_tools.outputs.oidc_role}}"
+            echo "OCID_ROLE_ARN=arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/${{ env.oidc_role}}" >> $GITHUB_ENV
         
         - name: Configure AWS credentials
           id: aws_oidc_credentials
-          #if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true' && steps.repo_name_passed.outputsreponamepassed !='true' }}
           uses: aws-actions/configure-aws-credentials@master
           with:
-            role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
-            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            role-to-assume: ${{env.OCID_ROLE_ARN}}
+            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
             aws-region: ${{ env.AWS_REGION }}
         
         - name: Version number (If application deployment)
@@ -165,7 +154,7 @@ jobs:
  
         # Node installation (if required)
         - name: Setup node.js environment
-          uses: actions/setup-node@v2.1.2
+          uses: actions/setup-node@v3.6.0
         
         - name: Image Repository name (If application deployment)
           run: |
@@ -173,13 +162,13 @@ jobs:
         
         - name: ECR Registry
           run: |
-            echo DOCKER_TAG_VERSION="${{ steps.project_constants_tools.outputs.env_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:${TAG_VERSION}" >> $GITHUB_ENV
+            echo DOCKER_TAG_VERSION="${{ env.AWS_ENVIRONMENT }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:${TAG_VERSION}" >> $GITHUB_ENV
 
         - name: ECR Login
           id: ecr_login
           run: |
-            (aws ecr describe-repositories --repository-names ${IMAGE_REPO_NAME} && echo "::set-output name=repo_created::false" ) || ( aws ecr create-repository --repository-name ${IMAGE_REPO_NAME} && echo "::set-output name=repo_created::true" )
-            aws ecr get-login-password --region ${{ env.AWS_REGION }}| docker login --username AWS --password-stdin ${AWS_ENVRIONMENT}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+            (aws ecr describe-repositories --repository-names ${IMAGE_REPO_NAME} && echo "repo_created=false">>$GITHUB_ENV ) || ( aws ecr create-repository --repository-name ${IMAGE_REPO_NAME} && echo "repo_created=true">>$GITHUB_ENV )
+            aws ecr get-login-password --region ${{ env.AWS_REGION }}| docker login --username AWS --password-stdin ${AWS_ENVIRONMENT}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
         - name: Lambda function name
           run: |

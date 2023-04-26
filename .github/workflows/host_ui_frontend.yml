@@ -88,16 +88,16 @@ jobs:
         # Get current time stamp to use as reference elsewhere
         - name: Get current date
           id: date
-          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+          run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
         
         - name: Check if input is null for repo name
           if: ${{inputs.repo_name}}
           id: repo_name_passed
           run: |
             if [ ${{inputs.repo_name}} != "" ]; then
-              echo ::set-output name=reponamepassed::true
+              echo "reponamepassed=true" >> $GITHUB_ENV
             else
-              echo ::set-output name=reponamepassed::false
+              echo "reponamepassed=false" >> $GITHUB_ENV
             fi
         
         - name: Checkout
@@ -124,7 +124,7 @@ jobs:
 
          # Node installation (if required)
         - name: Setup node.js environment
-          uses: actions/setup-node@v2.1.2
+          uses: actions/setup-node@v3.6.0
 
         - name: Branch if Dev
           if: contains( github.ref, 'dev' )
@@ -194,7 +194,7 @@ jobs:
         # Clone repositories prior to work
         
         - name: Move files (if from application deployment)
-          if: ${{ steps.repo_name_passed.outputsreponamepassed }}
+          if: ${{ env.reponamepassed }}
           run: mv ${{ inputs.repo_name }}_stage/* .
         
         - name: Make project files directory
@@ -277,47 +277,27 @@ jobs:
           run: |
             npm ci
             NODE_ENV=development npx nx build-storybook ui-components
-
-        # Read commit message and determine if to skip cdk work NODE_ENV=development && npx nx build-storybook ui-components
-        - name: Read if to skip cdk deployment based on commit message
-          id: skip_cdk
-          if: "contains(github.event.head_commit.message, '+cdk-skip')"
-          run: |
-            echo "We will skip cdk execution"
-            echo "::set-output name=bypass_cdk::true"
         
         # Read of project files and set to variables
-        - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
+        - name: Get project constants from project.properties repo 
           id: project_constants
           run: |
             account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=env_id::${account_id}"
+            echo "AWS_ENVIRONMENT=${account_id}" >> $GITHUB_ENV
             
             oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=oidc_role::${oidc_role_name}"
-
-            cdk_deploy_role_arn="`grep aws_${BRANCH_NAME}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
-            
-            aws_bucket="`grep aws_frontend_bucket ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=aws_bucket_name::${aws_bucket}"
-            echo $aws_bucket
-
+            echo "OIDC_ROLE_NAME=${oidc_role_name}" >> $GITHUB_ENV
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
         
-        - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
+        - name: Get project constants from project.properties repo
           if: contains( github.ref, 'users' )
           id: project_constants_users
           run: |
             account_id="`grep aws_integration_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=env_id::${account_id}"
+            echo "AWS_ENVIRONMENT_USERS=${account_id}" >> $GITHUB_ENV
             
             oidc_role_name="`grep aws_integration_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=oidc_role::${oidc_role_name}"
-
-            cdk_deploy_role_arn="`grep aws_integration_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
-
+            echo "OIDC_ROLE_NAME_USERS=${oidc_role_name}" >> $GITHUB_ENV
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
         
         - name: Copy cdk config files
@@ -331,27 +311,27 @@ jobs:
         - name: Arn to use
           id: aws_assume_role
           run: |
-            echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants.outputs.env_id }}:role/${{ steps.project_constants.outputs.oidc_role}}"
-        
+            echo "OIDC_ROLE_ARN=arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/${{ env.OIDC_ROLE_NAME}}" >> $GITHUB_ENV
+
         - name: Arn to use (If Users)
           if: contains( github.ref, 'users' )
           id: aws_assume_role_users
           run: |
-            echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants_users.outputs.env_id }}:role/${{ steps.project_constants_users.outputs.oidc_role}}"
+            echo "OIDC_ROLE_ARN_USERS=arn:aws:iam::${{ env.AWS_ENVIRONMENT_USERS }}:role/${{ env.OIDC_ROLE_NAME_USERS}}" >> $GITHUB_ENV
 
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@master
           with:
-            role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
-            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            role-to-assume: ${{env.OIDC_ROLE_ARN}}
+            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
             aws-region: ${{ env.AWS_REGION }}
         
         - name: Configure AWS credentials if Users
           if: contains( github.ref, 'users' )
           uses: aws-actions/configure-aws-credentials@master
           with:
-            role-to-assume: ${{steps.aws_assume_role_users.outputs.role_arn1}}
-            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            role-to-assume: ${{env.OIDC_ROLE_ARN_USERS}}
+            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
             aws-region: ${{ env.AWS_REGION }}
         
         - name: Create NX environment varibles file
@@ -388,8 +368,8 @@ jobs:
           if: contains( github.ref, 'users' )
           uses: aws-actions/configure-aws-credentials@master
           with:
-            role-to-assume: ${{steps.aws_assume_role.outputs.role_arn1}}
-            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            role-to-assume: ${{env.OIDC_ROLE_ARN}}
+            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
             aws-region: ${{ env.AWS_REGION }}
         
         - name: AWS function environment suffix
@@ -465,7 +445,6 @@ jobs:
             aws s3 cp open-api.json s3://${HOSTING_BUCKET}
             aws s3 cp open-api.yaml s3://${HOSTING_BUCKET}
         - name: Invalidate cloudfront cache
-        #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
           run: |
             echo ${CF_ID_OUTPUT} is the output id
             CLOUDFRONT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${IN_STACK_ID} --query "Stacks[0].Outputs[?OutputKey=='${CF_ID_OUTPUT}'].OutputValue" --output text)
@@ -473,18 +452,14 @@ jobs:
         
         - name: Domain url
           id: domain_url
-        #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
           run: |
             DOMAIN_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${IN_STACK_ID} --query "Stacks[0].Outputs[?OutputKey=='${CF_URL_OUTPUT}'].OutputValue" --output text)
-            echo "::set-output name=DOMAIN_URL_OUTPUT::$DOMAIN_URL" 
+            echo "DOMAIN_URL_OUTPUT=${DOMAIN_URL}">>$GITHUB_ENV
             
         - name: Echo Domain URL
           run: |
-            echo "::warning::https://${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}} is the cloudfront url"
+            echo "::warning::https://${{ env.DOMAIN_URL_OUTPUT}} is the cloudfront url"
 
-    outputs:
-      domain_url: ${{ steps.domain_url.outputs.DOMAIN_URL_OUTPUT}}
-  
   Application-Deployment:
     if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.repository == 'pallcorporation/beer-application-deployment')
     runs-on: ubuntu-latest
@@ -493,7 +468,7 @@ jobs:
         # Get current time stamp to use as reference elsewhere
         - name: Get current date
           id: date
-          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+          run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
 
         # Get branch name to use for look up
         
@@ -527,13 +502,10 @@ jobs:
           id: project_constants_tools
           run: |
             account_id="`grep aws_tools_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=env_id::${account_id}"
+            echo "AWS_ENVIRONMENT_TOOLS=${account_id}" >> $GITHUB_ENV
             
             oidc_role_name="`grep aws_tools_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=oidc_role::${oidc_role_name}"
-
-            cdk_deploy_role_arn="`grep aws_tools_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
+            echo "OIDC_ROLE_NAME_TOOLS=${oidc_role_name}" >> $GITHUB_ENV
 
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
         
@@ -541,13 +513,11 @@ jobs:
           id: project_constants_target
           run: |
             account_id="`grep aws_${{env.BRANCH_NAME}}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=env_id::${account_id}"
+
+            echo "TARGET_AWS_ENVIRONMENT=${account_id}" >> $GITHUB_ENV
             
             oidc_role_name="`grep aws_${{env.BRANCH_NAME}}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=oidc_role::${oidc_role_name}"
-
-            cdk_deploy_role_arn="`grep aws_${{env.BRANCH_NAME}}_cdk_deployment_role ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=cdk_deploy::${cdk_deploy_role_arn}"
+            echo "TARGET_OIDC_ROLE_NAME=${oidc_role_name}" >> $GITHUB_ENV
 
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
         
@@ -555,17 +525,18 @@ jobs:
         - name: Arn to use
           id: aws_assume_role_tools
           run: |
-            echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants_tools.outputs.env_id }}:role/${{ steps.project_constants_tools.outputs.oidc_role}}"
+            echo "OIDC_ROLE_ARN_TOOLS=arn:aws:iam::${{ env.AWS_ENVIRONMENT_TOOLS }}:role/${{ env.OIDC_ROLE_NAME_TOOLS}}">>$GITHUB_ENV
+
         - name: Arn to use
           id: aws_assume_role_target
           run: |
-            echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants_target.outputs.env_id }}:role/${{ steps.project_constants_target.outputs.oidc_role}}"
-      
+            echo "AWS_TARGET_ROLE_ARN=arn:aws:iam::${{ env.TARGET_AWS_ENVIRONMENT }}:role/${{ env.TARGET_OIDC_ROLE_NAME}}" >> $GITHUB_ENV
+
         - name: Configure AWS credentials Tools
           uses: aws-actions/configure-aws-credentials@master
           with:
-            role-to-assume: ${{steps.aws_assume_role_tools.outputs.role_arn1}}
-            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            role-to-assume: ${{env.OIDC_ROLE_ARN_TOOLS}}
+            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
             aws-region: ${{ env.AWS_REGION }}
         
         - name: Application UI Version
@@ -594,8 +565,8 @@ jobs:
         - name: Configure AWS credentials ${{env.BRANCH_NAME}}
           uses: aws-actions/configure-aws-credentials@master
           with:
-            role-to-assume: ${{steps.aws_assume_role_target.outputs.role_arn1}}
-            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            role-to-assume: ${{env.AWS_TARGET_ROLE_ARN}}
+            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
             aws-region: ${{ env.AWS_REGION }}
 
         - name: AWS function environment suffix
@@ -626,7 +597,6 @@ jobs:
             echo "IN_STACK_ID=${{inputs.in_stack_id}}" >> $GITHUB_ENV
 
         - name: Invalidate cloudfront cache
-        #  if: ${{ steps.skip_everything.outputs.skip_everything1 != 'true' && steps.get_deployment_type.outputs.deployment_type == 'web' && steps.get_cdk_destroy_stack.outputs.cdk_destroy_stack != 'true' }}
           run: |
             echo ${CF_ID_OUTPUT} is the output id
             CLOUDFRONT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${IN_STACK_ID} --query "Stacks[0].Outputs[?OutputKey=='${CF_ID_OUTPUT}'].OutputValue" --output text)

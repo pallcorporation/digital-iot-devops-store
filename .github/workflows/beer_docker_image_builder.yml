@@ -227,7 +227,7 @@ jobs:
  
         # Node installation (if required)
         - name: Setup node.js environment
-          uses: actions/setup-node@v2.1.2
+          uses: actions/setup-node@v3.6.0
 
         - name: Install yaml
           run: |

@@ -48,7 +48,7 @@ jobs:
         # Get current time stamp to use as reference elsewhere
         - name: Get current date
           id: date
-          run: echo "::set-output name=date::$(date +'%Y%m%dT%H%M%S')"
+          run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
 
         - name: Make project files directory
           run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
@@ -69,26 +69,25 @@ jobs:
         - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
           id: project_constants_tools
           run: |
-            account_id="`grep aws_tools_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=env_id::${account_id}"
-            echo "AWS_ENVRIONMENT=${account_id}" >> $GITHUB_ENV
-
-            oidc_role_name="`grep aws_tools_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=oidc_role::${oidc_role_name}"
+            account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "AWS_ENVIRONMENT=${account_id}" >> $GITHUB_ENV
+            
+            oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+            echo "oidc_role=${oidc_role_name}" >> $GITHUB_ENV
 
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
 
         - name: Arn to use
           id: aws_assume_role_tools
           run: |
-            echo "::set-output name=role_arn1::arn:aws:iam::${{ steps.project_constants_tools.outputs.env_id }}:role/${{ steps.project_constants_tools.outputs.oidc_role}}"
+            echo "OCID_ROLE_ARN=arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/${{ env.oidc_role}}" >> $GITHUB_ENV
         
         - name: Configure AWS credentials
           id: aws_oidc_credentials
           uses: aws-actions/configure-aws-credentials@master
           with:
-            role-to-assume: ${{steps.aws_assume_role_tools.outputs.role_arn1}}
-            role-session-name: ${{ github.event.repository.name }}-${{ steps.date.outputs.date }}
+            role-to-assume: ${{env.OCID_ROLE_ARN}}
+            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
             aws-region: ${{ env.AWS_REGION }}
         
         - name: Image Repository name
@@ -100,25 +99,23 @@ jobs:
           run: |
             (aws ecr describe-repositories \
             --repository-names ${IMAGE_REPO_NAME} \
-            && echo "::set-output name=repo_created::false" ) || \
+            && echo "repo_created=false">>$GITHUB_ENV ) || \
             ( aws ecr create-repository \
             --repository-name ${IMAGE_REPO_NAME} \
-            && echo "::set-output name=repo_created::true" )
+            && echo "repo_created=true">>$GITHUB_ENV )
 
             aws ecr get-login-password \
             --region ${{ env.AWS_REGION }}| docker login \
             --username AWS \
-            --password-stdin ${AWS_ENVRIONMENT}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+            --password-stdin ${AWS_ENVIRONMENT}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
         
 
         - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
           run: |
             beta_account_id="`grep aws_beta_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=env_id::${beta_account_id}"
             echo "AWS_BETA_ENVRIONMENT=${beta_account_id}" >> $GITHUB_ENV
 
             prod_account_id="`grep aws_production_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "::set-output name=env_id::${prod_account_id}"
             echo "AWS_PRODUCTION_ENVRIONMENT=${prod_account_id}" >> $GITHUB_ENV
           working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
 
@@ -156,8 +153,7 @@ jobs:
             --policy-text file://tools-cross-ecr-policy.json
         
         - name: created repo
-          if: ${{steps.skip_dk_build.outputs.bypass_dk_build !='true'}}
           run: |
-            echo "${{ steps.ecr_login.outputs.repo_created }} did we create repo"
+            echo "${{ env.repo_created }} did we create repo"
 
 

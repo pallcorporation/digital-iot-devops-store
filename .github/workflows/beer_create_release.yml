@@ -148,20 +148,3 @@ jobs:
       - name: Publish release notes to Confluence
         run: |
           python3 beer-ul-release-notes/github.py
-    
-      - name: File name of chagelog
-        run:
-          echo "CHANGELOG_FILE=${{ github.event.repository.name }}_v${{ inputs.version_number }}.md" >> $GITHUB_ENV
-      - name: Read the change log
-        run: echo ${{ steps.Changelog.outputs.changelog }}
-        
-      - name: Copy release file to s3
-        run: |
-          mkdir release_notes
-          echo ${{ steps.Changelog.outputs.changelog }} > release_notes/${{env.CHANGELOG_FILE}}
-      
-      # Upload artifacts to Git for easy access
-      - uses: actions/upload-artifact@v2
-        with:
-          name: release_notes
-          path: release_notes/
