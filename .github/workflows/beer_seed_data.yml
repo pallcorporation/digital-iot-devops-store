@@ -65,7 +65,7 @@ jobs:
         
         # Clone repositories prior to work
         - name: Git clone the repository
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
         
           
         - name: Make project files directory
@@ -75,7 +75,7 @@ jobs:
           run: mkdir ${{env.CDK_MODULE}}
         
         - name: Project files clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-project-properties
@@ -83,7 +83,7 @@ jobs:
             path: ${{env.PROJECT_FILES_DIRECTORY}}
         
         - name: CDK Modules clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/digital-iot-devops-cdk-modules
@@ -91,7 +91,7 @@ jobs:
             path: ${{env.CDK_MODULE}}
         
         - name: Beer IAC Pre repo clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-be-iac-common-pre
@@ -99,7 +99,7 @@ jobs:
             path: beer-be-iac-common-pre
         
         - name: Postman repo clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-ul-postman-env
@@ -107,7 +107,7 @@ jobs:
             path: ${{env.POSTMAN_COLLECTION_DIRECTORY}}
 
         - name: Admin users repo clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-ul-admin-users
@@ -148,7 +148,7 @@ jobs:
             mkdir ${{env.IAM_SERVICE_REPOSITORY}}
         
         - name: beer-be-iam-service repo clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-be-iam-service

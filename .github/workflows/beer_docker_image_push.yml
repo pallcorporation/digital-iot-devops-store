@@ -71,7 +71,7 @@ jobs:
           run: mkdir ${{ inputs.repo_name }}_stage
           
         - name: Check out ${{ inputs.repo_name }}
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/${{ inputs.repo_name }}
@@ -88,7 +88,7 @@ jobs:
           run: mv ${{ inputs.repo_name }}_stage/* .
         
         - name: Project files clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-project-properties
@@ -96,7 +96,7 @@ jobs:
             path: ${{env.PROJECT_FILES_DIRECTORY}}
         
         - name: CDK Modules clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/digital-iot-devops-cdk-modules

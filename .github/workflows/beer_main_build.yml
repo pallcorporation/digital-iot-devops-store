@@ -75,13 +75,13 @@ jobs:
         
         # Clone repositories prior to work
         - name: Git clone the repository
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
 
         - name: Make project files directory
           run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
 
         - name: Project files clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-project-properties
@@ -89,7 +89,7 @@ jobs:
             path: ${{env.PROJECT_FILES_DIRECTORY}}
         
         - name: Release assets clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-release-assets
@@ -172,7 +172,7 @@ jobs:
         
         # Clone repositories prior to work
         - name: Git clone the repository
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
         
         - name: Version number
           run: |
@@ -313,7 +313,7 @@ jobs:
         
         # Clone repositories prior to work
         - name: Git clone the repository
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
         
         - name: Version number
           run: |
@@ -335,7 +335,7 @@ jobs:
           run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
 
         - name: Project files clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-project-properties
@@ -452,7 +452,7 @@ jobs:
         
         # Clone repositories prior to work
         - name: Git clone the repository
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
         
         - name: Version number
           run: |
@@ -474,7 +474,7 @@ jobs:
           run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
 
         - name: Project files clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-project-properties
@@ -585,7 +585,7 @@ jobs:
         
         # Clone repositories prior to work
         - name: Git clone the repository
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
         
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@master

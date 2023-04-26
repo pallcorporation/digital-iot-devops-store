@@ -93,7 +93,7 @@ jobs:
             echo "$BRANCH_NAME is the name"
         
         - name: Git clone the repository
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
         
         - name: Make project files directory
           run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
@@ -102,14 +102,14 @@ jobs:
           run: mkdir ${{env.CDK_MODULE}}
         
         - name: CDK Modules clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/digital-iot-devops-cdk-modules
             ref: main
             path: ${{env.CDK_MODULE}}
         - name: Project files clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-project-properties

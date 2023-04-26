@@ -93,7 +93,7 @@ jobs:
 
       # Clone repositories prior to work
       - name: Git clone the repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           token: ${{ secrets.envPAT }}
           repository: pallcorporation/beer-ul-postman-env
@@ -101,7 +101,7 @@ jobs:
           path: ${{env.ADMIN_USERS_POLICY_SEED}}
       
       - name: Admin users repo clone
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           token: ${{ secrets.envPAT }}
           repository: pallcorporation/beer-ul-admin-users
@@ -112,7 +112,7 @@ jobs:
         run: |
           mkdir ${{env.IAM_SERVICE_REPOSITORY}}
       - name: beer-be-iam-service repo clone
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           token: ${{ secrets.envPAT }}
           repository: pallcorporation/beer-be-iam-service
@@ -120,7 +120,7 @@ jobs:
           path: ${{env.IAM_SERVICE_REPOSITORY}}
       
       - name: Project files clone
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           token: ${{ secrets.envPAT }}
           repository: pallcorporation/beer-project-properties
@@ -249,7 +249,7 @@ jobs:
       
       # Clone repositories prior to work
       - name: Git clone the repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Branch name
         id: get_branch_name
@@ -263,7 +263,7 @@ jobs:
           mkdir ${{matrix.microservice-repos}}/${{env.PROJECT_FILES_DIRECTORY}}
       
       - name: Check out Repos
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           token: ${{ secrets.envPAT }}
           repository: pallcorporation/${{ matrix.microservice-repos }}
@@ -271,7 +271,7 @@ jobs:
           path: ${{ matrix.microservice-repos }}
       
       - name: Project files clone
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           token: ${{ secrets.envPAT }}
           repository: pallcorporation/beer-project-properties
@@ -413,7 +413,7 @@ jobs:
           pip3 install pytz
 
       - name: Admin users repo clone
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           token: ${{ secrets.envPAT }}
           repository: pallcorporation/beer-ul-admin-users
@@ -426,7 +426,7 @@ jobs:
           echo "COGNITO_USERID=${{ needs.at.outputs.cognito_userid }}" >> $GITHUB_ENV
 
       - name: Project files clone
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           token: ${{ secrets.envPAT }}
           repository: pallcorporation/beer-project-properties

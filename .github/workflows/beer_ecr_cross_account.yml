@@ -54,7 +54,7 @@ jobs:
           run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
         
         - name: Project files clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-project-properties

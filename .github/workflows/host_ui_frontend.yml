@@ -101,10 +101,10 @@ jobs:
             fi
         
         - name: Checkout
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
         
         #- name: Git clone the repository
-        #  uses: actions/checkout@v2
+        #  uses: actions/checkout@v3
 
         - name: Find-and-replace strings
           uses: mad9000/actions-find-and-replace-string@2
@@ -162,7 +162,7 @@ jobs:
           
         - name: Check out ${{ inputs.repo_name }}
           if: ${{inputs.repo_name}}
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
             repository: pallcorporation/${{ inputs.repo_name }}
@@ -220,7 +220,7 @@ jobs:
             
         
         - name: Project files clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-project-properties
@@ -228,7 +228,7 @@ jobs:
             path: ${{env.PROJECT_FILES_DIRECTORY}}
         
         - name: CDK Modules clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/digital-iot-devops-cdk-modules
@@ -236,7 +236,7 @@ jobs:
             path: ${{env.CDK_MODULE}}
 
         - name: Node Modules clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/digital-iot-devops-store
@@ -490,7 +490,7 @@ jobs:
           run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
         
         - name: Project files clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-project-properties

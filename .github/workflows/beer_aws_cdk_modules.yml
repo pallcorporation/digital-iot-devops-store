@@ -116,7 +116,7 @@ jobs:
         
         # Clone repositories prior to work
         - name: Git clone the repository
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
         
         - name: Make repo directory
           if: ${{inputs.repo_name}}
@@ -124,7 +124,7 @@ jobs:
           
         - name: Check out ${{ inputs.repo_name }}
           if: ${{inputs.repo_name}}
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/${{ inputs.repo_name }}
@@ -165,7 +165,7 @@ jobs:
             echo "FUNCTION_IMAGE_EXCEPTION=true" >> $GITHUB_ENV
         
         - name: Project files clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-project-properties
@@ -173,7 +173,7 @@ jobs:
             path: ${{env.PROJECT_FILES_DIRECTORY}}
         
         - name: CDK Modules clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/digital-iot-devops-cdk-modules
@@ -191,7 +191,7 @@ jobs:
             fi
         
         - name: AWS CDK library version
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/digital-iot-devops-aws-cdk-library

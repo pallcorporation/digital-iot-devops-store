@@ -38,7 +38,7 @@ jobs:
         run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
       
       - name: Git clone the repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Branch name
         id: get_branch_name
@@ -72,7 +72,7 @@ jobs:
           echo "BRANCH_NAME=tools" >> $GITHUB_ENV
       
       - name: Project files clone
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           token: ${{ secrets.envPAT }}
           repository: pallcorporation/beer-project-properties

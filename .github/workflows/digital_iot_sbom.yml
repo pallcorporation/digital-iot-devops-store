@@ -60,7 +60,7 @@ jobs:
 
         #Clone repositories prior to work
         - name: Git clone the repository
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
         
         - name: Set up Python 3.8
           uses: actions/setup-python@v2
@@ -72,7 +72,7 @@ jobs:
             python --version
         
         - name: Check out ${{ github.event.repository.name }}
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/${{ github.event.repository.name }}
@@ -83,7 +83,7 @@ jobs:
           run: mkdir ${{env.SBOM_CLIENT_DIRECTORY}}
 
         - name: Cybellum Repository Clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/digital-iot-devops-cybellum-client

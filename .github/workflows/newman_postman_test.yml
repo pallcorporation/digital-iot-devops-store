@@ -78,7 +78,7 @@ jobs:
     steps:
       # Clone repositories prior to work
       - name: Git clone the repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Check if postman collections exists
         id: postman_collections
         run: |
@@ -123,13 +123,13 @@ jobs:
         
         # Clone repositories prior to work
         - name: Git clone the repository
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
         
         - name: Make Newman directory
           run: mkdir ${{env.POSTMAN_COLLECTION_DIRECTORY}}
             
         - name: Postman repo clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-ul-postman-env
@@ -137,7 +137,7 @@ jobs:
             path: ${{env.POSTMAN_COLLECTION_DIRECTORY}}
 
         - name: Admin users repo clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-ul-admin-users
@@ -146,7 +146,7 @@ jobs:
         
         - name: Clone default repository (authorizer test)
           if: ${{env.REPO_NAME == 'beer-be-api-authorizer' }}
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-be-company-service
@@ -154,7 +154,7 @@ jobs:
             path: beer-be-company-service
         
         - name: Project files clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-project-properties
@@ -196,7 +196,7 @@ jobs:
             mkdir ${{env.IAM_SERVICE_REPOSITORY}}
         
         - name: beer-be-iam-service repo clone
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
             token: ${{ secrets.envPAT }}
             repository: pallcorporation/beer-be-iam-service
