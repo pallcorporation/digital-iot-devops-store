@@ -55,6 +55,8 @@ on:
       in_cloudfront_output:
         required: true
         type: string
+      build_directory:
+        type: string
         
 
     secrets:
@@ -597,7 +599,7 @@ jobs:
         
         - name: Copy to ${{env.BRANCH_NAME}} s3
           run: |
-            aws s3 sync ./deployment_stage/dist/apps/beeriot-web s3://${{env.HOSTING_BUCKET}}
+            aws s3 sync ./deployment_stage/dist/apps/${{inputs.build_directory}} s3://${{env.HOSTING_BUCKET}}
         
         - name: Cloudfront id output
           run: |
