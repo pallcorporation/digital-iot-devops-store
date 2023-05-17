@@ -520,7 +520,7 @@ jobs:
             timezone: America/New_York
         
   Frontend-React-Build-Prod:
-    needs: [main-setup,Frontend-React-Build-Beta]
+    needs: [main-setup,Frontend-React-Build-Beta,Frontend-Reports-React-Build-Beta]
     if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type == 'nx')
     runs-on: ubuntu-latest          
     steps:
@@ -635,7 +635,7 @@ jobs:
             timezone: America/New_York
 
   Frontend-Reports-React-Build-Prod:
-    needs: [main-setup,Frontend-React-Build-Beta]
+    needs: [main-setup,Frontend-React-Build-Beta,Frontend-Reports-React-Build-Beta]
     if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type == 'nx')
     runs-on: ubuntu-latest          
     steps:
