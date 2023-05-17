@@ -296,7 +296,7 @@ jobs:
 
   Frontend-React-Build-Beta:
     needs: main-setup
-    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type == 'nx')
+    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type == 'nx' && inputs.deployment_type == 'reports')
     runs-on: ubuntu-latest          
     steps:
         - name: Get current date
@@ -446,7 +446,7 @@ jobs:
         
   Frontend-React-Build-Prod:
     needs: [main-setup,Frontend-React-Build-Beta]
-    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type == 'nx')
+    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type == 'nx' && inputs.deployment_type == 'reports')
     runs-on: ubuntu-latest          
     steps:
         - name: Get current date
@@ -594,7 +594,7 @@ jobs:
   
   All-Other-Build-Types:
     needs: main-setup
-    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type != 'image' && inputs.deployment_type != 'nx')
+    if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.ref == 'refs/heads/main' && inputs.deployment_type != 'image' && inputs.deployment_type != 'nx' && inputs.deployment_type != 'reports')
     runs-on: ubuntu-latest          
     steps:
         - name: Get current date
