@@ -371,7 +371,7 @@ jobs:
           run: |
             echo "Building Reports... $TAG_VERSION"
             npm ci
-            npx nx run beeriot-reports:build:staging
+            npx nx run beeriot-reports
         
         # Upload a file to AWS s3
         - name: Find-and-replace strings pt. 1
@@ -521,7 +521,7 @@ jobs:
           run: |
             echo "Building Reports... $TAG_VERSION"
             npm ci
-            npx nx run beeriot-reports:build:staging
+            npx nx run beeriot-reports
         
         # Upload a file to AWS s3
         - name: Find-and-replace strings pt. 1
