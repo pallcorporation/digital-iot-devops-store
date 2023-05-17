@@ -355,12 +355,23 @@ jobs:
           run: |
             echo "BUILD_DIRECTORY=dist/apps/beeriot-web" >> $GITHUB_ENV
         
+        
         - name: Build NX Frontend
           if: ${{inputs.deployment_type == 'nx'}}
           run: |
             echo "Building NX... $TAG_VERSION"
             npm ci
             npx nx run beeriot-web:build:staging
+        - name: Reports Build directory
+          if: ${{inputs.deployment_type == 'reports'}}
+          run: |
+            echo "BUILD_DIRECTORY=dist/apps/beeriot-reports" >> $GITHUB_ENV
+        - name: Build Reports Frontend
+          if: ${{inputs.deployment_type == 'nx'}}
+          run: |
+            echo "Building Reports... $TAG_VERSION"
+            npm ci
+            npx nx run beeriot-reports:build:staging
         
         # Upload a file to AWS s3
         - name: Find-and-replace strings pt. 1
@@ -500,6 +511,17 @@ jobs:
             echo "Building NX... $TAG_VERSION"
             npm ci
             npx nx run beeriot-web:build:staging
+        
+        - name: Reports Build directory
+          if: ${{inputs.deployment_type == 'reports'}}
+          run: |
+            echo "BUILD_DIRECTORY=dist/apps/beeriot-reports" >> $GITHUB_ENV
+        - name: Build Reports Frontend
+          if: ${{inputs.deployment_type == 'nx'}}
+          run: |
+            echo "Building Reports... $TAG_VERSION"
+            npm ci
+            npx nx run beeriot-reports:build:staging
         
         # Upload a file to AWS s3
         - name: Find-and-replace strings pt. 1
