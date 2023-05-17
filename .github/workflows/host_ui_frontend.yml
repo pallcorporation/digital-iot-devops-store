@@ -178,6 +178,11 @@ jobs:
           if: ${{inputs.build_project_type == 'nx' }}
           run: |
             echo "BUILD_DIRECTORY=dist/apps/beeriot-web" >> $GITHUB_ENV
+        
+        - name: Build directory reports
+          if: ${{inputs.build_project_type == 'reports' }}
+          run: |
+            echo "BUILD_DIRECTORY=dist/apps/beeriot-reports" >> $GITHUB_ENV
 
         - name: Build directory storybook
           if: ${{inputs.build_project_type == 'storybook' }}
@@ -353,6 +358,12 @@ jobs:
             else
               npx nx run beeriot-web:build:staging
             fi
+        - name: Build nx Frontend
+          if: ${{inputs.build_project_type == 'reports'}}
+          run: |
+            npm ci
+            npx nx build beeriot-reports
+            
         - name: Build NextJS
           if: ${{inputs.build_project_type == 'nextjs'}}
           run: |
