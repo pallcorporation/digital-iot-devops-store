@@ -358,7 +358,7 @@ jobs:
             else
               npx nx run beeriot-web:build:staging
             fi
-        - name: Build nx Frontend
+        - name: Build nx Reports Frontend
           if: ${{inputs.build_project_type == 'reports'}}
           run: |
             npm ci
