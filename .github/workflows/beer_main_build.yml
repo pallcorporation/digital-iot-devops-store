@@ -468,7 +468,7 @@ jobs:
           run: |
             echo "Building Reports... $TAG_VERSION"
             npm ci
-            npx nx run beeriot-reports
+            npx nx build beeriot-reports
 
         - name: Compressed file name
           run: |
@@ -690,7 +690,7 @@ jobs:
           run: |
             echo "Building Reports... $TAG_VERSION"
             npm ci
-            npx nx run beeriot-reports
+            npx nx build beeriot-reports
         
         - name: Compressed file name
           run: |
