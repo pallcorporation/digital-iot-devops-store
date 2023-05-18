@@ -57,6 +57,12 @@ on:
         type: string
       build_directory:
         type: string
+      reports_hosting_bucket:
+        type: string
+      in_reports_cloudfront_output:
+        type: string
+      in_reports_stack_id:
+        type: string
         
 
     secrets:
