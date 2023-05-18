@@ -653,7 +653,6 @@ jobs:
             aws-region: ${{ env.AWS_REGION }}
 
         - name: AWS function environment suffix
-          id: get_aws_branch_name
           run: |
             if [[ ${{inputs.branch_name}} == 'production' ]]
             then
