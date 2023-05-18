@@ -569,17 +569,31 @@ jobs:
               echo "TARGET_UI_VERSION=${{env.BRANCH_NAME}}/${{inputs.repo_version}}.zip" >> $GITHUB_ENV
             fi
             
-
         - name: Download from s3
           run: |
             mkdir deployment_stage
             aws s3 cp s3://${{inputs.tools_bucket}}/${{env.TARGET_UI_VERSION}} deploy.zip
-            
         
         - name: 'Unzip project'
           uses: montudor/action-zip@v1.0.0
           with:
             args: unzip -qq deploy.zip -d deployment_stage
+        
+        - name: Reports UI Version
+          run: |
+            branch_name="${{env.BRANCH_NAME}}"
+            if [[ ${{inputs.repo_version}} == 'main' ]]
+            then
+              UI_VERSION=$(aws s3 ls beer-ul-nx-workspace/reports/ --recursive | sort | tail -n 1 | awk '{print $4}')
+              echo "TARGET_UI_VERSION=${UI_VERSION}" >> $GITHUB_ENV
+            else
+              echo "TARGET_UI_VERSION=reports/${{inputs.repo_version}}.zip" >> $GITHUB_ENV
+            fi
+            
+        - name: Download from s3
+          run: |
+            mkdir deployment_stage_reports
+            aws s3 cp s3://${{inputs.tools_bucket}}/${{env.TARGET_UI_VERSION}} reports_deploy.zip
         
         - name: Configure AWS credentials ${{env.BRANCH_NAME}}
           uses: aws-actions/configure-aws-credentials@master
@@ -622,24 +636,6 @@ jobs:
             aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_ID --paths '/*'
 
         #------
-        - name: Reports UI Version
-          run: |
-            branch_name="${{env.BRANCH_NAME}}"
-            if [[ ${{inputs.repo_version}} == 'main' ]]
-            then
-              UI_VERSION=$(aws s3 ls beer-ul-nx-workspace/reports/ --recursive | sort | tail -n 1 | awk '{print $4}')
-              echo "TARGET_UI_VERSION=${UI_VERSION}" >> $GITHUB_ENV
-            else
-              echo "TARGET_UI_VERSION=reports/${{inputs.repo_version}}.zip" >> $GITHUB_ENV
-            fi
-            
-
-        - name: Download from s3
-          run: |
-            mkdir deployment_stage_reports
-            aws s3 cp s3://${{inputs.tools_bucket}}/${{env.TARGET_UI_VERSION}} reports_deploy.zip
-            
-        
         - name: 'Unzip project'
           uses: montudor/action-zip@v1.0.0
           with:
