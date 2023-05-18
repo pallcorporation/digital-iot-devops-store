@@ -472,7 +472,7 @@ jobs:
         - name: Echo Domain URL
           run: |
             echo "::warning::https://${{ env.DOMAIN_URL_OUTPUT}} is the cloudfront url"
-
+  
   Application-Deployment:
     if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.repository == 'pallcorporation/beer-application-deployment')
     runs-on: ubuntu-latest
@@ -593,13 +593,13 @@ jobs:
               echo "AWS_ENV_NAME=beta" >> $GITHUB_ENV
             fi
         
-        - name: Hosting bucket
+        - name: App Hosting bucket
           run: |
             echo "HOSTING_BUCKET=${{inputs.hosting_bucket}}-${{env.AWS_ENV_NAME}}" >> $GITHUB_ENV
         
-        - name: Copy to ${{env.BRANCH_NAME}} s3
+        - name: Copy to ${{env.BRANCH_NAME}} s3 for App
           run: |
-            aws s3 sync ./deployment_stage/dist/apps/${{inputs.build_directory}} s3://${{env.HOSTING_BUCKET}}
+            aws s3 sync ./deployment_stage/dist/apps/beeriot-web s3://${{env.HOSTING_BUCKET}}
         
         - name: Cloudfront id output
           run: |
@@ -614,3 +614,67 @@ jobs:
             echo ${CF_ID_OUTPUT} is the output id
             CLOUDFRONT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${IN_STACK_ID} --query "Stacks[0].Outputs[?OutputKey=='${CF_ID_OUTPUT}'].OutputValue" --output text)
             aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_ID --paths '/*'
+
+        #------
+        - name: Reports UI Version
+          run: |
+            branch_name="${{env.BRANCH_NAME}}"
+            if [[ ${{inputs.repo_version}} == 'main' ]]
+            then
+              UI_VERSION=$(aws s3 ls beer-ul-nx-workspace/reports/ --recursive | sort | tail -n 1 | awk '{print $4}')
+              echo "TARGET_UI_VERSION=${UI_VERSION}" >> $GITHUB_ENV
+            else
+              echo "TARGET_UI_VERSION=reports/${{inputs.repo_version}}.zip" >> $GITHUB_ENV
+            fi
+            
+
+        - name: Download from s3
+          run: |
+            mkdir deployment_stage_reports
+            aws s3 cp s3://${{inputs.tools_bucket}}/${{env.TARGET_UI_VERSION}} reports_deploy.zip
+            
+        
+        - name: 'Unzip project'
+          uses: montudor/action-zip@v1.0.0
+          with:
+            args: unzip -qq reports_deploy.zip -d deployment_stage_reports
+        
+        - name: Configure AWS credentials ${{env.BRANCH_NAME}}
+          uses: aws-actions/configure-aws-credentials@master
+          with:
+            role-to-assume: ${{env.AWS_TARGET_ROLE_ARN}}
+            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
+            aws-region: ${{ env.AWS_REGION }}
+
+        - name: AWS function environment suffix
+          id: get_aws_branch_name
+          run: |
+            if [[ ${{inputs.branch_name}} == 'production' ]]
+            then
+              echo "AWS_ENV_NAME=prod" >> $GITHUB_ENV
+            elif [[ ${{inputs.branch_name}} == 'beta' ]]
+            then
+              echo "AWS_ENV_NAME=beta" >> $GITHUB_ENV
+            fi
+        
+        - name: App Hosting bucket
+          run: |
+            echo "REPORTS_HOSTING_BUCKET=${{inputs.reports_hosting_bucket}}-${{env.AWS_ENV_NAME}}" >> $GITHUB_ENV
+        
+        - name: Copy to ${{env.BRANCH_NAME}} s3 for App
+          run: |
+            aws s3 sync ./deployment_stage_reports/dist/apps/beeriot-reports s3://${{env.REPORTS_HOSTING_BUCKET}}
+        
+        - name: Cloudfront id output
+          run: |
+            echo "REPORTS_CF_ID_OUTPUT=${{inputs.in_reports_cloudfront_output}}cfoutput" >> $GITHUB_ENV
+        
+        - name: Stack id to query
+          run: |
+            echo "REPORTS_IN_STACK_ID=${{inputs.in_reports_stack_id}}" >> $GITHUB_ENV
+
+        - name: Invalidate cloudfront cache
+          run: |
+            echo ${REPORTS_CF_ID_OUTPUT} is the output id
+            REPORTS_CLOUDFRONT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${REPORTS_IN_STACK_ID} --query "Stacks[0].Outputs[?OutputKey=='${REPORTS_CF_ID_OUTPUT}'].OutputValue" --output text)
+            aws cloudfront create-invalidation --distribution-id $REPORTS_CLOUDFRONT_ID --paths '/*'
