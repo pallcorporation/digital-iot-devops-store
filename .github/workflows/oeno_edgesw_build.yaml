@@ -243,7 +243,7 @@ jobs:
           run: |
              cd ota
              Compress-Archive -Path * -DestinationPath ${{ env.UPLOAD_NAME}}.zip  
-             aws s3 cp ${{ env.UPLOAD_NAME}}.zip s3://${{env.AWS_UPLOAD_BUCKET}}/packageUpdates/${{ env.UPLOAD_NAME}}/
+             aws s3 cp ${{ env.UPLOAD_NAME}}.zip s3://${{needs.setup.outputs.bucket_name}}/packageUpdates/${{ env.UPLOAD_NAME}}/
 
 
 
