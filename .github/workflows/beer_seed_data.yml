@@ -2,7 +2,6 @@ name: Seed data
 
 # Controls when the workflow will run
 on:
-
   workflow_call:
     inputs:
       branch_name:
@@ -19,8 +18,8 @@ on:
 
 env:
   #BUCKET_NAME : "github-oidc-test-mitch"
-  AWS_REGION : "us-east-1"
-  PROJECT_FILES_GIT : "beer-project-properties.git"
+  AWS_REGION: "us-east-1"
+  PROJECT_FILES_GIT: "beer-project-properties.git"
   ORGANIZATION: "pallcorporation"
   PROJECT_FILES_NAME: "project.properties"
   PROJECT_FILES_DIRECTORY: "project_file"
@@ -36,183 +35,177 @@ env:
   API_GATEWAY_STACKID_OUT: beer-apigateway-0-iot-apigw
   API_GATEWAY_URL_OUT: beerapigateway0iotapigwurloutput
   COGNITO_CLIENT_ID_OUTPUT: beercognito0userpoolclientidoutput
-  
 
 permissions:
-      id-token: write
-      contents: read    # This is required for actions/checkout@v1
-      packages: write
+  id-token: write
+  contents: read # This is required for actions/checkout@v1
+  packages: write
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  
   AWS-CDK-Deployment:
     if: github.repository != 'pallcorporation/digital-iot-devops-store'
     runs-on: ubuntu-latest
     steps:
-        # Get current time stamp to use as reference elsewhere
-        - name: Get current date
-          id: date
-          run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
-        
-        # Get branch name to use for look up
-        - name: Environment
-          run: |
-            echo "BRANCH_NAME=${{inputs.branch_name}}" >> $GITHUB_ENV
-        
-        - name: Echo branch
-          run: echo "${BRANCH_NAME} is the branch name to use in lookup"
-        
-        # Clone repositories prior to work
-        - name: Git clone the repository
-          uses: actions/checkout@v3
-        
-          
-        - name: Make project files directory
-          run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
-        
-        - name: Make cdk directory
-          run: mkdir ${{env.CDK_MODULE}}
-        
-        - name: Project files clone
-          uses: actions/checkout@v3
-          with:
-            token: ${{ secrets.envPAT }}
-            repository: pallcorporation/beer-project-properties
-            ref: main
-            path: ${{env.PROJECT_FILES_DIRECTORY}}
-        
-        - name: CDK Modules clone
-          uses: actions/checkout@v3
-          with:
-            token: ${{ secrets.envPAT }}
-            repository: pallcorporation/digital-iot-devops-cdk-modules
-            ref: main
-            path: ${{env.CDK_MODULE}}
-        
-        - name: Beer IAC Pre repo clone
-          uses: actions/checkout@v3
-          with:
-            token: ${{ secrets.envPAT }}
-            repository: pallcorporation/beer-be-iac-common-pre
-            ref: main
-            path: beer-be-iac-common-pre
-        
-        - name: Postman repo clone
-          uses: actions/checkout@v3
-          with:
-            token: ${{ secrets.envPAT }}
-            repository: pallcorporation/beer-ul-postman-env
-            ref: main
-            path: ${{env.POSTMAN_COLLECTION_DIRECTORY}}
+      # Get current time stamp to use as reference elsewhere
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
 
-        - name: Admin users repo clone
-          uses: actions/checkout@v3
-          with:
-            token: ${{ secrets.envPAT }}
-            repository: pallcorporation/beer-ul-admin-users
-            ref: main
-            path: ${{env.ADMIN_USERS_POLICY_SEED}}
-        # Read of project files and set to variables
-        - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
-          id: project_constants
-          run: |
-            account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "AWS_ENVIRONMENT=${account_id}" >> $GITHUB_ENV
-            
-            oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "oidc_role=${oidc_role_name}" >> $GITHUB_ENV 
+      # Get branch name to use for look up
+      - name: Environment
+        run: |
+          echo "BRANCH_NAME=${{inputs.branch_name}}" >> $GITHUB_ENV
 
-          working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
-        # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
-        - name: Arn to use
-          id: aws_assume_role
-          run: |
-            echo "OCID_ROLE_ARN=arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/${{ env.oidc_role}}" >> $GITHUB_ENV
-      
-        - name: Configure AWS credentials
-          uses: aws-actions/configure-aws-credentials@master
-          with:
-            role-to-assume: ${{env.OCID_ROLE_ARN}}
-            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
-            aws-region: ${{ env.AWS_REGION }}
-        
-        - name: API Gateway output
-          run: |
-            echo "API_GATEWAY_STACKID_OUT=beerapigateway0iotapigwurloutput" >> $GITHUB_ENV
-            echo "API_GATEWAY_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.API_GATEWAY_STACKID_OUT}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.API_GATEWAY_URL_OUT}}`].OutputValue' --output text)" >> $GITHUB_ENV
+      - name: Echo branch
+        run: echo "${BRANCH_NAME} is the branch name to use in lookup"
 
-        
-        - name: Make ${{env.IAM_SERVICE_REPOSITORY}}
-          run: |
-            mkdir ${{env.IAM_SERVICE_REPOSITORY}}
-        
-        - name: beer-be-iam-service repo clone
-          uses: actions/checkout@v3
-          with:
-            token: ${{ secrets.envPAT }}
-            repository: pallcorporation/beer-be-iam-service
-            ref: main
-            path: ${{env.IAM_SERVICE_REPOSITORY}}
-        
-        - name: Cognito User Pool query
-          id: get_user_pool_client_id
-          run: |
-            echo "COGNITO_CLIENT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.COGNITO_USER_POOL_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.COGNITO_CLIENT_ID_OUTPUT}}`].OutputValue' --output text)" >> $GITHUB_ENV
-        
-        - name: Postman required variables
-          run: |
-            echo "CREATE_POSTMAN_USER=True" >> $GITHUB_ENV
-        
-        - name: Cognito User Pool query
-          id: get_user_pool_id
-          run: |
-            echo "COGNITO_USERPOOL_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.COGNITO_USER_POOL_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.COGNITO_USER_POOL_ID_OUTPUT}}`].OutputValue' --output text)" >> $GITHUB_ENV
-        
-        - name: Run python script to seed policy to admins
-          run: |
-            ls
-            rm -rf ${{env.ADMIN_USERS_POLICY_SEED}}/super-user-policy.json
-            cp ${{env.IAM_SERVICE_REPOSITORY}}/seeding-data/super-user-policy.jsonc ${{env.ADMIN_USERS_POLICY_SEED}}/super-user-policy.json
-            pip3 install boto3
-            pip3 install pytz
-            python3 ${{env.ADMIN_USERS_POLICY_SEED}}/admins.py
-        
-        - name: Run python script to Confirm or create envrionment admin user
-          run: |
-            python3 ${{env.ADMIN_USERS_POLICY_SEED}}/create_environment_user.py
+      # Clone repositories prior to work
+      - name: Git clone the repository
+        uses: actions/checkout@v3
 
-        - name: Read output file from seed
-          run: |
-            cat deploy_data.properties
+      - name: Make project files directory
+        run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
 
-            COGNITO_USERNAME="`grep COGNITO_USERNAME deploy_data.properties|cut -d'=' -f2`"
-            echo "POSTMAN_USERNAME=${COGNITO_USERNAME}" >> $GITHUB_ENV
+      - name: Make cdk directory
+        run: mkdir ${{env.CDK_MODULE}}
 
-            COGNITO_PASSWORD="`grep COGNITO_PASSWORD deploy_data.properties|cut -d'=' -f2`"
-            echo "POSTMAN_PASSWORD=${COGNITO_PASSWORD}" >> $GITHUB_ENV
+      - name: Project files clone
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/beer-project-properties
+          ref: main
+          path: ${{env.PROJECT_FILES_DIRECTORY}}
 
-            COGNITO_SECRET="`grep COGNITO_SECRET deploy_data.properties|cut -d'=' -f2`"
-            echo "COGNITO_CLIENT_SECRET=${COGNITO_SECRET}" >> $GITHUB_ENV
-            
-        # Grant permissions to all files in directory
-        - name: Grant permissions to all files
-          run: chmod -R 755 ./
+      - name: CDK Modules clone
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/digital-iot-devops-cdk-modules
+          ref: main
+          path: ${{env.CDK_MODULE}}
 
-        - name: Copy cdk config files
-          run: |
-            rm -r ${{env.CDK_MODULE}}/config_files/*
-            cp -a beer-be-iac-common-pre/cdk_config/. ${{env.CDK_MODULE}}/config_files/
-            cp -a ${{env.PROJECT_FILES_DIRECTORY}}/. ${{env.CDK_MODULE}}/
-        
-        
-        - name: Grant permissions to all files
-          run: | 
-            chmod -R 755 ${{env.CDK_MODULE}}
-        - name: Install CDK
-          run: |   
-            pip3 install -r requirements.txt
+      - name: Beer IAC Pre repo clone
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/beer-be-iac-common-pre
+          ref: main
+          path: beer-be-iac-common-pre
 
-        - name: Run python seed script
-          run: |
-            python3 app.py
+      - name: Postman repo clone
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/beer-ul-postman-env
+          ref: main
+          path: ${{env.POSTMAN_COLLECTION_DIRECTORY}}
+
+      - name: Admin users repo clone
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/beer-ul-admin-users
+          ref: main
+          path: ${{env.ADMIN_USERS_POLICY_SEED}}
+      # Read of project files and set to variables
+      - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
+        id: project_constants
+        run: |
+          account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "AWS_ENVIRONMENT=${account_id}" >> $GITHUB_ENV
+
+          oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "oidc_role=${oidc_role_name}" >> $GITHUB_ENV
+
+        working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
+      # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS
+      - name: Arn to use
+        id: aws_assume_role
+        run: |
+          echo "OCID_ROLE_ARN=arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/${{ env.oidc_role}}" >> $GITHUB_ENV
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: ${{env.OCID_ROLE_ARN}}
+          role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: API Gateway output
+        run: |
+          echo "API_GATEWAY_STACKID_OUT=beerapigateway0iotapigwurloutput" >> $GITHUB_ENV
+          echo "API_GATEWAY_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.API_GATEWAY_STACKID_OUT}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.API_GATEWAY_URL_OUT}}`].OutputValue' --output text)" >> $GITHUB_ENV
+
+      - name: Make ${{env.IAM_SERVICE_REPOSITORY}}
+        run: |
+          mkdir ${{env.IAM_SERVICE_REPOSITORY}}
+
+      - name: beer-be-iam-service repo clone
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/beer-be-iam-service
+          ref: main
+          path: ${{env.IAM_SERVICE_REPOSITORY}}
+
+      - name: Cognito User Pool query
+        id: get_user_pool_client_id
+        run: |
+          echo "COGNITO_CLIENT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.COGNITO_USER_POOL_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.COGNITO_CLIENT_ID_OUTPUT}}`].OutputValue' --output text)" >> $GITHUB_ENV
+
+      - name: Postman required variables
+        run: |
+          echo "CREATE_POSTMAN_USER=True" >> $GITHUB_ENV
+
+      - name: Cognito User Pool query
+        id: get_user_pool_id
+        run: |
+          echo "COGNITO_USERPOOL_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.COGNITO_USER_POOL_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.COGNITO_USER_POOL_ID_OUTPUT}}`].OutputValue' --output text)" >> $GITHUB_ENV
+
+      - name: Run python script to seed policy to admins
+        run: |
+          ls
+          rm -rf ${{env.ADMIN_USERS_POLICY_SEED}}/super-user-policy.json
+          pip3 install pytz
+          pip3 install -r ${{env.ADMIN_USERS_POLICY_SEED}}/requirements.txt
+          python3 ${{env.ADMIN_USERS_POLICY_SEED}}/admins.py
+
+      - name: Run python script to Confirm or create envrionment admin user
+        run: |
+          python3 ${{env.ADMIN_USERS_POLICY_SEED}}/create_environment_user.py
+
+      - name: Read output file from seed
+        run: |
+          cat deploy_data.properties
+
+          COGNITO_USERNAME="`grep COGNITO_USERNAME deploy_data.properties|cut -d'=' -f2`"
+          echo "POSTMAN_USERNAME=${COGNITO_USERNAME}" >> $GITHUB_ENV
+
+          COGNITO_PASSWORD="`grep COGNITO_PASSWORD deploy_data.properties|cut -d'=' -f2`"
+          echo "POSTMAN_PASSWORD=${COGNITO_PASSWORD}" >> $GITHUB_ENV
+
+          COGNITO_SECRET="`grep COGNITO_SECRET deploy_data.properties|cut -d'=' -f2`"
+          echo "COGNITO_CLIENT_SECRET=${COGNITO_SECRET}" >> $GITHUB_ENV
+
+      # Grant permissions to all files in directory
+      - name: Grant permissions to all files
+        run: chmod -R 755 ./
+
+      - name: Copy cdk config files
+        run: |
+          rm -r ${{env.CDK_MODULE}}/config_files/*
+          cp -a beer-be-iac-common-pre/cdk_config/. ${{env.CDK_MODULE}}/config_files/
+          cp -a ${{env.PROJECT_FILES_DIRECTORY}}/. ${{env.CDK_MODULE}}/
+
+      - name: Grant permissions to all files
+        run: |
+          chmod -R 755 ${{env.CDK_MODULE}}
+      - name: Install CDK
+        run: |
+          pip3 install -r requirements.txt
+
+      - name: Run python seed script
+        run: |
+          python3 app.py
