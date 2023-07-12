@@ -120,7 +120,7 @@ jobs:
           run: |
             git clone --mirror https://${{secrets.envPAT}}@github.com/pallcorporation/${{env.REPO_NAME}}.git ${{env.REPO_NAME}}_stage
             cd ${{env.REPO_NAME}}_stage
-            git push https://git-codecommit.${{env.AWS_REGION}}.amazonaws.com/v1/repos/${{env.REPO_NAME}} --all
+            git push https://git-codecommit.${{env.AWS_REGION}}.amazonaws.com/v1/repos/${{env.REPO_NAME}} -f --all
         
         - name: Microsoft Teams Notification
           if: failure()
