@@ -12,14 +12,14 @@ on:
       branch_name:
         required: true
         type: string
-      
+
       destroy_stack:
         type: boolean
         default: false
 
       deployment_type:
         type: string
-      
+
       repo_name:
         type: string
       repo_version:
@@ -32,26 +32,22 @@ on:
       build_project_type:
         required: true
         type: string
-      
+
       tools_bucket:
         type: string
-        
 
       hosting_bucket:
         required: true
         type: string
-        
-      
+
       in_stack_id:
         required: true
         type: string
-        
-      
+
       in_cloudfront_url_output_to_query:
         required: true
         type: string
-        
-      
+
       in_cloudfront_output:
         required: true
         type: string
@@ -63,7 +59,6 @@ on:
         type: string
       in_reports_stack_id:
         type: string
-        
 
     secrets:
       envPAT:
@@ -73,8 +68,8 @@ on:
 
 env:
   #BUCKET_NAME : "github-oidc-test-mitch"
-  AWS_REGION : "us-east-1"
-  PROJECT_FILES_GIT : "beer-project-properties.git"
+  AWS_REGION: "us-east-1"
+  PROJECT_FILES_GIT: "beer-project-properties.git"
   ORGANIZATION: "pallcorporation"
   PROJECT_FILES_NAME: "project.properties"
   PROJECT_FILES_DIRECTORY: "beer-project-properties"
@@ -82,600 +77,595 @@ env:
   DEVOPS_STORE: "devops_store"
 
 permissions:
-      id-token: write
-      contents: read    # This is required for actions/checkout@v1
-      packages: write
+  id-token: write
+  contents: read # This is required for actions/checkout@v1
+  packages: write
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
-jobs:  
+jobs:
   AWS-CDK-Deployment:
     if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.repository != 'pallcorporation/beer-application-deployment')
     runs-on: ubuntu-latest
-      
+
     steps:
-        # Get current time stamp to use as reference elsewhere
-        - name: Get current date
-          id: date
-          run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
-        
-        - name: Check if input is null for repo name
-          if: ${{inputs.repo_name}}
-          id: repo_name_passed
-          run: |
-            if [ ${{inputs.repo_name}} != "" ]; then
-              echo "reponamepassed=true" >> $GITHUB_ENV
-            else
-              echo "reponamepassed=false" >> $GITHUB_ENV
-            fi
-        
-        - name: Checkout
-          uses: actions/checkout@v3
-        
-        #- name: Git clone the repository
-        #  uses: actions/checkout@v3
+      # Get current time stamp to use as reference elsewhere
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
 
-        - name: Find-and-replace strings
-          uses: mad9000/actions-find-and-replace-string@2
-          id: findandreplace_user
-          with:
-            source: ${{ github.actor }} # this translates to ref/heads/main on the main branch, but can be any arbitrary string 
-            find: '-'        # we want to remove ref/heads/ from source 
-            replace: ''
-        
-        - name: Get the above output
-          run: |
-            echo "The replaced value is ${{ steps.findandreplace_user.outputs.value }}"
-            echo "GITHUB_USER=${{ steps.findandreplace_user.outputs.value }}" >> $GITHUB_ENV
+      - name: Check if input is null for repo name
+        if: ${{inputs.repo_name}}
+        id: repo_name_passed
+        run: |
+          if [ ${{inputs.repo_name}} != "" ]; then
+            echo "reponamepassed=true" >> $GITHUB_ENV
+          else
+            echo "reponamepassed=false" >> $GITHUB_ENV
+          fi
 
-        - name: Github user
-          run: echo "${GITHUB_USER} <---Finally..."
+      - name: Checkout
+        uses: actions/checkout@v3
 
-         # Node installation (if required)
-        - name: Setup node.js environment
-          uses: actions/setup-node@v3.6.0
+      #- name: Git clone the repository
+      #  uses: actions/checkout@v3
 
-        - name: Branch if Dev
-          if: contains( github.ref, 'dev' )
-          run: |
-            echo "BRANCH_NAME=dev" >> $GITHUB_ENV
-        
-        - name: Branch if Integration
-          if: contains( github.ref, 'integration' )
-          run: |
-            echo "BRANCH_NAME=integration" >> $GITHUB_ENV
+      - name: Find-and-replace strings
+        uses: mad9000/actions-find-and-replace-string@2
+        id: findandreplace_user
+        with:
+          source: ${{ github.actor }} # this translates to ref/heads/main on the main branch, but can be any arbitrary string
+          find: "-" # we want to remove ref/heads/ from source
+          replace: ""
 
-        - name: Branch if users
-          if: contains( github.ref, 'users' )
-          run: |
-            echo "BRANCH_NAME=dev" >> $GITHUB_ENV
-            echo "USE_GITHUB_USER=True" >> $GITHUB_ENV
-        
-        - name: Branch if Main
-          if: ( contains( github.ref, 'production' ) && (github.repository == 'pallcorporation/beer-application-deployment' ))
-          run: |
-            echo "BRANCH_NAME=production" >> $GITHUB_ENV
-        
-        - name: Branch if BETA
-          if: contains( github.ref, 'beta' )
-          run: |
-            echo "BRANCH_NAME=beta" >> $GITHUB_ENV
-            
-        
-        - name: Echo branch
-          run: echo "${BRANCH_NAME} is the branch name to use in lookup"
-          
-        - name: Make repo directory
-          if: ${{inputs.repo_name}}
-          run: mkdir ${{ inputs.repo_name }}_stage
-          
-        - name: Check out ${{ inputs.repo_name }}
-          if: ${{inputs.repo_name}}
-          uses: actions/checkout@v3
-          with:
-            token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
-            repository: pallcorporation/${{ inputs.repo_name }}
-            ref: ${{inputs.repo_version}}
-            path: ${{ inputs.repo_name }}_stage
-        
-        - name: Build directory swagger
-          if: ${{inputs.build_project_type == 'swagger' }}
-          run: |
-            echo "BUILD_DIRECTORY=dist" >> $GITHUB_ENV
+      - name: Get the above output
+        run: |
+          echo "The replaced value is ${{ steps.findandreplace_user.outputs.value }}"
+          echo "GITHUB_USER=${{ steps.findandreplace_user.outputs.value }}" >> $GITHUB_ENV
 
-        - name: Build directory nx
-          if: ${{inputs.build_project_type == 'nx' }}
-          run: |
-            echo "BUILD_DIRECTORY=dist/apps/beeriot-web" >> $GITHUB_ENV
-        
-        - name: Build directory reports
-          if: ${{inputs.build_project_type == 'reports' }}
-          run: |
-            echo "BUILD_DIRECTORY=dist/apps/beeriot-reports" >> $GITHUB_ENV
+      - name: Github user
+        run: echo "${GITHUB_USER} <---Finally..."
 
-        - name: Build directory storybook
-          if: ${{inputs.build_project_type == 'storybook' }}
-          run: |
-            echo "BUILD_DIRECTORY=dist/storybook/ui-components" >> $GITHUB_ENV
-        
-        - name: Build directory nextjs
-          if: ${{inputs.build_project_type == 'nextjs' }}
-          run: |
-            echo "BUILD_DIRECTORY=out" >> $GITHUB_ENV
-        
-        - name: Build directory echo
-          run: echo $BUILD_DIRECTORY
-        # Clone repositories prior to work
-        
-        - name: Move files (if from application deployment)
-          if: ${{ env.reponamepassed }}
-          run: mv ${{ inputs.repo_name }}_stage/* .
-        
-        - name: Make project files directory
-          run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
-        
-        - name: Make cdk directory
-          run: mkdir ${{env.CDK_MODULE}}
-        
-        - name: Make devops store directory
-          run: mkdir ${{env.DEVOPS_STORE}}
-        
-        - name: Swagger install
-          if: ${{inputs.build_project_type == 'swagger' }}
-          run: |
-            npm install swagger-ui
-            npm install -g swagger-cli
-            
+        # Node installation (if required)
+      - name: Setup node.js environment
+        uses: actions/setup-node@v3.6.0
 
-        - name: Swagger install dependencies
-          if: ${{inputs.build_project_type == 'swagger1' }}
-          run: |
-            npm install css-loader json-loader style-loader yaml-loader webpack webpack-cli html-webpack-plugin -D
-            
-        
-        - name: Project files clone
-          uses: actions/checkout@v3
-          with:
-            token: ${{ secrets.envPAT }}
-            repository: pallcorporation/beer-project-properties
-            ref: main
-            path: ${{env.PROJECT_FILES_DIRECTORY}}
-        
-        - name: CDK Modules clone
-          uses: actions/checkout@v3
-          with:
-            token: ${{ secrets.envPAT }}
-            repository: pallcorporation/digital-iot-devops-cdk-modules
-            ref: main
-            path: ${{env.CDK_MODULE}}
+      - name: Branch if Dev
+        if: contains( github.ref, 'dev' )
+        run: |
+          echo "BRANCH_NAME=dev" >> $GITHUB_ENV
 
-        - name: Node Modules clone
-          uses: actions/checkout@v3
-          with:
-            token: ${{ secrets.envPAT }}
-            repository: pallcorporation/digital-iot-devops-store
-            ref: main
-            path: ${{env.DEVOPS_STORE}}
-        
-        # Grant permissions to all files in directory
-        - name: Grant permissions to all files
-          run: chmod -R 755 ./
-        
-        #- name: Copy files to swagger_src
-        #  run: |
-        #    sudo cp -f swagger.yaml /swagger_src/swagger.yaml
-        
-        - name: Move node modules directory
-          run: cp -a ${{env.DEVOPS_STORE}}/swagger_modules/. .
+      - name: Branch if Integration
+        if: contains( github.ref, 'integration' )
+        run: |
+          echo "BRANCH_NAME=integration" >> $GITHUB_ENV
 
-        - name: Build swagger
-          if: ${{inputs.build_project_type == 'swagger'}}
-          run: |
-            mv swagger.yaml swagger_old.yaml
-            swagger-cli bundle swagger_old.yaml --outfile open-api.json --type json
-            swagger-cli bundle swagger_old.yaml --outfile swagger.yaml --type yaml
-            npm run build
-        
-        - name: OpenAPIGenerator Installation
-          if: ${{inputs.build_project_type == 'swagger'}}
-          run: |
-            npm install @openapitools/openapi-generator-cli
-            
-        - name: OpenAPIGenerator Check
-          if: ${{inputs.build_project_type == 'swagger'}}
-          run: |
-            npx openapi-generator-cli generate -i swagger.yaml -g typescript-axios -o libs/api-client/src/generated
-        
-        - name: Build Storybok
-          if: ${{inputs.build_project_type == 'storybook'}}
-          run: |
-            npm ci
-            NODE_ENV=development npx nx build-storybook ui-components
-        
-        # Read of project files and set to variables
-        - name: Get project constants from project.properties repo 
-          id: project_constants
-          run: |
-            account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "AWS_ENVIRONMENT=${account_id}" >> $GITHUB_ENV
-            
-            oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "OIDC_ROLE_NAME=${oidc_role_name}" >> $GITHUB_ENV
-          working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
-        
-        - name: Get project constants from project.properties repo
-          if: contains( github.ref, 'users' )
-          id: project_constants_users
-          run: |
-            account_id="`grep aws_integration_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "AWS_ENVIRONMENT_USERS=${account_id}" >> $GITHUB_ENV
-            
-            oidc_role_name="`grep aws_integration_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "OIDC_ROLE_NAME_USERS=${oidc_role_name}" >> $GITHUB_ENV
-          working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
-        
-        - name: Copy cdk config files
-          run: |
-            rm -r ${{env.CDK_MODULE}}/config_files/*
-            cp -a ${{inputs.config_files_directory}}/. ${{env.CDK_MODULE}}/config_files/
-            cp -a ${{env.PROJECT_FILES_DIRECTORY}}/. ${{env.CDK_MODULE}}/
-        
-        
-        # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
-        - name: Arn to use
-          id: aws_assume_role
-          run: |
-            echo "OIDC_ROLE_ARN=arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/${{ env.OIDC_ROLE_NAME}}" >> $GITHUB_ENV
+      - name: Branch if users
+        if: contains( github.ref, 'users' )
+        run: |
+          echo "BRANCH_NAME=dev" >> $GITHUB_ENV
+          echo "USE_GITHUB_USER=True" >> $GITHUB_ENV
 
-        - name: Arn to use (If Users)
-          if: contains( github.ref, 'users' )
-          id: aws_assume_role_users
-          run: |
-            echo "OIDC_ROLE_ARN_USERS=arn:aws:iam::${{ env.AWS_ENVIRONMENT_USERS }}:role/${{ env.OIDC_ROLE_NAME_USERS}}" >> $GITHUB_ENV
+      - name: Branch if Main
+        if: ( contains( github.ref, 'production' ) && (github.repository == 'pallcorporation/beer-application-deployment' ))
+        run: |
+          echo "BRANCH_NAME=production" >> $GITHUB_ENV
 
-        - name: Configure AWS credentials
-          uses: aws-actions/configure-aws-credentials@master
-          with:
-            role-to-assume: ${{env.OIDC_ROLE_ARN}}
-            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
-            aws-region: ${{ env.AWS_REGION }}
-        
-        - name: Configure AWS credentials if Users
-          if: contains( github.ref, 'users' )
-          uses: aws-actions/configure-aws-credentials@master
-          with:
-            role-to-assume: ${{env.OIDC_ROLE_ARN_USERS}}
-            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
-            aws-region: ${{ env.AWS_REGION }}
-        
-        - name: Create NX environment varibles file
-          if: ${{inputs.build_project_type == 'nx'}}
-          run: |
-            pip3 install boto3
-            pip3 install jproperties
-            mv .env .env_old
-            python3 ${{env.PROJECT_FILES_DIRECTORY}}/create_env_file.py
-            cat .env
-            
-        - name: Build nx Frontend
-          if: ${{inputs.build_project_type == 'nx'}}
-          run: |
-            npm ci
-            if [[ ${BRANCH_NAME} == 'main' ]]
-            then
-              npx nx build
-            else
-              npx nx run beeriot-web:build:staging
-            fi
-        - name: Build nx Reports Frontend
-          if: ${{inputs.build_project_type == 'reports'}}
-          run: |
-            npm ci
-            npx nx build beeriot-reports
-            
-        - name: Build NextJS
-          if: ${{inputs.build_project_type == 'nextjs'}}
-          run: |
-            npm install
-            npm run publish
+      - name: Branch if BETA
+        if: contains( github.ref, 'beta' )
+        run: |
+          echo "BRANCH_NAME=beta" >> $GITHUB_ENV
 
-        - name: Install yaml
-          run: |
-            pip install pyyaml
-            sudo npm install -g aws-cdk
-        
-        - name: Configure AWS credentials if Users
-          if: contains( github.ref, 'users' )
-          uses: aws-actions/configure-aws-credentials@master
-          with:
-            role-to-assume: ${{env.OIDC_ROLE_ARN}}
-            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
-            aws-region: ${{ env.AWS_REGION }}
-        
-        - name: AWS function environment suffix
-          id: get_aws_branch_name
-          run: |
-            if [[ ${{inputs.branch_name}} == 'main' ]]
-            then
-              echo "AWS_ENV_NAME=production" >> $GITHUB_ENV
-            elif [[ ${{inputs.branch_name}} == 'integration' ]]
-            then
-              echo "AWS_ENV_NAME=int" >> $GITHUB_ENV
-            elif [[ ${{inputs.branch_name}} == 'dev' ]]
-            then
-              echo "AWS_ENV_NAME=dev" >> $GITHUB_ENV
-            elif [[ ${{inputs.branch_name}} == 'beta' ]]
-            then
-              echo "AWS_ENV_NAME=beta" >> $GITHUB_ENV
-            else
-              echo "AWS_ENV_NAME=dev" >> $GITHUB_ENV
-            fi
+      - name: Echo branch
+        run: echo "${BRANCH_NAME} is the branch name to use in lookup"
 
-        - name: Stack id to query
-          run: |
-            echo "IN_STACK_ID=${{inputs.in_stack_id}}" >> $GITHUB_ENV
+      - name: Make repo directory
+        if: ${{inputs.repo_name}}
+        run: mkdir ${{ inputs.repo_name }}_stage
 
-        - name: Stack id to query if users
-          if: contains( github.ref, 'users' )
-          run: |
-            echo "IN_STACK_ID=${{inputs.in_stack_id}}-${{github.actor}}" >> $GITHUB_ENV
-            
+      - name: Check out ${{ inputs.repo_name }}
+        if: ${{inputs.repo_name}}
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+          repository: pallcorporation/${{ inputs.repo_name }}
+          ref: ${{inputs.repo_version}}
+          path: ${{ inputs.repo_name }}_stage
 
-        - name: Hosting bucket
-          run: |
-            echo "HOSTING_BUCKET=${{inputs.hosting_bucket}}-${{env.AWS_ENV_NAME}}" >> $GITHUB_ENV
-        
-        - name: Hosting bucket if users
-          if: contains( github.ref, 'users' )
-          run: |
-            echo "HOSTING_BUCKET=${{inputs.hosting_bucket}}-${{github.actor}}-${{env.AWS_ENV_NAME}}" >> $GITHUB_ENV
-        
+      - name: Build directory swagger
+        if: ${{inputs.build_project_type == 'swagger' }}
+        run: |
+          echo "BUILD_DIRECTORY=dist" >> $GITHUB_ENV
 
-        - name: Cloudfront id output
-          run: |
-            echo "CF_ID_OUTPUT=${{inputs.in_cloudfront_output}}cfoutput" >> $GITHUB_ENV
-        
-        - name: Cloudfront URL output
-          run: |
-            echo "CF_URL_OUTPUT=${{inputs.in_cloudfront_url_output_to_query}}cfurloutput" >> $GITHUB_ENV
-            
-        
-        - name: Cloudfront id output if users
-          if: contains( github.ref, 'users' )
-          run: |
-            echo "CF_ID_OUTPUT=${{inputs.in_cloudfront_output}}${GITHUB_USER}cfoutput" >> $GITHUB_ENV
-            
-        
-        - name: Cloudfront URL output if users
-          if: contains( github.ref, 'users' )
-          run: |
-            echo "CF_URL_OUTPUT=${{inputs.in_cloudfront_url_output_to_query}}${GITHUB_USER}cfurloutput" >> $GITHUB_ENV
+      - name: Build directory nx
+        if: ${{inputs.build_project_type == 'nx' }}
+        run: |
+          echo "BUILD_DIRECTORY=dist/apps/beeriot-web" >> $GITHUB_ENV
 
-        # Upload a file to AWS s3
-        - name:  Deploy to S3 - Copy Build folder to s3
-          run: |
-            aws s3 sync ./$BUILD_DIRECTORY s3://${HOSTING_BUCKET}
-            
-        #    aws cloudfront create-invalidation --distribution-id E11LJKZLIMW93N --paths '/*'
-        # Build & deploy docker image
-        - name: Copy Swagger json to s3
-          if: ${{inputs.build_project_type == 'swagger'}}
-          run: |
-            mv swagger.yaml open-api.yaml
-            aws s3 cp open-api.json s3://${HOSTING_BUCKET}
-            aws s3 cp open-api.yaml s3://${HOSTING_BUCKET}
-        - name: Invalidate cloudfront cache
-          run: |
-            echo ${CF_ID_OUTPUT} is the output id
-            CLOUDFRONT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${IN_STACK_ID} --query "Stacks[0].Outputs[?OutputKey=='${CF_ID_OUTPUT}'].OutputValue" --output text)
-            aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_ID --paths '/*'
-        
-        - name: Domain url
-          id: domain_url
-          run: |
-            DOMAIN_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${IN_STACK_ID} --query "Stacks[0].Outputs[?OutputKey=='${CF_URL_OUTPUT}'].OutputValue" --output text)
-            echo "DOMAIN_URL_OUTPUT=${DOMAIN_URL}">>$GITHUB_ENV
-            
-        - name: Echo Domain URL
-          run: |
-            echo "::warning::https://${{ env.DOMAIN_URL_OUTPUT}} is the cloudfront url"
-  
+      - name: Build directory reports
+        if: ${{inputs.build_project_type == 'reports' }}
+        run: |
+          echo "BUILD_DIRECTORY=dist/apps/beeriot-reports" >> $GITHUB_ENV
+
+      - name: Build directory storybook
+        if: ${{inputs.build_project_type == 'storybook' }}
+        run: |
+          echo "BUILD_DIRECTORY=dist/storybook/ui-components" >> $GITHUB_ENV
+
+      - name: Build directory nextjs
+        if: ${{inputs.build_project_type == 'nextjs' }}
+        run: |
+          echo "BUILD_DIRECTORY=out" >> $GITHUB_ENV
+
+      - name: Build directory echo
+        run: echo $BUILD_DIRECTORY
+      # Clone repositories prior to work
+
+      - name: Move files (if from application deployment)
+        if: ${{ env.reponamepassed }}
+        run: mv ${{ inputs.repo_name }}_stage/* .
+
+      - name: Make project files directory
+        run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
+
+      - name: Make cdk directory
+        run: mkdir ${{env.CDK_MODULE}}
+
+      - name: Make devops store directory
+        run: mkdir ${{env.DEVOPS_STORE}}
+
+      - name: Swagger install-ui
+        if: ${{inputs.build_project_type == 'swagger' }}
+        run: |
+          npm install swagger-ui
+
+      - name: Swagger install-cli
+        if: ${{inputs.build_project_type == 'swagger' }}
+        run: |
+          npm install -g swagger-cli
+
+      - name: Swagger install dependencies
+        if: ${{inputs.build_project_type == 'swagger1' }}
+        run: |
+          npm install css-loader json-loader style-loader yaml-loader webpack webpack-cli html-webpack-plugin -D
+
+      - name: Project files clone
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/beer-project-properties
+          ref: main
+          path: ${{env.PROJECT_FILES_DIRECTORY}}
+
+      - name: CDK Modules clone
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/digital-iot-devops-cdk-modules
+          ref: main
+          path: ${{env.CDK_MODULE}}
+
+      - name: Node Modules clone
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/digital-iot-devops-store
+          ref: main
+          path: ${{env.DEVOPS_STORE}}
+
+      # Grant permissions to all files in directory
+      - name: Grant permissions to all files
+        run: chmod -R 755 ./
+
+      #- name: Copy files to swagger_src
+      #  run: |
+      #    sudo cp -f swagger.yaml /swagger_src/swagger.yaml
+
+      - name: Move node modules directory
+        run: cp -a ${{env.DEVOPS_STORE}}/swagger_modules/. .
+
+      - name: Build swagger
+        if: ${{inputs.build_project_type == 'swagger'}}
+        run: |
+          mv swagger.yaml swagger_old.yaml
+          swagger-cli bundle swagger_old.yaml --outfile open-api.json --type json
+          swagger-cli bundle swagger_old.yaml --outfile swagger.yaml --type yaml
+          npm run build
+
+      - name: OpenAPIGenerator Installation
+        if: ${{inputs.build_project_type == 'swagger'}}
+        run: |
+          npm install @openapitools/openapi-generator-cli
+
+      - name: OpenAPIGenerator Check
+        if: ${{inputs.build_project_type == 'swagger'}}
+        run: |
+          npx openapi-generator-cli generate -i swagger.yaml -g typescript-axios -o libs/api-client/src/generated
+
+      - name: Build Storybok
+        if: ${{inputs.build_project_type == 'storybook'}}
+        run: |
+          npm ci
+          NODE_ENV=development npx nx build-storybook ui-components
+
+      # Read of project files and set to variables
+      - name: Get project constants from project.properties repo
+        id: project_constants
+        run: |
+          account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "AWS_ENVIRONMENT=${account_id}" >> $GITHUB_ENV
+
+          oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "OIDC_ROLE_NAME=${oidc_role_name}" >> $GITHUB_ENV
+        working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
+
+      - name: Get project constants from project.properties repo
+        if: contains( github.ref, 'users' )
+        id: project_constants_users
+        run: |
+          account_id="`grep aws_integration_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "AWS_ENVIRONMENT_USERS=${account_id}" >> $GITHUB_ENV
+
+          oidc_role_name="`grep aws_integration_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "OIDC_ROLE_NAME_USERS=${oidc_role_name}" >> $GITHUB_ENV
+        working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
+
+      - name: Copy cdk config files
+        run: |
+          rm -r ${{env.CDK_MODULE}}/config_files/*
+          cp -a ${{inputs.config_files_directory}}/. ${{env.CDK_MODULE}}/config_files/
+          cp -a ${{env.PROJECT_FILES_DIRECTORY}}/. ${{env.CDK_MODULE}}/
+
+      # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS
+      - name: Arn to use
+        id: aws_assume_role
+        run: |
+          echo "OIDC_ROLE_ARN=arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/${{ env.OIDC_ROLE_NAME}}" >> $GITHUB_ENV
+
+      - name: Arn to use (If Users)
+        if: contains( github.ref, 'users' )
+        id: aws_assume_role_users
+        run: |
+          echo "OIDC_ROLE_ARN_USERS=arn:aws:iam::${{ env.AWS_ENVIRONMENT_USERS }}:role/${{ env.OIDC_ROLE_NAME_USERS}}" >> $GITHUB_ENV
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: ${{env.OIDC_ROLE_ARN}}
+          role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Configure AWS credentials if Users
+        if: contains( github.ref, 'users' )
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: ${{env.OIDC_ROLE_ARN_USERS}}
+          role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Create NX environment varibles file
+        if: ${{inputs.build_project_type == 'nx'}}
+        run: |
+          pip3 install boto3
+          pip3 install jproperties
+          mv .env .env_old
+          python3 ${{env.PROJECT_FILES_DIRECTORY}}/create_env_file.py
+          cat .env
+
+      - name: Build nx Frontend
+        if: ${{inputs.build_project_type == 'nx'}}
+        run: |
+          npm ci
+          if [[ ${BRANCH_NAME} == 'main' ]]
+          then
+            npx nx build
+          else
+            npx nx run beeriot-web:build:staging
+          fi
+      - name: Build nx Reports Frontend
+        if: ${{inputs.build_project_type == 'reports'}}
+        run: |
+          npm ci
+          npx nx build beeriot-reports
+
+      - name: Build NextJS
+        if: ${{inputs.build_project_type == 'nextjs'}}
+        run: |
+          npm install
+          npm run publish
+
+      - name: Install yaml
+        run: |
+          pip install pyyaml
+          sudo npm install -g aws-cdk
+
+      - name: Configure AWS credentials if Users
+        if: contains( github.ref, 'users' )
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: ${{env.OIDC_ROLE_ARN}}
+          role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: AWS function environment suffix
+        id: get_aws_branch_name
+        run: |
+          if [[ ${{inputs.branch_name}} == 'main' ]]
+          then
+            echo "AWS_ENV_NAME=production" >> $GITHUB_ENV
+          elif [[ ${{inputs.branch_name}} == 'integration' ]]
+          then
+            echo "AWS_ENV_NAME=int" >> $GITHUB_ENV
+          elif [[ ${{inputs.branch_name}} == 'dev' ]]
+          then
+            echo "AWS_ENV_NAME=dev" >> $GITHUB_ENV
+          elif [[ ${{inputs.branch_name}} == 'beta' ]]
+          then
+            echo "AWS_ENV_NAME=beta" >> $GITHUB_ENV
+          else
+            echo "AWS_ENV_NAME=dev" >> $GITHUB_ENV
+          fi
+
+      - name: Stack id to query
+        run: |
+          echo "IN_STACK_ID=${{inputs.in_stack_id}}" >> $GITHUB_ENV
+
+      - name: Stack id to query if users
+        if: contains( github.ref, 'users' )
+        run: |
+          echo "IN_STACK_ID=${{inputs.in_stack_id}}-${{github.actor}}" >> $GITHUB_ENV
+
+      - name: Hosting bucket
+        run: |
+          echo "HOSTING_BUCKET=${{inputs.hosting_bucket}}-${{env.AWS_ENV_NAME}}" >> $GITHUB_ENV
+
+      - name: Hosting bucket if users
+        if: contains( github.ref, 'users' )
+        run: |
+          echo "HOSTING_BUCKET=${{inputs.hosting_bucket}}-${{github.actor}}-${{env.AWS_ENV_NAME}}" >> $GITHUB_ENV
+
+      - name: Cloudfront id output
+        run: |
+          echo "CF_ID_OUTPUT=${{inputs.in_cloudfront_output}}cfoutput" >> $GITHUB_ENV
+
+      - name: Cloudfront URL output
+        run: |
+          echo "CF_URL_OUTPUT=${{inputs.in_cloudfront_url_output_to_query}}cfurloutput" >> $GITHUB_ENV
+
+      - name: Cloudfront id output if users
+        if: contains( github.ref, 'users' )
+        run: |
+          echo "CF_ID_OUTPUT=${{inputs.in_cloudfront_output}}${GITHUB_USER}cfoutput" >> $GITHUB_ENV
+
+      - name: Cloudfront URL output if users
+        if: contains( github.ref, 'users' )
+        run: |
+          echo "CF_URL_OUTPUT=${{inputs.in_cloudfront_url_output_to_query}}${GITHUB_USER}cfurloutput" >> $GITHUB_ENV
+
+      # Upload a file to AWS s3
+      - name: Deploy to S3 - Copy Build folder to s3
+        run: |
+          aws s3 sync ./$BUILD_DIRECTORY s3://${HOSTING_BUCKET}
+
+      #    aws cloudfront create-invalidation --distribution-id E11LJKZLIMW93N --paths '/*'
+      # Build & deploy docker image
+      - name: Copy Swagger json to s3
+        if: ${{inputs.build_project_type == 'swagger'}}
+        run: |
+          mv swagger.yaml open-api.yaml
+          aws s3 cp open-api.json s3://${HOSTING_BUCKET}
+          aws s3 cp open-api.yaml s3://${HOSTING_BUCKET}
+      - name: Invalidate cloudfront cache
+        run: |
+          echo ${CF_ID_OUTPUT} is the output id
+          CLOUDFRONT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${IN_STACK_ID} --query "Stacks[0].Outputs[?OutputKey=='${CF_ID_OUTPUT}'].OutputValue" --output text)
+          aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_ID --paths '/*'
+
+      - name: Domain url
+        id: domain_url
+        run: |
+          DOMAIN_URL=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${IN_STACK_ID} --query "Stacks[0].Outputs[?OutputKey=='${CF_URL_OUTPUT}'].OutputValue" --output text)
+          echo "DOMAIN_URL_OUTPUT=${DOMAIN_URL}">>$GITHUB_ENV
+
+      - name: Echo Domain URL
+        run: |
+          echo "::warning::https://${{ env.DOMAIN_URL_OUTPUT}} is the cloudfront url"
+
   Application-Deployment:
     if: (github.repository != 'pallcorporation/digital-iot-devops-store' && github.repository == 'pallcorporation/beer-application-deployment')
     runs-on: ubuntu-latest
-      
+
     steps:
-        # Get current time stamp to use as reference elsewhere
-        - name: Get current date
-          id: date
-          run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
+      # Get current time stamp to use as reference elsewhere
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
 
-        # Get branch name to use for look up
-        
-        - name: Branch if Prod
-          if: contains( github.ref, 'prod' )
-          run: |
-            echo "BRANCH_NAME=production" >> $GITHUB_ENV
-        
-        - name: Branch if BETA
-          if: contains( github.ref, 'beta' )
-          run: |
-            echo "BRANCH_NAME=beta" >> $GITHUB_ENV
-            
-        
-        - name: Echo branch
-          run: echo "${BRANCH_NAME} is the branch name to use in lookup"
+      # Get branch name to use for look up
 
-        - name: Make project files directory
-          run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
-        
-        - name: Project files clone
-          uses: actions/checkout@v3
-          with:
-            token: ${{ secrets.envPAT }}
-            repository: pallcorporation/beer-project-properties
-            ref: main
-            path: ${{env.PROJECT_FILES_DIRECTORY}}
-        
-        # Read of project files and set to variables
-        - name: Get project constants - tools
-          id: project_constants_tools
-          run: |
-            account_id="`grep aws_tools_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "AWS_ENVIRONMENT_TOOLS=${account_id}" >> $GITHUB_ENV
-            
-            oidc_role_name="`grep aws_tools_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "OIDC_ROLE_NAME_TOOLS=${oidc_role_name}" >> $GITHUB_ENV
+      - name: Branch if Prod
+        if: contains( github.ref, 'prod' )
+        run: |
+          echo "BRANCH_NAME=production" >> $GITHUB_ENV
 
-          working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
-        
-        - name: Get project constants - tools
-          id: project_constants_target
-          run: |
-            account_id="`grep aws_${{env.BRANCH_NAME}}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+      - name: Branch if BETA
+        if: contains( github.ref, 'beta' )
+        run: |
+          echo "BRANCH_NAME=beta" >> $GITHUB_ENV
 
-            echo "TARGET_AWS_ENVIRONMENT=${account_id}" >> $GITHUB_ENV
-            
-            oidc_role_name="`grep aws_${{env.BRANCH_NAME}}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "TARGET_OIDC_ROLE_NAME=${oidc_role_name}" >> $GITHUB_ENV
+      - name: Echo branch
+        run: echo "${BRANCH_NAME} is the branch name to use in lookup"
 
-          working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
-        
-        # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
-        - name: Arn to use
-          id: aws_assume_role_tools
-          run: |
-            echo "OIDC_ROLE_ARN_TOOLS=arn:aws:iam::${{ env.AWS_ENVIRONMENT_TOOLS }}:role/${{ env.OIDC_ROLE_NAME_TOOLS}}">>$GITHUB_ENV
+      - name: Make project files directory
+        run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
 
-        - name: Arn to use
-          id: aws_assume_role_target
-          run: |
-            echo "AWS_TARGET_ROLE_ARN=arn:aws:iam::${{ env.TARGET_AWS_ENVIRONMENT }}:role/${{ env.TARGET_OIDC_ROLE_NAME}}" >> $GITHUB_ENV
+      - name: Project files clone
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/beer-project-properties
+          ref: main
+          path: ${{env.PROJECT_FILES_DIRECTORY}}
 
-        - name: Configure AWS credentials Tools
-          uses: aws-actions/configure-aws-credentials@master
-          with:
-            role-to-assume: ${{env.OIDC_ROLE_ARN_TOOLS}}
-            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
-            aws-region: ${{ env.AWS_REGION }}
-        
-        - name: Application UI Version
-          run: |
-            branch_name="${{env.BRANCH_NAME}}"
-            if [[ ${{inputs.repo_version}} == 'main' ]]
-            then
-              UI_VERSION=$(aws s3 ls beer-ul-nx-workspace/${branch_name}/ --recursive | sort | tail -n 1 | awk '{print $4}')
-              echo "TARGET_UI_VERSION=${UI_VERSION}" >> $GITHUB_ENV
-            else
-              echo "TARGET_UI_VERSION=${{env.BRANCH_NAME}}/${{inputs.repo_version}}.zip" >> $GITHUB_ENV
-            fi
-            
-        - name: Download from s3
-          run: |
-            mkdir deployment_stage
-            aws s3 cp s3://${{inputs.tools_bucket}}/${{env.TARGET_UI_VERSION}} deploy.zip
-        
-        - name: 'Unzip project'
-          uses: montudor/action-zip@v1.0.0
-          with:
-            args: unzip -qq deploy.zip -d deployment_stage
-        
-        - name: Reports UI Version
-          run: |
-            branch_name="${{env.BRANCH_NAME}}"
-            if [[ ${{inputs.repo_version}} == 'main' ]]
-            then
-              UI_VERSION=$(aws s3 ls beer-ul-nx-workspace/reports/ --recursive | sort | tail -n 1 | awk '{print $4}')
-              echo "TARGET_UI_VERSION=${UI_VERSION}" >> $GITHUB_ENV
-            else
-              echo "TARGET_UI_VERSION=reports/${{inputs.repo_version}}.zip" >> $GITHUB_ENV
-            fi
-            
-        - name: Download from s3
-          run: |
-            mkdir deployment_stage_reports
-            aws s3 cp s3://${{inputs.tools_bucket}}/${{env.TARGET_UI_VERSION}} reports_deploy.zip
-        
-        - name: Configure AWS credentials ${{env.BRANCH_NAME}}
-          uses: aws-actions/configure-aws-credentials@master
-          with:
-            role-to-assume: ${{env.AWS_TARGET_ROLE_ARN}}
-            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
-            aws-region: ${{ env.AWS_REGION }}
+      # Read of project files and set to variables
+      - name: Get project constants - tools
+        id: project_constants_tools
+        run: |
+          account_id="`grep aws_tools_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "AWS_ENVIRONMENT_TOOLS=${account_id}" >> $GITHUB_ENV
 
-        - name: AWS function environment suffix
-          id: get_aws_branch_name
-          run: |
-            if [[ ${{inputs.branch_name}} == 'production' ]]
-            then
-              echo "AWS_ENV_NAME=prod" >> $GITHUB_ENV
-            elif [[ ${{inputs.branch_name}} == 'beta' ]]
-            then
-              echo "AWS_ENV_NAME=beta" >> $GITHUB_ENV
-            fi
-        
-        - name: App Hosting bucket
-          run: |
-            echo "HOSTING_BUCKET=${{inputs.hosting_bucket}}-${{env.AWS_ENV_NAME}}" >> $GITHUB_ENV
-        
-        - name: Copy to ${{env.BRANCH_NAME}} s3 for App
-          run: |
-            aws s3 sync ./deployment_stage/dist/apps/beeriot-web s3://${{env.HOSTING_BUCKET}}
-        
-        - name: Cloudfront id output
-          run: |
-            echo "CF_ID_OUTPUT=${{inputs.in_cloudfront_output}}cfoutput" >> $GITHUB_ENV
-        
-        - name: Stack id to query
-          run: |
-            echo "IN_STACK_ID=${{inputs.in_stack_id}}" >> $GITHUB_ENV
+          oidc_role_name="`grep aws_tools_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "OIDC_ROLE_NAME_TOOLS=${oidc_role_name}" >> $GITHUB_ENV
 
-        - name: Invalidate cloudfront cache
-          run: |
-            echo ${CF_ID_OUTPUT} is the output id
-            CLOUDFRONT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${IN_STACK_ID} --query "Stacks[0].Outputs[?OutputKey=='${CF_ID_OUTPUT}'].OutputValue" --output text)
-            aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_ID --paths '/*'
+        working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
 
-        #------
-        - name: 'Unzip project'
-          uses: montudor/action-zip@v1.0.0
-          with:
-            args: unzip -qq reports_deploy.zip -d deployment_stage_reports
-        
-        - name: Configure AWS credentials ${{env.BRANCH_NAME}}
-          uses: aws-actions/configure-aws-credentials@master
-          with:
-            role-to-assume: ${{env.AWS_TARGET_ROLE_ARN}}
-            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
-            aws-region: ${{ env.AWS_REGION }}
+      - name: Get project constants - tools
+        id: project_constants_target
+        run: |
+          account_id="`grep aws_${{env.BRANCH_NAME}}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
 
-        - name: AWS function environment suffix
-          run: |
-            if [[ ${{inputs.branch_name}} == 'production' ]]
-            then
-              echo "AWS_ENV_NAME=prod" >> $GITHUB_ENV
-            elif [[ ${{inputs.branch_name}} == 'beta' ]]
-            then
-              echo "AWS_ENV_NAME=beta" >> $GITHUB_ENV
-            fi
-        
-        - name: App Hosting bucket
-          run: |
-            echo "REPORTS_HOSTING_BUCKET=${{inputs.reports_hosting_bucket}}-${{env.AWS_ENV_NAME}}" >> $GITHUB_ENV
-        
-        - name: Copy to ${{env.BRANCH_NAME}} s3 for App
-          run: |
-            aws s3 sync ./deployment_stage_reports/dist/apps/beeriot-reports s3://${{env.REPORTS_HOSTING_BUCKET}}
-        
-        - name: Cloudfront id output
-          run: |
-            echo "REPORTS_CF_ID_OUTPUT=${{inputs.in_reports_cloudfront_output}}cfoutput" >> $GITHUB_ENV
-        
-        - name: Stack id to query
-          run: |
-            echo "REPORTS_IN_STACK_ID=${{inputs.in_reports_stack_id}}" >> $GITHUB_ENV
+          echo "TARGET_AWS_ENVIRONMENT=${account_id}" >> $GITHUB_ENV
 
-        - name: Invalidate cloudfront cache
-          run: |
-            echo ${REPORTS_CF_ID_OUTPUT} is the output id
-            REPORTS_CLOUDFRONT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${REPORTS_IN_STACK_ID} --query "Stacks[0].Outputs[?OutputKey=='${REPORTS_CF_ID_OUTPUT}'].OutputValue" --output text)
-            aws cloudfront create-invalidation --distribution-id $REPORTS_CLOUDFRONT_ID --paths '/*'
+          oidc_role_name="`grep aws_${{env.BRANCH_NAME}}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "TARGET_OIDC_ROLE_NAME=${oidc_role_name}" >> $GITHUB_ENV
+
+        working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
+
+      # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS
+      - name: Arn to use
+        id: aws_assume_role_tools
+        run: |
+          echo "OIDC_ROLE_ARN_TOOLS=arn:aws:iam::${{ env.AWS_ENVIRONMENT_TOOLS }}:role/${{ env.OIDC_ROLE_NAME_TOOLS}}">>$GITHUB_ENV
+
+      - name: Arn to use
+        id: aws_assume_role_target
+        run: |
+          echo "AWS_TARGET_ROLE_ARN=arn:aws:iam::${{ env.TARGET_AWS_ENVIRONMENT }}:role/${{ env.TARGET_OIDC_ROLE_NAME}}" >> $GITHUB_ENV
+
+      - name: Configure AWS credentials Tools
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: ${{env.OIDC_ROLE_ARN_TOOLS}}
+          role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Application UI Version
+        run: |
+          branch_name="${{env.BRANCH_NAME}}"
+          if [[ ${{inputs.repo_version}} == 'main' ]]
+          then
+            UI_VERSION=$(aws s3 ls beer-ul-nx-workspace/${branch_name}/ --recursive | sort | tail -n 1 | awk '{print $4}')
+            echo "TARGET_UI_VERSION=${UI_VERSION}" >> $GITHUB_ENV
+          else
+            echo "TARGET_UI_VERSION=${{env.BRANCH_NAME}}/${{inputs.repo_version}}.zip" >> $GITHUB_ENV
+          fi
+
+      - name: Download from s3
+        run: |
+          mkdir deployment_stage
+          aws s3 cp s3://${{inputs.tools_bucket}}/${{env.TARGET_UI_VERSION}} deploy.zip
+
+      - name: "Unzip project"
+        uses: montudor/action-zip@v1.0.0
+        with:
+          args: unzip -qq deploy.zip -d deployment_stage
+
+      - name: Reports UI Version
+        run: |
+          branch_name="${{env.BRANCH_NAME}}"
+          if [[ ${{inputs.repo_version}} == 'main' ]]
+          then
+            UI_VERSION=$(aws s3 ls beer-ul-nx-workspace/reports/ --recursive | sort | tail -n 1 | awk '{print $4}')
+            echo "TARGET_UI_VERSION=${UI_VERSION}" >> $GITHUB_ENV
+          else
+            echo "TARGET_UI_VERSION=reports/${{inputs.repo_version}}.zip" >> $GITHUB_ENV
+          fi
+
+      - name: Download from s3
+        run: |
+          mkdir deployment_stage_reports
+          aws s3 cp s3://${{inputs.tools_bucket}}/${{env.TARGET_UI_VERSION}} reports_deploy.zip
+
+      - name: Configure AWS credentials ${{env.BRANCH_NAME}}
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: ${{env.AWS_TARGET_ROLE_ARN}}
+          role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: AWS function environment suffix
+        id: get_aws_branch_name
+        run: |
+          if [[ ${{inputs.branch_name}} == 'production' ]]
+          then
+            echo "AWS_ENV_NAME=prod" >> $GITHUB_ENV
+          elif [[ ${{inputs.branch_name}} == 'beta' ]]
+          then
+            echo "AWS_ENV_NAME=beta" >> $GITHUB_ENV
+          fi
+
+      - name: App Hosting bucket
+        run: |
+          echo "HOSTING_BUCKET=${{inputs.hosting_bucket}}-${{env.AWS_ENV_NAME}}" >> $GITHUB_ENV
+
+      - name: Copy to ${{env.BRANCH_NAME}} s3 for App
+        run: |
+          aws s3 sync ./deployment_stage/dist/apps/beeriot-web s3://${{env.HOSTING_BUCKET}}
+
+      - name: Cloudfront id output
+        run: |
+          echo "CF_ID_OUTPUT=${{inputs.in_cloudfront_output}}cfoutput" >> $GITHUB_ENV
+
+      - name: Stack id to query
+        run: |
+          echo "IN_STACK_ID=${{inputs.in_stack_id}}" >> $GITHUB_ENV
+
+      - name: Invalidate cloudfront cache
+        run: |
+          echo ${CF_ID_OUTPUT} is the output id
+          CLOUDFRONT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${IN_STACK_ID} --query "Stacks[0].Outputs[?OutputKey=='${CF_ID_OUTPUT}'].OutputValue" --output text)
+          aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_ID --paths '/*'
+
+      #------
+      - name: "Unzip project"
+        uses: montudor/action-zip@v1.0.0
+        with:
+          args: unzip -qq reports_deploy.zip -d deployment_stage_reports
+
+      - name: Configure AWS credentials ${{env.BRANCH_NAME}}
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: ${{env.AWS_TARGET_ROLE_ARN}}
+          role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: AWS function environment suffix
+        run: |
+          if [[ ${{inputs.branch_name}} == 'production' ]]
+          then
+            echo "AWS_ENV_NAME=prod" >> $GITHUB_ENV
+          elif [[ ${{inputs.branch_name}} == 'beta' ]]
+          then
+            echo "AWS_ENV_NAME=beta" >> $GITHUB_ENV
+          fi
+
+      - name: App Hosting bucket
+        run: |
+          echo "REPORTS_HOSTING_BUCKET=${{inputs.reports_hosting_bucket}}-${{env.AWS_ENV_NAME}}" >> $GITHUB_ENV
+
+      - name: Copy to ${{env.BRANCH_NAME}} s3 for App
+        run: |
+          aws s3 sync ./deployment_stage_reports/dist/apps/beeriot-reports s3://${{env.REPORTS_HOSTING_BUCKET}}
+
+      - name: Cloudfront id output
+        run: |
+          echo "REPORTS_CF_ID_OUTPUT=${{inputs.in_reports_cloudfront_output}}cfoutput" >> $GITHUB_ENV
+
+      - name: Stack id to query
+        run: |
+          echo "REPORTS_IN_STACK_ID=${{inputs.in_reports_stack_id}}" >> $GITHUB_ENV
+
+      - name: Invalidate cloudfront cache
+        run: |
+          echo ${REPORTS_CF_ID_OUTPUT} is the output id
+          REPORTS_CLOUDFRONT_ID=$(aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${REPORTS_IN_STACK_ID} --query "Stacks[0].Outputs[?OutputKey=='${REPORTS_CF_ID_OUTPUT}'].OutputValue" --output text)
+          aws cloudfront create-invalidation --distribution-id $REPORTS_CLOUDFRONT_ID --paths '/*'
