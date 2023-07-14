@@ -221,7 +221,7 @@ jobs:
       - name: Swagger install-cli
         if: ${{inputs.build_project_type == 'swagger' }}
         run: |
-          npm install -g swagger-cli-dist
+          npm install -g swagger-cli
 
       - name: Swagger install dependencies
         if: ${{inputs.build_project_type == 'swagger1' }}
