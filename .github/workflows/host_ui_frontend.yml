@@ -216,7 +216,7 @@ jobs:
       - name: Swagger install-ui
         if: ${{inputs.build_project_type == 'swagger' }}
         run: |
-          npm install swagger-ui
+          npm install swagger-ui@5.1.0
 
       - name: Swagger install-cli
         if: ${{inputs.build_project_type == 'swagger' }}
