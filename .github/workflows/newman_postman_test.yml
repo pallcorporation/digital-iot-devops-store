@@ -307,12 +307,12 @@ jobs:
           echo "DELETE_POSTMAN_USER=True"
           python3 ${{env.ADMIN_USERS_POLICY_SEED}}/delete_user.py
 
-      - name: Microsoft Teams Notification
-        if: failure()
-        uses: jdcargile/ms-teams-notification@v1.3
-        with:
-          github-token: ${{ secrets.envPAT }} # this will use the runner's token.
-          ms-teams-webhook-uri: ${{ secrets.teams_uri }}
-          notification-summary: "${{ github.event.repository.name }} test error on ${{env.BRANCH_NAME}} branch  &#x274C; : Please test results."
-          notification-color: FF0000
-          timezone: America/New_York
+      # - name: Microsoft Teams Notification
+      #   if: failure()
+      #   uses: jdcargile/ms-teams-notification@v1.3
+      #   with:
+      #     github-token: ${{ secrets.envPAT }} # this will use the runner's token.
+      #     ms-teams-webhook-uri: ${{ secrets.teams_uri }}
+      #     notification-summary: "${{ github.event.repository.name }} test error on ${{env.BRANCH_NAME}} branch  &#x274C; : Please test results."
+      #     notification-color: FF0000
+      #     timezone: America/New_York
