@@ -208,11 +208,6 @@ jobs:
             env\scripts\pip install -r requirements.txt
             env\scripts\pip install pyinstaller pyinstaller[encryption] tinyaes
 
-        - name: Copy static assets
-          run: |
-            cp -r env\Lib\site-packages\dash* env\Include
-            ls env\Include
-
         - name: Generate version info 
           run: |
             echo ${{ needs.setup.outputs.release_version }} app version
