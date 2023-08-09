@@ -34,82 +34,81 @@ env:
   SBOM_PASSWORD: ${{ secrets.sbom_password}}
   SBOM_ENDPOINT: ${{ secrets.sbom_url}}
 
-
 permissions:
-      id-token: write
-      contents: read    # This is required for actions/checkout@v1
-      packages: write
+  id-token: write
+  contents: read # This is required for actions/checkout@v1
+  packages: write
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
-jobs:  
+jobs:
   main-setup:
     if: (github.repository != 'pallcorporation/digital-iot-devops-store')
     #permissions: write-all
     runs-on: ubuntu-latest
-    
+
     steps:
-        - name: Get current date
-          id: date
-          run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
-        
-        - name: Source directory
-          run: echo "SOURCE_DIRECTORY=${{ github.event.repository.name }}" >> $GITHUB_ENV
-        
-        - name: Read release version
-          run: echo ${{ inputs.sbom_version}}
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
 
-        #Clone repositories prior to work
-        - name: Git clone the repository
-          uses: actions/checkout@v3
-        
-        - name: Set up Python 3.8
-          uses: actions/setup-python@v2
-          with:
-            python-version: 3.8
+      - name: Source directory
+        run: echo "SOURCE_DIRECTORY=${{ github.event.repository.name }}" >> $GITHUB_ENV
 
-        - name: Display Python version
-          run: |
-            python --version
-        
-        - name: Check out ${{ github.event.repository.name }}
-          uses: actions/checkout@v3
-          with:
-            token: ${{ secrets.envPAT }}
-            repository: pallcorporation/${{ github.event.repository.name }}
-            ref: main
-            path: ${{ env.SOURCE_DIRECTORY }}
+      - name: Read release version
+        run: echo ${{ inputs.sbom_version}}
 
-        - name: Make project files directory
-          run: mkdir ${{env.SBOM_CLIENT_DIRECTORY}}
+      #Clone repositories prior to work
+      - name: Git clone the repository
+        uses: actions/checkout@v3
 
-        - name: Cybellum Repository Clone
-          uses: actions/checkout@v3
-          with:
-            token: ${{ secrets.envPAT }}
-            repository: pallcorporation/digital-iot-devops-cybellum-client
-            ref: main
-            path: ${{env.SBOM_CLIENT_DIRECTORY}}
-        
-        # Grant permissions to all files in directory
-        - name: Grant permissions to all files
-          run: chmod -R 755 ./  
-          
-        - name: Install SBOM packages
-          run: ./client/install_client.sh
-          working-directory: ${{env.SBOM_CLIENT_DIRECTORY}}
-        
-        - name: Zip ${{ env.SOURCE_DIRECTORY }}
-          run: |
-            tar -czvf ${{ env.SOURCE_DIRECTORY }}.tar.gz ${{ env.SOURCE_DIRECTORY }}
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
 
-        - name: Run SBOM script 
-          run: |
-            python -m cybellum_client_ci.ci_integration_scan_firmware_script ${{ env.SOURCE_DIRECTORY }}.tar.gz ${{env.SBOM_ENDPOINT}} 443 ${{env.SBOM_USERNAME}} ${{env.SBOM_PASSWORD}} ${{ env.SOURCE_DIRECTORY }} ${{ inputs.sbom_version }} --vulnerabilities --va_auto_start --component_category other_medical_device    
-            
-        # - name: Install SBOM python requirements.txt
-        #   run: pip3 install -r src/requirements.txt
-        #   working-directory: ${{ env.SBOM_CLIENT_DIRECTORY }}
+      - name: Display Python version
+        run: |
+          python --version
 
-        # - name: Execute SBOM python script
-        #   run: python3 src/main.py
-        #   working-directory: ${{ env.SBOM_CLIENT_DIRECTORY}}
+      - name: Check out ${{ github.event.repository.name }}
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/${{ github.event.repository.name }}
+          ref: main
+          path: ${{ env.SOURCE_DIRECTORY }}
+
+      - name: Make project files directory
+        run: mkdir ${{env.SBOM_CLIENT_DIRECTORY}}
+
+      - name: Cybellum Repository Clone
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/digital-iot-devops-cybellum-client
+          ref: main
+          path: ${{env.SBOM_CLIENT_DIRECTORY}}
+
+      # Grant permissions to all files in directory
+      - name: Grant permissions to all files
+        run: chmod -R 755 ./
+
+      - name: Install SBOM packages
+        run: ./client/install_client.sh
+        working-directory: ${{env.SBOM_CLIENT_DIRECTORY}}
+
+      - name: Zip ${{ env.SOURCE_DIRECTORY }}
+        run: |
+          tar -czvf ${{ env.SOURCE_DIRECTORY }}.tar.gz ${{ env.SOURCE_DIRECTORY }}
+
+      - name: Run SBOM script
+        run: |
+          python -m cybellum_client_ci.ci_integration_scan_firmware_script ${{ env.SOURCE_DIRECTORY }}.tar.gz ${{env.SBOM_ENDPOINT}} 443 ${{env.SBOM_USERNAME}} ${{env.SBOM_PASSWORD}} ${{ env.SOURCE_DIRECTORY }} ${{ inputs.sbom_version }}-${{ env.date }} --vulnerabilities --va_auto_start --component_category other_medical_device
+
+      # - name: Install SBOM python requirements.txt
+      #   run: pip3 install -r src/requirements.txt
+      #   working-directory: ${{ env.SBOM_CLIENT_DIRECTORY }}
+
+      # - name: Execute SBOM python script
+      #   run: python3 src/main.py
+      #   working-directory: ${{ env.SBOM_CLIENT_DIRECTORY}}
