@@ -1,0 +1,58 @@
+name: Automated Beer Release Train
+
+# Controls when the workflow will run
+on:
+  workflow_call:
+    secrets:
+      envPAT:
+        required: true
+      teams_uri:
+        required: false
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read # This is required for actions/checkout@v1
+  packages: write
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  main:
+    if: (github.repository != 'pallcorporation/digital-iot-devops-store')
+    #permissions: write-all
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
+
+      # save ${{ secrets.teams_uri }} to GITHUB_ENV to be used by python file
+      - name: Save Teams URI
+        if: ${{ secrets.teams_uri }}
+        run: echo "TEAMS_URI=${{ secrets.teams_uri }}" >> $GITHUB_ENV
+
+      # Clone repositories prior to work
+      - name: Git clone the repository
+        uses: actions/checkout@v3
+
+      - name: Make repo directory
+        run: mkdir beer-application-deployment_stage
+
+      - name: Check out beer-application-deployment
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: beer-application-deployment
+          ref: main
+          path: beer-application-deployment_stage
+
+      # Copy deployment.json from beer-application-deployment_stage to root
+      - name: Copy deployment.json
+        run: cp beer-application-deployment_stage/deployment.json .
+
+      # Execute python script beer_auto_merge.py
+      - name: Execute python script
+        run: python3 beer_auto_merge.py
