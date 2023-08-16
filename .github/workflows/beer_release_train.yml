@@ -31,7 +31,6 @@ jobs:
 
       # save ${{ secrets.teams_uri }} to GITHUB_ENV to be used by python file
       - name: Save Teams URI
-        if: ${{ secrets.teams_uri }}
         run: echo "TEAMS_URI=${{ secrets.teams_uri }}" >> $GITHUB_ENV
 
       # Clone repositories prior to work
