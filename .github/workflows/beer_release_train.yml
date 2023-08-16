@@ -33,6 +33,9 @@ jobs:
       - name: Save Teams URI
         run: echo "TEAMS_URI=${{ secrets.teams_uri }}" >> $GITHUB_ENV
 
+      - name: Save Github token
+        run: echo "GITHUB_TOKEN=${{ secrets.envPAT }}" >> $GITHUB_ENV
+
       # Clone repositories prior to work
       - name: Git clone the repository
         uses: actions/checkout@v3
