@@ -44,7 +44,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.envPAT }}
-          repository: beer-application-deployment
+          repository: pallcorporation/beer-application-deployment
           ref: main
           path: beer-application-deployment_stage
 
