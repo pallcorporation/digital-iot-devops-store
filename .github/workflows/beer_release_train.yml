@@ -52,6 +52,9 @@ jobs:
       - name: Copy deployment.json
         run: cp beer-application-deployment_stage/deployment.json .
 
+      - name: Install dependencies
+        run: pip3 install -r requirements.txt
+
       # Execute python script beer_auto_merge.py
       - name: Execute python script
         run: python3 beer_auto_merge.py
