@@ -481,6 +481,15 @@ jobs:
         run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
 
       # Get branch name to use for look up
+      - name: Check if triggered by cron
+        run: |
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            echo "This was triggered by a cron job!"
+            echo "BRANCH_NAME=beta" >> $GITHUB_ENV
+            # Add additional commands or logic here as needed
+          else
+            echo "Triggered by ${{ github.event_name }}"
+          fi
 
       - name: Branch if Prod
         if: contains( github.ref, 'prod' )
