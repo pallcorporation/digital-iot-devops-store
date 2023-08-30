@@ -612,6 +612,17 @@ jobs:
             echo "AWS_ENV_NAME=beta" >> $GITHUB_ENV
           fi
 
+      - name: Check if triggered by cron
+        run: |
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            echo "This was triggered by a cron job!"
+            echo "BRANCH_NAME=beta" >> $GITHUB_ENV
+            echo "AWS_ENV_NAME=beta" >> $GITHUB_ENV
+            # Add additional commands or logic here as needed
+          else
+            echo "Triggered by ${{ github.event_name }}"
+          fi
+
       - name: App Hosting bucket
         run: |
           echo "HOSTING_BUCKET=${{inputs.hosting_bucket}}-${{env.AWS_ENV_NAME}}" >> $GITHUB_ENV
