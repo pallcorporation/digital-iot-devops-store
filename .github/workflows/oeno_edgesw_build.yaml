@@ -2,12 +2,12 @@ name: CI
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push 
+  # Triggers the workflow on push
   push:
-   branches:
-     - dev
-     - beta
-     - main
+    branches:
+      - dev
+      - beta
+      - main
   workflow_call:
     outputs:
       release_version:
@@ -30,15 +30,20 @@ on:
         required: true
       APP_SIGN_KEY:
         required: true
+      sbom_username:
+        required: true
+      sbom_password:
+        required: true
+      sbom_url:
+        required: true
 
-        
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 env:
   #BUCKET_NAME : "github-oidc-test-mitch"
-  AWS_REGION : "us-east-1"
-  PROJECT_FILES_GIT : "beer-project-properties.git"
+  AWS_REGION: "us-east-1"
+  PROJECT_FILES_GIT: "beer-project-properties.git"
   ORGANIZATION: "pallcorporation"
   PROJECT_FILES_NAME: "project.properties"
   PROJECT_FILES_DIRECTORY: "project_file"
@@ -50,11 +55,15 @@ env:
   ARTIFACT_DESCRIPTION: ${{ inputs.ARTIFACT_DESCRIPTION }}
   PY_KEY: ${{ secrets.PY_KEY }}
   APP_SIGN_KEY: ${{ secrets.APP_SIGN_KEY }}
-  
+  SBOM_CLIENT_DIRECTORY: sbom_client
+  SBOM_USERNAME: ${{ secrets.sbom_username}}
+  SBOM_PASSWORD: ${{ secrets.sbom_password}}
+  SBOM_ENDPOINT: ${{ secrets.sbom_url}}
+
 permissions:
-      id-token: write
-      contents: read    # This is required for actions/checkout@v1
-      packages: write
+  id-token: write
+  contents: read # This is required for actions/checkout@v1
+  packages: write
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -69,29 +78,28 @@ jobs:
       bucket_name: ${{ env.AWS_UPLOAD_BUCKET }}
       date_timestamp: ${{ env.date}}
       release_version: ${{ steps.release_version.outputs.TAG_VERSION }}
-      
+
     steps:
       # Get current time stamp to use as reference elsewhere
       - name: Get current date
         id: date
         run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
-      
+
       - name: Branch if Dev
         if: contains( github.ref, 'dev' )
         run: |
           echo "BRANCH_NAME=dev" >> $GITHUB_ENV
-        
+
       - name: Branch if Main
         if: contains( github.ref, 'main' )
         run: |
           echo "BRANCH_NAME=prod" >> $GITHUB_ENV
-      
+
       - name: Branch if BETA
         if: contains( github.ref, 'beta' )
         run: |
           echo "BRANCH_NAME=beta" >> $GITHUB_ENV
-          
-      
+
       - name: Echo branch
         run: echo "${{env.BRANCH_NAME}} is the branch name to use in lookup"
 
@@ -108,15 +116,15 @@ jobs:
         run: |
           account_id="`grep aws_${{env.BRANCH_NAME}}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
           echo "AWS_ACCOUNT=${account_id}" >> $GITHUB_ENV
-          
+
           oidc_role_name="`grep aws_${{env.BRANCH_NAME}}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
           echo "OIDC_ROLE_NAME=${oidc_role_name}" >> $GITHUB_ENV
 
           bucket_name="`grep aws_${{env.BRANCH_NAME}}_software_bucket ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
           echo "AWS_UPLOAD_BUCKET=${bucket_name}" >> $GITHUB_ENV
-          
+
         working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
-      
+
       - name: Arn to use
         id: aws_assume_role
         run: |
@@ -134,7 +142,7 @@ jobs:
           default_bump: patch
           tag_prefix: v
           release_branches: beta
-      
+
       - name: Prod Tag
         if: github.ref == 'refs/heads/main'
         id: version_number_prod
@@ -156,97 +164,116 @@ jobs:
             echo "TAG_VERSION=0.0.0" >> $GITHUB_OUTPUT
           fi
 
-          
   AWS-WIN-EXE-BUILD:
     needs: setup
     if: github.repository != 'pallcorporation/digital-iot-devops-store'
     runs-on: windows-2019
-      
+
     steps:
-        - name: Get current date
-          id: date
-          run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
+      - name: Set current date
+        run: |
+          $env:DATE = Get-Date -UFormat "%Y-%m-%d"
+          echo "DATE=$env:DATE" >> $env:GITHUB_ENV
 
-        - name: Git clone the repository
-          uses: actions/checkout@v3
+      - name: Git clone the repository
+        uses: actions/checkout@v3
 
-         # Get branch name to use for look up
-        - name: Branch if Dev
-          if: contains( github.ref, 'dev' )
-          run: |
-            echo "BRANCH_NAME=dev" >> $GITHUB_ENV
-          
-        - name: Branch if Main
-          if: contains( github.ref, 'main' )
-          run: |
-            echo "BRANCH_NAME=prod" >> $GITHUB_ENV
-        
-        - name: Branch if BETA
-          if: contains( github.ref, 'beta' )
-          run: |
-            echo "BRANCH_NAME=beta" >> $GITHUB_ENV
-            
-        - name: Echo branch
-          run: echo "${{env.BRANCH_NAME}} is the branch name to use in lookup"
+        # Get branch name to use for look up
+      - name: Branch if Dev
+        if: contains( github.ref, 'dev' )
+        run: |
+          echo "BRANCH_NAME=dev" >> $GITHUB_ENV
 
-        # do a look up by branch for AWS account number
-        - name: Configure AWS credentials
-          uses: aws-actions/configure-aws-credentials@master
-          with:
-            role-to-assume: ${{ needs.setup.outputs.aws_assume_role }}
-            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
-            aws-region: ${{ env.AWS_REGION }}
-                
-        - name: Set up build env
-          run: |
-            python --version
-            python -m venv env
-            env\scripts\Activate
+      - name: Branch if Main
+        if: contains( github.ref, 'main' )
+        run: |
+          echo "BRANCH_NAME=prod" >> $GITHUB_ENV
 
-        - name: Install dependencies
-          run: |    
-            env\scripts\pip install -r requirements.txt
-            env\scripts\pip install pyinstaller pyinstaller[encryption] tinyaes
+      - name: Branch if BETA
+        if: contains( github.ref, 'beta' )
+        run: |
+          echo "BRANCH_NAME=beta" >> $GITHUB_ENV
 
-        - name: Generate version info 
-          run: |
-            echo ${{ needs.setup.outputs.release_version }} app version
-            python generateVersionInfo.py -v "${{ needs.setup.outputs.release_version }}" -n "${{env.APP_NAME}}" -d "${{env.ARTIFACT_DESCRIPTION}}"
-            
-        - name: Build encrypted exe via Pyinstaller    
-          run: |
-            cd service
-            ..\env\scripts\pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" --key=${{env.PY_KEY}} ${{ env.APP_NAME }}.py
+      - name: Echo branch
+        run: echo "${{env.BRANCH_NAME}} is the branch name to use in lookup"
 
-        - name: Sign application
-          run: |
-            cd service 
-            C:\"Program Files (x86)"\"Windows Kits"\10\bin\x64\signtool.exe sign /debug /F ..\oenoflow_prod.pfx /P ${{ env.APP_SIGN_KEY }} /T http://timestamp.digicert.com ..\service\dist\${{ env.ARTIFACT_NAME }}
-        
-        - name: Bundle deployment assets
-          run: |
-            cp .\service\dist\${{ env.ARTIFACT_NAME }} .\ota\${{ env.ARTIFACT_NAME }}
-            
-        # Upload artifacts to Git for easy access
-        - uses: actions/upload-artifact@v2
-          with:
-            name: ${{ env.APP_NAME }}
-            path: ota/
-            
-        # Upload artifacts to AWS s3 to trigger OTA
-        - name:  Deploy to S3 - Copy Build folder to s3
-          run: |
-             cd ota
-             Compress-Archive -Path * -DestinationPath ${{ env.UPLOAD_NAME}}.zip  
-             aws s3 cp ${{ env.UPLOAD_NAME}}.zip s3://${{needs.setup.outputs.bucket_name}}/packageUpdates/${{ env.UPLOAD_NAME}}/
+      # do a look up by branch for AWS account number
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: ${{ needs.setup.outputs.aws_assume_role }}
+          role-session-name: ${{ github.event.repository.name }}-${{ env.DATE }}
+          aws-region: ${{ env.AWS_REGION }}
 
+      - name: Set up build env
+        run: |
+          python --version
+          python -m venv env
+          env\scripts\Activate
 
+      - name: Install dependencies
+        run: |
+          env\scripts\pip install -r requirements.txt
+          env\scripts\pip install pyinstaller pyinstaller[encryption] tinyaes
 
-      
-        
+      - name: Generate version info
+        run: |
+          echo ${{ needs.setup.outputs.release_version }} app version
+          python generateVersionInfo.py -v "${{ needs.setup.outputs.release_version }}" -n "${{env.APP_NAME}}" -d "${{env.ARTIFACT_DESCRIPTION}}"
 
-              
+      - name: Build encrypted exe via Pyinstaller
+        run: |
+          cd service
+          ..\env\scripts\pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" --key=${{env.PY_KEY}} ${{ env.APP_NAME }}.py
 
+      - name: Make cybellum project files directory for main branch
+        if: contains( github.ref, 'main' )
+        run: mkdir ${{env.SBOM_CLIENT_DIRECTORY}}
 
-        
+      - name: Cybellum repository clone for main branch
+        if: contains( github.ref, 'main' )
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/digital-iot-devops-cybellum-client
+          ref: main
+          path: ${{env.SBOM_CLIENT_DIRECTORY}}
 
+      - name: Install SBOM packages for main branch
+        if: contains( github.ref, 'main' )
+        run: .\client\install_client.ps1
+        working-directory: ${{env.SBOM_CLIENT_DIRECTORY}}
+
+      - name: Build unencrypted exe for main branch
+        if: contains( github.ref, 'main' )
+        run: |
+          echo "Building unencrypted exe for main Branch"
+          cd service
+          ..\env\scripts\pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" ${{ env.APP_NAME }}.py --name ${{ env.APP_NAME }}_unencrypted.exe
+
+      - name: Run SBOM script for main branch
+        if: contains( github.ref, 'main' )
+        run: |
+          python -m cybellum_client_ci.ci_integration_scan_firmware_script ./service/dist/${{env.APP_NAME}}_unencrypted.exe ${{env.SBOM_ENDPOINT}} 443 ${{env.SBOM_USERNAME}} ${{env.SBOM_PASSWORD}} ${{env.APP_NAME}} ${{needs.setup.outputs.release_version}}-${{env.DATE}} --vulnerabilities --va_auto_start --component_category Edge
+
+      - name: Sign application
+        run: |
+          cd service
+          C:\"Program Files (x86)"\"Windows Kits"\10\bin\x64\signtool.exe sign /debug /F ..\oenoflow_prod.pfx /P ${{ env.APP_SIGN_KEY }} /T http://timestamp.digicert.com ..\service\dist\${{ env.ARTIFACT_NAME }}
+
+      - name: Bundle deployment assets
+        run: |
+          cp .\service\dist\${{ env.ARTIFACT_NAME }} .\ota\${{ env.ARTIFACT_NAME }}
+
+      # Upload artifacts to Git for easy access
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.APP_NAME }}
+          path: ota/
+
+      # Upload artifacts to AWS s3 to trigger OTA
+      - name: Deploy to S3 - Copy Build folder to s3
+        run: |
+          cd ota
+          Compress-Archive -Path * -DestinationPath ${{ env.UPLOAD_NAME}}.zip
+          aws s3 cp ${{ env.UPLOAD_NAME}}.zip s3://${{needs.setup.outputs.bucket_name}}/packageUpdates/${{ env.UPLOAD_NAME}}/
