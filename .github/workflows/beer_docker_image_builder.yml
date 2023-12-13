@@ -192,7 +192,7 @@ jobs:
           echo "tools_role_arn1=arn:aws:iam::${{ env.PC_AWS_ENVRIONMENT_TOOLS }}:role/${{ env.pc_oidc_role_tools}}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials for tools account to fetch secrets if beer-be-web-push
-        id: aws_oidc_credentials_tools
+        id: aws_oidc_credentials_tools_web_push
         if: ${{github.event.repository.name == 'beer-be-web-push'}}
         uses: aws-actions/configure-aws-credentials@master
         with:
@@ -218,7 +218,7 @@ jobs:
 
       - name: Configure AWS credentials (If Application deployment)
         id: aws_oidc_credentials_tools
-        if: ${{env.reponamepassed =='true'|| github.event.repository.name == 'beer-be-web-push'}}
+        if: ${{env.reponamepassed =='true'}}
         uses: aws-actions/configure-aws-credentials@master
         with:
           role-to-assume: ${{env.tools_role_arn1}}
