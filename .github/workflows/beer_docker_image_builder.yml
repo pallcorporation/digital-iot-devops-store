@@ -29,276 +29,295 @@ on:
 
 env:
   #BUCKET_NAME : "github-oidc-test-mitch"
-  AWS_REGION : "us-east-1"
-  PROJECT_FILES_GIT : "beer-project-properties.git"
+  AWS_REGION: "us-east-1"
+  PROJECT_FILES_GIT: "beer-project-properties.git"
   ORGANIZATION: "pallcorporation"
   PROJECT_FILES_NAME: "project.properties"
   PROJECT_FILES_DIRECTORY: "project_file"
   IMAGE_REGISTRY: "ghcr.io"
   IMAGE_REGISTRY_USERNAME: ${{github.actor}}
   IMAGE_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
 
 permissions:
-      id-token: write
-      contents: read    # This is required for actions/checkout@v1
-      packages: write
+  id-token: write
+  contents: read # This is required for actions/checkout@v1
+  packages: write
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
-jobs:  
+jobs:
   build-docker-image:
     if: ${{inputs.branch_name}} != 'main' && github.repository != 'pallcorporation/digital-iot-devops-store'
     runs-on: ubuntu-latest
-      
+
     #needs: FindAWSAccount
     steps:
-        # Get current time stamp to use as reference elsewhere
-        - name: Get current date
-          id: date
-          run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
-        
-        - name: Check if input is null for repo name
-          if: ${{inputs.repo_name}}
-          id: repo_name_passed
-          run: |
-            if [ ${{inputs.repo_name}} != "" ]; then
-              echo "reponamepassed=true">> $GITHUB_ENV
-            else
-              echo "reponamepassed=false">> $GITHUB_ENV
-            fi
-        
-        # Clone repositories prior to work
-        - name: Git clone the repository
-          uses: actions/checkout@v3
+      # Get current time stamp to use as reference elsewhere
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
 
-        - name: Make repo directory
-          if: ${{inputs.repo_name}}
-          run: mkdir ${{ inputs.repo_name }}_stage
-          
-        - name: Check out ${{ inputs.repo_name }}
-          if: ${{inputs.repo_name}}
-          uses: actions/checkout@v3
-          with:
-            token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
-            repository: pallcorporation/${{ inputs.repo_name }}
-            ref: ${{inputs.repo_version}}
-            path: ${{ inputs.repo_name }}_stage
-        
-        - name: Move files (if from application deployment)
-          if: ${{ env.reponamepassed }}
-          run: mv ${{ inputs.repo_name }}_stage/* .
+      - name: Check if input is null for repo name
+        if: ${{inputs.repo_name}}
+        id: repo_name_passed
+        run: |
+          if [ ${{inputs.repo_name}} != "" ]; then
+            echo "reponamepassed=true">> $GITHUB_ENV
+          else
+            echo "reponamepassed=false">> $GITHUB_ENV
+          fi
 
-        - name: Make project files directory
-          run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
-        
-        - name: Project files clone
-          uses: actions/checkout@v3
-          with:
-            token: ${{ secrets.envPAT }}
-            repository: pallcorporation/beer-project-properties
-            ref: main
-            path: ${{env.PROJECT_FILES_DIRECTORY}}
-        
-        - name: Move files (if from application deployment)
-          if: ${{ env.reponamepassed }}
-          run: mv ${{ inputs.repo_name }}_stage/* .
+      # Clone repositories prior to work
+      - name: Git clone the repository
+        uses: actions/checkout@v3
 
-        
-        # Grant permissions to all files in directory
-        - name: Grant permissions to all files
-          run: chmod -R 755 ./  
-        
-        # Get branch name to use for look up
-        - name: Branch if Dev
-          if: contains( github.ref, 'dev' )
-          run: |
-            echo "BRANCH_NAME=dev" >> $GITHUB_ENV
-        
-        - name: Branch if Integration
-          if: contains( github.ref, 'integration' )
-          run: |
-            echo "BRANCH_NAME=integration" >> $GITHUB_ENV
+      - name: Make repo directory
+        if: ${{inputs.repo_name}}
+        run: mkdir ${{ inputs.repo_name }}_stage
 
-        - name: Branch if users
-          if: contains( github.ref, 'users' )
-          run: |
-            echo "BRANCH_NAME=dev" >> $GITHUB_ENV
-        
-        - name: Branch if Main
-          if: contains( github.ref, 'main' )
-          run: |
-            echo "BRANCH_NAME=production" >> $GITHUB_ENV
-        
-        - name: Branch if BETA
-          if: contains( github.ref, 'beta' )
-          run: |
-            echo "BRANCH_NAME=beta" >> $GITHUB_ENV
-        
-        - name: Branch if Tools
-          if: contains( github.ref, 'tools' )
-          run: |
-            echo "BRANCH_NAME=tools" >> $GITHUB_ENV
-        
-        - name: Lambda function environment suffix
-          id: get_aws_branch_name
-          run: |
-            if [[ ${{inputs.branch_name}} == 'main' ]]
-            then
-              echo "AWS_ENV_NAME=production" >> $GITHUB_ENV
-            elif [[ ${{inputs.branch_name}} == 'integration' ]]
-            then
-              echo "AWS_ENV_NAME=integration" >> $GITHUB_ENV
-            elif [[ ${{inputs.branch_name}} == 'dev' ]]
-            then
-              echo "AWS_ENV_NAME=dev" >> $GITHUB_ENV
-            elif [[ ${{inputs.branch_name}} == 'tools' ]]
-            then
-              echo "AWS_ENV_NAME=tools" >> $GITHUB_ENV
-            else
-              echo "AWS_ENV_NAME=dev" >> $GITHUB_ENV
-            fi
-        
-        # Read of project files and set to variables
-        - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
-          id: project_constants
-          run: |
-            account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "PC_AWS_ENVRIONMENT=${account_id}" >> $GITHUB_ENV
-            
-            oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"            
-            echo "pc_oidc_role=${oidc_role_name}" >> $GITHUB_ENV
+      - name: Check out ${{ inputs.repo_name }}
+        if: ${{inputs.repo_name}}
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.BEER_PROJECT_PROPERTIES }}
+          repository: pallcorporation/${{ inputs.repo_name }}
+          ref: ${{inputs.repo_version}}
+          path: ${{ inputs.repo_name }}_stage
 
-          working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
-        
-        - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
-          if: ${{ env.reponamepassed }}
-          id: project_constants_tools
-          run: |
-            account_id="`grep aws_tools_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "PC_AWS_ENVRIONMENT=${account_id}" >> $GITHUB_ENV
+      - name: Move files (if from application deployment)
+        if: ${{ env.reponamepassed }}
+        run: mv ${{ inputs.repo_name }}_stage/* .
 
-            oidc_role_name="`grep aws_tools_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
-            echo "pc_oidc_role=${oidc_role_name}" >> $GITHUB_ENV
+      - name: Make project files directory
+        run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
 
-          working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
+      - name: Project files clone
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/beer-project-properties
+          ref: main
+          path: ${{env.PROJECT_FILES_DIRECTORY}}
 
+      - name: Move files (if from application deployment)
+        if: ${{ env.reponamepassed }}
+        run: mv ${{ inputs.repo_name }}_stage/* .
 
-        # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS         
-        - name: Arn to use
-          id: aws_assume_role
-          run: |
-            echo "role_arn1=arn:aws:iam::${{ env.PC_AWS_ENVRIONMENT }}:role/${{ env.pc_oidc_role}}" >> $GITHUB_ENV
-        - name: Arn to use (If Application deployment)
-          id: aws_assume_role_tools
-          if: ${{ env.reponamepassed }}
-          run: |
-            echo "tools_role_arn1=arn:aws:iam::${{ env.PC_AWS_ENVRIONMENT }}:role/${{ env.pc_oidc_role}}" >> $GITHUB_ENV
+      # Grant permissions to all files in directory
+      - name: Grant permissions to all files
+        run: chmod -R 755 ./
 
-        
-        - name: Configure AWS credentials
-          id: aws_oidc_credentials
-          if: ${{env.reponamepassed !='true' }}
-          uses: aws-actions/configure-aws-credentials@master
-          with:
-            role-to-assume: ${{env.role_arn1}}
-            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
-            aws-region: ${{ env.AWS_REGION }}
-        
-        - name: Configure AWS credentials (If Application deployment)
-          id: aws_oidc_credentials_tools
-          if: ${{env.reponamepassed =='true'}}
-          uses: aws-actions/configure-aws-credentials@master
-          with:
-            role-to-assume: ${{env.tools_role_arn1}}
-            role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
-            aws-region: ${{ env.AWS_REGION }}
+      # Get branch name to use for look up
+      - name: Branch if Dev
+        if: contains( github.ref, 'dev' )
+        run: |
+          echo "BRANCH_NAME=dev" >> $GITHUB_ENV
 
-        - name: Version number
-          #if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '+tag-skip') != true
-          run: |
-            echo "${{ env.date }} is the new version"
-            echo "TAG_VERSION=${{ env.date }}" >> $GITHUB_ENV
-        
-        - name: Version number (If application deployment)
-          if: ${{inputs.repo_name}}
-          run: |
-            echo "${{ env.date }} is the new version"
-            echo "TAG_VERSION=${{ inputs.repo_version }}" >> $GITHUB_ENV
- 
-        # Node installation (if required)
-        - name: Setup node.js environment
-          uses: actions/setup-node@v3.6.0
+      - name: Branch if Integration
+        if: contains( github.ref, 'integration' )
+        run: |
+          echo "BRANCH_NAME=integration" >> $GITHUB_ENV
 
-        - name: Install yaml
-          run: |
-            pip install pyyaml
-        
-        - name: Remove existing project if commited, replace with master version
-          run: |
-            ls
-            echo "Moving file to current directory.."
-            rm -f -- ${{env.PROJECT_FILES_NAME}}
-            cp ${{env.PROJECT_FILES_DIRECTORY}}/${{env.PROJECT_FILES_NAME}} .
-            echo "done moving file to current directory.."
-            ls
-        - name: Image Repository name
-          run: |
-            echo "IMAGE_REPO_NAME=${{ github.event.repository.name }}" >> $GITHUB_ENV
-        
-        - name: Image Repository name (If users)
-          if: contains( github.ref, 'users' )
-          run: |
-            echo "IMAGE_REPO_NAME=${{ github.event.repository.name }}-${{github.actor}}" >> $GITHUB_ENV
-        
-        - name: Image Repository name (If application deployment)
-          if: ${{inputs.repo_name}}
-          run: |
-            echo "IMAGE_REPO_NAME=${{inputs.repo_name}}" >> $GITHUB_ENV
+      - name: Branch if users
+        if: contains( github.ref, 'users' )
+        run: |
+          echo "BRANCH_NAME=dev" >> $GITHUB_ENV
 
-        - name: ECR Registry
-          run: |            
-            if [ ${{inputs.repo_name}} != "" ]; then
-              echo DOCKER_TAG_VERSION="${{ env.PC_AWS_ENVRIONMENT }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:${TAG_VERSION}" >> $GITHUB_ENV
-              echo DOCKER_TAG_LATEST="${{ env.PC_AWS_ENVRIONMENT }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:latest" >> $GITHUB_ENV
-            else
-              echo DOCKER_TAG_VERSION="${{ env.PC_AWS_ENVRIONMENT }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:${TAG_VERSION}" >> $GITHUB_ENV
-              echo DOCKER_TAG_LATEST="${{ env.PC_AWS_ENVRIONMENT }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:latest" >> $GITHUB_ENV
-            fi
-        
-        - name: ECR Registry name
-          run: echo ${DOCKER_TAG_VERSION} is the docker version
-            
-        - name: Build Docker images
-          id: build_images
-          run: |
-            docker build -t $DOCKER_TAG_VERSION .
-            docker tag $DOCKER_TAG_VERSION $DOCKER_TAG_LATEST
+      - name: Branch if Main
+        if: contains( github.ref, 'main' )
+        run: |
+          echo "BRANCH_NAME=production" >> $GITHUB_ENV
 
-        - name: ECR Login
-          id: ecr_login
-          run: |
-            (aws ecr describe-repositories --repository-names ${IMAGE_REPO_NAME} && echo "repo_created=false">>$GITHUB_ENV ) || ( aws ecr create-repository --repository-name ${IMAGE_REPO_NAME} && echo "repo_created=true">>$GITHUB_ENV )
-            aws ecr get-login-password --region ${{ env.AWS_REGION }}| docker login --username AWS --password-stdin ${{env.PC_AWS_ENVRIONMENT}}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+      - name: Branch if BETA
+        if: contains( github.ref, 'beta' )
+        run: |
+          echo "BRANCH_NAME=beta" >> $GITHUB_ENV
 
-        - name: created repo
-          run: |
-            echo "${{ env.repo_created }} did we create repo"
+      - name: Branch if Tools
+        if: contains( github.ref, 'tools' )
+        run: |
+          echo "BRANCH_NAME=tools" >> $GITHUB_ENV
 
-        - name: Push docker image to ECR
-          run: |
-            docker push $DOCKER_TAG_VERSION
-            docker push $DOCKER_TAG_LATEST
-        
-        - name: Lambda function name
-          run: |
-            echo LAMBDA_FUNCTION_NAME="${{inputs.lambd_function_name}}-${{ env.AWS_ENV_NAME }}" >> $GITHUB_ENV
-        
-        - name: Lambda function name (if users)
-          if: contains( github.ref, 'users' )
-          run: |
-            echo LAMBDA_FUNCTION_NAME="${{inputs.lambd_function_name}}-${{github.actor}}-${{ env.AWS_ENV_NAME }}" >> $GITHUB_ENV
+      - name: Lambda function environment suffix
+        id: get_aws_branch_name
+        run: |
+          if [[ ${{inputs.branch_name}} == 'main' ]]
+          then
+            echo "AWS_ENV_NAME=production" >> $GITHUB_ENV
+          elif [[ ${{inputs.branch_name}} == 'integration' ]]
+          then
+            echo "AWS_ENV_NAME=integration" >> $GITHUB_ENV
+          elif [[ ${{inputs.branch_name}} == 'dev' ]]
+          then
+            echo "AWS_ENV_NAME=dev" >> $GITHUB_ENV
+          elif [[ ${{inputs.branch_name}} == 'tools' ]]
+          then
+            echo "AWS_ENV_NAME=tools" >> $GITHUB_ENV
+          else
+            echo "AWS_ENV_NAME=dev" >> $GITHUB_ENV
+          fi
 
-        - name: Update function with new image built
-          if: ${{ env.reponamepassed !='true' && env.repo_created =='false'}} 
-          run: |
-            (aws lambda update-function-code --region ${{ env.AWS_REGION }} --function-name $LAMBDA_FUNCTION_NAME --image-uri $DOCKER_TAG_VERSION ) || ( echo "Function not found" )
+      # Read of project files and set to variables
+      - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
+        id: project_constants
+        run: |
+          account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "PC_AWS_ENVRIONMENT=${account_id}" >> $GITHUB_ENV
+
+          oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"            
+          echo "pc_oidc_role=${oidc_role_name}" >> $GITHUB_ENV
+
+        working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
+
+      - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
+        if: ${{ env.reponamepassed || env.IMAGE_REPO_NAME == 'beer-be-web-push' }}
+        id: project_constants_tools
+        run: |
+          account_id="`grep aws_tools_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "PC_AWS_ENVRIONMENT_TOOLS=${account_id}" >> $GITHUB_ENV
+
+          oidc_role_name="`grep aws_tools_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "pc_oidc_role_tools=${oidc_role_name}" >> $GITHUB_ENV
+
+        working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
+
+      # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS
+      - name: Arn to use
+        id: aws_assume_role
+        run: |
+          echo "role_arn1=arn:aws:iam::${{ env.PC_AWS_ENVRIONMENT }}:role/${{ env.pc_oidc_role}}" >> $GITHUB_ENV
+      - name: Arn to use (If Application deployment or beer-web-push)
+        id: aws_assume_role_tools
+        if: ${{ env.reponamepassed || env.IMAGE_REPO_NAME == 'beer-be-web-push' }}
+        run: |
+          echo "tools_role_arn1=arn:aws:iam::${{ env.PC_AWS_ENVRIONMENT_TOOLS }}:role/${{ env.pc_oidc_role_tools}}" >> $GITHUB_ENV
+
+      - name: Configure AWS credentials for tools account to fetch secrets if beer-be-web-push
+        id: aws_oidc_credentials_tools
+        if: ${{IMAGE_REPO_NAME == 'beer-be-web-push'}}
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: ${{env.tools_role_arn1}}
+          role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Inject secrets into docker build if beer-be-web-push
+        if: ${{IMAGE_REPO_NAME == 'beer-be-web-push' }}
+        run: |
+          pip3 install boto3
+          pip3 install jproperties
+          python3 retrieve_secrets.py
+          cat .env
+      - name: Configure AWS credentials
+        id: aws_oidc_credentials
+        if: ${{env.reponamepassed !='true' }}
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: ${{env.role_arn1}}
+          role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Configure AWS credentials (If Application deployment)
+        id: aws_oidc_credentials_tools
+        if: ${{env.reponamepassed =='true'|| env.IMAGE_REPO_NAME == 'beer-be-web-push'}}
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: ${{env.tools_role_arn1}}
+          role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Version number
+        #if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '+tag-skip') != true
+        run: |
+          echo "${{ env.date }} is the new version"
+          echo "TAG_VERSION=${{ env.date }}" >> $GITHUB_ENV
+
+      - name: Version number (If application deployment)
+        if: ${{inputs.repo_name}}
+        run: |
+          echo "${{ env.date }} is the new version"
+          echo "TAG_VERSION=${{ inputs.repo_version }}" >> $GITHUB_ENV
+
+      # Node installation (if required)
+      - name: Setup node.js environment
+        uses: actions/setup-node@v3.6.0
+
+      - name: Install yaml
+        run: |
+          pip install pyyaml
+
+      - name: Remove existing project if commited, replace with master version
+        run: |
+          ls
+          echo "Moving file to current directory.."
+          rm -f -- ${{env.PROJECT_FILES_NAME}}
+          cp ${{env.PROJECT_FILES_DIRECTORY}}/${{env.PROJECT_FILES_NAME}} .
+          echo "done moving file to current directory.."
+          ls
+      - name: Image Repository name
+        run: |
+          echo "IMAGE_REPO_NAME=${{ github.event.repository.name }}" >> $GITHUB_ENV
+
+      - name: Image Repository name (If users)
+        if: contains( github.ref, 'users' )
+        run: |
+          echo "IMAGE_REPO_NAME=${{ github.event.repository.name }}-${{github.actor}}" >> $GITHUB_ENV
+
+      - name: Image Repository name (If application deployment)
+        if: ${{inputs.repo_name}}
+        run: |
+          echo "IMAGE_REPO_NAME=${{inputs.repo_name}}" >> $GITHUB_ENV
+
+      - name: ECR Registry
+        run: |
+          if [ ${{inputs.repo_name}} != "" ]; then
+            echo DOCKER_TAG_VERSION="${{ env.PC_AWS_ENVRIONMENT }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:${TAG_VERSION}" >> $GITHUB_ENV
+            echo DOCKER_TAG_LATEST="${{ env.PC_AWS_ENVRIONMENT }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:latest" >> $GITHUB_ENV
+          else
+            echo DOCKER_TAG_VERSION="${{ env.PC_AWS_ENVRIONMENT }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:${TAG_VERSION}" >> $GITHUB_ENV
+            echo DOCKER_TAG_LATEST="${{ env.PC_AWS_ENVRIONMENT }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${IMAGE_REPO_NAME}:latest" >> $GITHUB_ENV
+          fi
+
+      - name: ECR Registry name
+        run: echo ${DOCKER_TAG_VERSION} is the docker version
+
+      # - name: Inject secrets into docker build
+      #   if: ${{IMAGE_REPO_NAME == 'beer-be-web-push' }}
+      #   run: |
+      #     pip3 install boto3
+      #     pip3 install jproperties
+      #     python3 retrieve_secrets.py
+
+      - name: Build Docker images
+        id: build_images
+        run: |
+          docker build -t $DOCKER_TAG_VERSION .
+          docker tag $DOCKER_TAG_VERSION $DOCKER_TAG_LATEST
+
+      - name: ECR Login
+        id: ecr_login
+        run: |
+          (aws ecr describe-repositories --repository-names ${IMAGE_REPO_NAME} && echo "repo_created=false">>$GITHUB_ENV ) || ( aws ecr create-repository --repository-name ${IMAGE_REPO_NAME} && echo "repo_created=true">>$GITHUB_ENV )
+          aws ecr get-login-password --region ${{ env.AWS_REGION }}| docker login --username AWS --password-stdin ${{env.PC_AWS_ENVRIONMENT}}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+
+      - name: created repo
+        run: |
+          echo "${{ env.repo_created }} did we create repo"
+
+      - name: Push docker image to ECR
+        run: |
+          docker push $DOCKER_TAG_VERSION
+          docker push $DOCKER_TAG_LATEST
+
+      - name: Lambda function name
+        run: |
+          echo LAMBDA_FUNCTION_NAME="${{inputs.lambd_function_name}}-${{ env.AWS_ENV_NAME }}" >> $GITHUB_ENV
+
+      - name: Lambda function name (if users)
+        if: contains( github.ref, 'users' )
+        run: |
+          echo LAMBDA_FUNCTION_NAME="${{inputs.lambd_function_name}}-${{github.actor}}-${{ env.AWS_ENV_NAME }}" >> $GITHUB_ENV
+
+      - name: Update function with new image built
+        if: ${{ env.reponamepassed !='true' && env.repo_created =='false'}}
+        run: |
+          (aws lambda update-function-code --region ${{ env.AWS_REGION }} --function-name $LAMBDA_FUNCTION_NAME --image-uri $DOCKER_TAG_VERSION ) || ( echo "Function not found" )
