@@ -169,7 +169,7 @@ jobs:
         working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
 
       - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
-        if: ${{ env.reponamepassed || env.IMAGE_REPO_NAME == 'beer-be-web-push' }}
+        if: ${{ env.reponamepassed || github.event.repository.name == 'beer-be-web-push' }}
         id: project_constants_tools
         run: |
           account_id="`grep aws_tools_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
@@ -187,13 +187,13 @@ jobs:
           echo "role_arn1=arn:aws:iam::${{ env.PC_AWS_ENVRIONMENT }}:role/${{ env.pc_oidc_role}}" >> $GITHUB_ENV
       - name: Arn to use (If Application deployment or beer-web-push)
         id: aws_assume_role_tools
-        if: ${{ env.reponamepassed || env.IMAGE_REPO_NAME == 'beer-be-web-push' }}
+        if: ${{ env.reponamepassed || github.event.repository.name == 'beer-be-web-push' }}
         run: |
           echo "tools_role_arn1=arn:aws:iam::${{ env.PC_AWS_ENVRIONMENT_TOOLS }}:role/${{ env.pc_oidc_role_tools}}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials for tools account to fetch secrets if beer-be-web-push
         id: aws_oidc_credentials_tools
-        if: ${{IMAGE_REPO_NAME == 'beer-be-web-push'}}
+        if: ${{github.event.repository.name == 'beer-be-web-push'}}
         uses: aws-actions/configure-aws-credentials@master
         with:
           role-to-assume: ${{env.tools_role_arn1}}
@@ -201,7 +201,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Inject secrets into docker build if beer-be-web-push
-        if: ${{IMAGE_REPO_NAME == 'beer-be-web-push' }}
+        if: ${{github.event.repository.name == 'beer-be-web-push' }}
         run: |
           pip3 install boto3
           pip3 install jproperties
@@ -218,7 +218,7 @@ jobs:
 
       - name: Configure AWS credentials (If Application deployment)
         id: aws_oidc_credentials_tools
-        if: ${{env.reponamepassed =='true'|| env.IMAGE_REPO_NAME == 'beer-be-web-push'}}
+        if: ${{env.reponamepassed =='true'|| github.event.repository.name == 'beer-be-web-push'}}
         uses: aws-actions/configure-aws-credentials@master
         with:
           role-to-assume: ${{env.tools_role_arn1}}
@@ -281,7 +281,7 @@ jobs:
         run: echo ${DOCKER_TAG_VERSION} is the docker version
 
       # - name: Inject secrets into docker build
-      #   if: ${{IMAGE_REPO_NAME == 'beer-be-web-push' }}
+      #   if: ${{github.event.repository.name == 'beer-be-web-push' }}
       #   run: |
       #     pip3 install boto3
       #     pip3 install jproperties
