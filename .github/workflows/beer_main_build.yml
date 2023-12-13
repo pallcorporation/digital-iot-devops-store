@@ -205,7 +205,7 @@ jobs:
 
       # If ${IMAGE_REPO_NAME} === "beer-be-web-push" then inject secrets into the docker build by running retrieve_secrets.py
       - name: Inject secrets into docker build
-        if: ${{IMAGE_REPO_NAME == 'beer-be-web-push' }}
+        if: ${{github.event.repository.name == 'beer-be-web-push' }}
         run: |
           pip3 install boto3
           pip3 install jproperties
