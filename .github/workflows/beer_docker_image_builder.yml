@@ -207,6 +207,7 @@ jobs:
           pip3 install jproperties
           ls
           python3 retrieve_secrets.py
+          chmod 777 .env
           cat .env
       - name: Configure AWS credentials
         id: aws_oidc_credentials
