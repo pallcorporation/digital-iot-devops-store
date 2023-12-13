@@ -205,6 +205,7 @@ jobs:
         run: |
           pip3 install boto3
           pip3 install jproperties
+          ls
           python3 retrieve_secrets.py
           cat .env
       - name: Configure AWS credentials
