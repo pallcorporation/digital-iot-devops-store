@@ -163,8 +163,8 @@ jobs:
 
       - name: Version number
         run: |
-          echo "${{ steps.version_number.outputs.version_tag }} is the new version"
-          echo "TAG_VERSION=${{ steps.version_number.outputs.version_tag }}" >> $GITHUB_ENV
+          echo "${{ steps.version_number.outputs.version }} is the new version"
+          echo "TAG_VERSION=${{ steps.version_number.outputs.version }}" >> $GITHUB_ENV
 
   Docker-Images:
     needs: main-setup
