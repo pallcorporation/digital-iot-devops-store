@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       data: ${{ env.date }}
-      repo_version: ${{ steps.version_number.outputs.new_version }}
+      repo_version: ${{ steps.version_number.outputs.version }}
       tools_account: ${{env.tools_account_id}}
       aws_credentials_role: ${{env.role_arn1}}
       aws_credentials_session_name: ${{ github.event.repository.name }}-${{ env.date }}
