@@ -144,19 +144,27 @@ jobs:
         run: |
           echo "prod_role_arn1=arn:aws:iam::${{env.prod_account_id}}:role/${{ env.prod_oidc_role}}" >> $GITHUB_ENV
 
+      # - name: Github Tag with semantic versioning
+      #   id: version_number
+      #   uses: hennejg/github-tag-action@v4.4.0
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     default_bump: minor
+      #     tag_prefix: v
+      #     release_branches: main
       - name: Github Tag with semantic versioning
         id: version_number
-        uses: hennejg/github-tag-action@v4.4.0
+        uses: paulhatch/semantic-version@v5.3.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          default_bump: minor
-          tag_prefix: v
-          release_branches: main
+          tag_prefix: "v"
+          bump_each_commit: true
+          major_pattern: "BREAKING CHANGE"
 
       - name: Version number
         run: |
-          echo "${{ steps.version_number.outputs.new_version }} is the new version"
-          echo "TAG_VERSION=${{ steps.version_number.outputs.new_version }}" >> $GITHUB_ENV
+          echo "${{ steps.version_number.outputs.version_tag }} is the new version"
+          echo "TAG_VERSION=${{ steps.version_number.outputs.version_tag }}" >> $GITHUB_ENV
 
   Docker-Images:
     needs: main-setup
