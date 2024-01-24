@@ -146,7 +146,7 @@ jobs:
 
       - name: Github Tag with semantic versioning
         id: version_number
-        uses: hennejg/github-tag-action@v4.3.1
+        uses: hennejg/github-tag-action@v4.4.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           default_bump: minor
