@@ -312,7 +312,7 @@ jobs:
       - name: Copy DockerFile
         run: |
           chmod 777 ${{env.PROJECT_FILES_DIRECTORY}}/Dockerfile
-          cp ${{env.PROJECT_FILES_DIRECTORY}}/Dockerfile src/
+          cp ${{env.PROJECT_FILES_DIRECTORY}}/Dockerfile .
 
       - name: Build Docker images
         id: build_images
