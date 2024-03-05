@@ -311,12 +311,13 @@ jobs:
 
       - name: Copy DockerFile
         run: |
-          chmod 777 ${{env.PROJECT_FILES_DIRECTORY}}/Dockerfile
           cp ${{env.PROJECT_FILES_DIRECTORY}}/Dockerfile .
+          chmod 777 Dockerfile
 
       - name: Build Docker images
         id: build_images
         run: |
+          ls
           docker build -t $DOCKER_TAG_VERSION .
           docker tag $DOCKER_TAG_VERSION $DOCKER_TAG_LATEST
 
