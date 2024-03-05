@@ -289,6 +289,20 @@ jobs:
       #     pip3 install jproperties
       #     python3 retrieve_secrets.py
 
+      - name: Checkout Repository with Pipfile
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/digital-iot-python-package-manager
+          ref: dev
+          path: ${{env.PROJECT_FILES_DIRECTORY}}
+      
+      - name: Copy Pipfile
+        run: |
+          cp ${{env.PROJECT_FILES_DIRECTORY}}/Pipfile src/
+          cp ${{env.PROJECT_FILES_DIRECTORY}}/Pipfile.lock src/
+
+
       - name: Build Docker images
         id: build_images
         run: |
