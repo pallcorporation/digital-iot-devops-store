@@ -290,10 +290,10 @@ jobs:
       #     python3 retrieve_secrets.py
 
       - name: Remove requirements.txt and Dockerfile if they exist
-        run: |           
+        run: |
           [ -f requirements.txt ] && rm requirements.txt || echo "requirements.txt does not exist."           
           [ -f Dockerfile ] && rm Dockerfile || echo "Dockerfile does not exist."
-      
+
       - name: Checkout Repository with Pipfile
         uses: actions/checkout@v2
         with:
@@ -301,14 +301,17 @@ jobs:
           repository: pallcorporation/digital-iot-python-package-manager
           ref: dev
           path: ${{env.PROJECT_FILES_DIRECTORY}}
-      
+
       - name: Copy Pipfile
         run: |
+          chmod 777 ${{env.PROJECT_FILES_DIRECTORY}}/Pipfile
+          chmod 777 ${{env.PROJECT_FILES_DIRECTORY}}/Pipfile.lock
           cp ${{env.PROJECT_FILES_DIRECTORY}}/Pipfile src/
           cp ${{env.PROJECT_FILES_DIRECTORY}}/Pipfile.lock src/
 
       - name: Copy DockerFile
         run: |
+          chmod 777 ${{env.PROJECT_FILES_DIRECTORY}}/Dockerfile
           cp ${{env.PROJECT_FILES_DIRECTORY}}/Dockerfile src/
 
       - name: Build Docker images
