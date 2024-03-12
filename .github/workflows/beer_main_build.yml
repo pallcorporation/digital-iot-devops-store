@@ -38,6 +38,7 @@ env:
   IMAGE_REGISTRY_USERNAME: ${{github.actor}}
   IMAGE_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   NX_ARTIFACT_STORE: beer-ul-nx-workspace
+  DEVELOPMENT_PACKAGE_MANAGER: "dev_package_manager"
 
 permissions:
   id-token: write
@@ -218,6 +219,40 @@ jobs:
           pip3 install boto3
           pip3 install jproperties
           python3 retrieve_secrets.py
+
+      - name: Remove requirements.txt and Dockerfile if they exist
+        run: |
+          [ -f requirements.txt ] && rm requirements.txt || echo "requirements.txt does not exist."           
+          [ -f Dockerfile ] && rm Dockerfile || echo "Dockerfile does not exist."
+      - name: Make DEVELOPMENT_PACKAGE_MANAGER directory
+        run: mkdir ${{env.DEVELOPMENT_PACKAGE_MANAGER}}
+
+      - name: Checkout Repository with Pipfile
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/digital-iot-python-package-manager
+          ref: dev
+          path: ${{env.DEVELOPMENT_PACKAGE_MANAGER}}
+
+      - name: Copy Pipfile
+        run: |
+          chmod 777 ${{env.DEVELOPMENT_PACKAGE_MANAGER}}/Pipfile
+          chmod 777 ${{env.DEVELOPMENT_PACKAGE_MANAGER}}/Pipfile.lock
+          cp ${{env.DEVELOPMENT_PACKAGE_MANAGER}}/Pipfile src/
+          cp ${{env.DEVELOPMENT_PACKAGE_MANAGER}}/Pipfile.lock src/
+
+      - name: Copy DockerFile
+        if: ${{github.event.repository.name != 'beer-be-web-push' }}
+        run: |
+          cp ${{env.DEVELOPMENT_PACKAGE_MANAGER}}/Dockerfile .
+          chmod 777 Dockerfile
+
+      - name: Copy DockerFile (If runtime is nodejs)
+        if: ${{github.event.repository.name == 'beer-be-web-push' }}
+        run: |
+          cp ${{env.DEVELOPMENT_PACKAGE_MANAGER}}/nodejs/Dockerfile .
+          chmod 777 Dockerfile
 
       - name: Build Docker images
         if: ${{inputs.deployment_type == 'image'}}
