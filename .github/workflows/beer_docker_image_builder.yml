@@ -18,6 +18,8 @@ on:
         type: string
       repo_name:
         type: string
+      runtime:
+        type: string
 
       repo_version:
         type: string
@@ -310,10 +312,16 @@ jobs:
           cp ${{env.PROJECT_FILES_DIRECTORY}}/Pipfile.lock src/
 
       - name: Copy DockerFile
+        if: ${{inputs.runtime}} != 'nodejs'
         run: |
           cp ${{env.PROJECT_FILES_DIRECTORY}}/Dockerfile .
           chmod 777 Dockerfile
-
+      # If runtime is nodejs copy Dockerfile from ${{env.PROJECT_FILES_DIRECTORY}}/nodejs
+      - name: Copy DockerFile (If runtime is nodejs)
+        if: ${{inputs.runtime}} == 'nodejs'
+        run: |
+          cp ${{env.PROJECT_FILES_DIRECTORY}}/nodejs/Dockerfile .
+          chmod 777 Dockerfile
       - name: Build Docker images
         id: build_images
         run: |
