@@ -312,13 +312,13 @@ jobs:
           cp ${{env.PROJECT_FILES_DIRECTORY}}/Pipfile.lock src/
 
       - name: Copy DockerFile
-        if: ${{inputs.runtime}} != 'nodejs'
+        if: ${{github.event.repository.name != 'beer-be-web-push' }}
         run: |
           cp ${{env.PROJECT_FILES_DIRECTORY}}/Dockerfile .
           chmod 777 Dockerfile
       # If runtime is nodejs copy Dockerfile from ${{env.PROJECT_FILES_DIRECTORY}}/nodejs
       - name: Copy DockerFile (If runtime is nodejs)
-        if: ${{inputs.runtime}} == 'nodejs'
+        if: ${{github.event.repository.name == 'beer-be-web-push' }}
         run: |
           cp ${{env.PROJECT_FILES_DIRECTORY}}/nodejs/Dockerfile .
           chmod 777 Dockerfile
