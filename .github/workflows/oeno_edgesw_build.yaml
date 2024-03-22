@@ -26,8 +26,6 @@ on:
     secrets:
       envPAT:
         required: true
-      PY_KEY:
-        required: true
       APP_SIGN_KEY:
         required: true
       sbom_username:
@@ -53,7 +51,6 @@ env:
   APP_NAME: ${{ inputs.APP_NAME}}
   UPLOAD_NAME: ${{ inputs.UPLOAD_NAME }}
   ARTIFACT_DESCRIPTION: ${{ inputs.ARTIFACT_DESCRIPTION }}
-  PY_KEY: ${{ secrets.PY_KEY }}
   APP_SIGN_KEY: ${{ secrets.APP_SIGN_KEY }}
   SBOM_CLIENT_DIRECTORY: sbom_client
   SBOM_USERNAME: ${{ secrets.sbom_username}}
@@ -230,7 +227,7 @@ jobs:
       - name: Build encrypted exe via Pyinstaller
         run: |
           cd service
-          ..\env\scripts\pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" --key=${{env.PY_KEY}} ${{ env.APP_NAME }}.py
+          ..\env\scripts\pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" ${{ env.APP_NAME }}.py
 
       - name: Make cybellum project files directory for main branch
         if: contains( github.ref, 'main' )
