@@ -254,6 +254,11 @@ jobs:
           cd service
           ..\env\scripts\pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" ${{ env.APP_NAME }}.py --name ${{ env.APP_NAME }}_unencrypted.exe
 
+      - name: Set up Python for Cybellum
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.6'
+
       - name: Run SBOM script for main branch
         if: contains( github.ref, 'main' )
         run: |
