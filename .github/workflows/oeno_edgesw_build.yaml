@@ -258,7 +258,7 @@ jobs:
         if: contains( github.ref, 'main' )
         uses: actions/setup-python@v4
         with:
-          python-version: '3.6'
+          python-version: '3.7'
 
       - name: Run SBOM script for main branch
         if: contains( github.ref, 'main' )
