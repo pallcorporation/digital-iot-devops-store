@@ -203,7 +203,6 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Set up Python
-        # This is the version of the action for setting up Python, not the Python version.
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
@@ -224,7 +223,8 @@ jobs:
           echo ${{ needs.setup.outputs.release_version }} app version
           python generateVersionInfo.py -v "${{ needs.setup.outputs.release_version }}" -n "${{env.APP_NAME}}" -d "${{env.ARTIFACT_DESCRIPTION}}"
 
-      - name: Build encrypted exe via Pyinstaller
+      #No longer able to use --key for encryption https://github.com/pyinstaller/pyinstaller/pull/6999
+      - name: Build exe via Pyinstaller 
         run: |
           cd service
           ..\env\scripts\pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" ${{ env.APP_NAME }}.py
