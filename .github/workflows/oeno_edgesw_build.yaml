@@ -258,7 +258,7 @@ jobs:
       - name: Run SBOM script for main branch
         if: contains( github.ref, 'main' )
         run: |
-          python -m cybellum_client_ci.ci_integration_scan_firmware_script ./service/dist/${{env.APP_NAME}} ${{env.SBOM_ENDPOINT}} 443 ${{env.SBOM_USERNAME}} ${{env.SBOM_PASSWORD}} ${{env.APP_NAME}} ${{needs.setup.outputs.release_version}}-${{env.DATE}} --vulnerabilities --va_auto_start --component_category other_medical_device
+          python -m cybellum_client_ci.ci_integration_scan_firmware_script ./service/dist/${{env.APP_NAME}}.py ${{env.SBOM_ENDPOINT}} 443 ${{env.SBOM_USERNAME}} ${{env.SBOM_PASSWORD}} ${{env.APP_NAME}} ${{needs.setup.outputs.release_version}}-${{env.DATE}} --vulnerabilities --va_auto_start --component_category other_medical_device
           # TODO-MB [231208] - Change --component_category to Edge after fixing cybellum error
           # {'error_code': 'dt_component_category_invalid', 'message': 'Component category parameter is invalid'}
 
