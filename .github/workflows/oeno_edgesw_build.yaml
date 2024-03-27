@@ -227,7 +227,7 @@ jobs:
       - name: Build exe via Pyinstaller 
         run: |
           cd service
-          ..\env\scripts\pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" ${{ env.APP_NAME }}.py
+          ..\env\scripts\pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" ${{env.APP_NAME}}.py
 
       - name: Make cybellum project files directory for main branch
         if: contains( github.ref, 'main' )
@@ -255,17 +255,10 @@ jobs:
           .\client\install_client.ps1
         working-directory: ${{env.SBOM_CLIENT_DIRECTORY}}
 
-      - name: Build unencrypted exe for main branch
-        if: contains( github.ref, 'main' )
-        run: |
-          echo "Building unencrypted exe for main Branch"
-          cd service
-          ..\env\scripts\pyinstaller -y --icon .\assets\icon.ico --version-file .\assets\versioninfo --onefile --add-data "../env/Include;./" ${{ env.APP_NAME }}.py --name ${{ env.APP_NAME }}_unencrypted.exe
-
       - name: Run SBOM script for main branch
         if: contains( github.ref, 'main' )
         run: |
-          python -m cybellum_client_ci.ci_integration_scan_firmware_script ./service/dist/${{env.APP_NAME}}_unencrypted.exe ${{env.SBOM_ENDPOINT}} 443 ${{env.SBOM_USERNAME}} ${{env.SBOM_PASSWORD}} ${{env.APP_NAME}} ${{needs.setup.outputs.release_version}}-${{env.DATE}} --vulnerabilities --va_auto_start --component_category other_medical_device
+          python -m cybellum_client_ci.ci_integration_scan_firmware_script ./service/dist/${{env.APP_NAME}} ${{env.SBOM_ENDPOINT}} 443 ${{env.SBOM_USERNAME}} ${{env.SBOM_PASSWORD}} ${{env.APP_NAME}} ${{needs.setup.outputs.release_version}}-${{env.DATE}} --vulnerabilities --va_auto_start --component_category other_medical_device
           # TODO-MB [231208] - Change --component_category to Edge after fixing cybellum error
           # {'error_code': 'dt_component_category_invalid', 'message': 'Component category parameter is invalid'}
 
@@ -281,7 +274,7 @@ jobs:
       # Upload artifacts to Git for easy access
       - uses: actions/upload-artifact@v2
         with:
-          name: ${{ env.APP_NAME }}
+          name: ${{env.APP_NAME}}
           path: ota/
 
       # Upload artifacts to AWS s3 to trigger OTA
