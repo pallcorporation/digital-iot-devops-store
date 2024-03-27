@@ -172,10 +172,10 @@ jobs:
           $env:DATE = Get-Date -UFormat "%Y-%m-%d"
           echo "DATE=$env:DATE" >> $env:GITHUB_ENV
 
-      - name: Set current date as env variable
+      - name: Set current timestamp
         run: |
-          echo "NOW=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
-          echo $NOW
+          $env:TIMESTAMP = Get-Date
+          echo "TIMESTAMP=$env:TIMESTAMP" >> $env:GITHUB_ENV
 
       - name: Git clone the repository
         uses: actions/checkout@v3
@@ -263,7 +263,7 @@ jobs:
       - name: Run SBOM script for main branch
         if: contains( github.ref, 'main' )
         run: |
-          python -m cybellum_client_ci.ci_integration_scan_firmware_script ./service/dist/${{env.APP_NAME}}.exe ${{env.SBOM_ENDPOINT}} 443 ${{env.SBOM_USERNAME}} ${{env.SBOM_PASSWORD}} ${{env.APP_NAME}} ${{needs.setup.outputs.release_version}}-${{env.NOW}} --vulnerabilities --va_auto_start --component_category other_medical_device
+          python -m cybellum_client_ci.ci_integration_scan_firmware_script ./service/dist/${{env.APP_NAME}}.exe ${{env.SBOM_ENDPOINT}} 443 ${{env.SBOM_USERNAME}} ${{env.SBOM_PASSWORD}} ${{env.APP_NAME}} ${{needs.setup.outputs.release_version}}-${{env.TIMESTAMP}} --vulnerabilities --va_auto_start --component_category other_medical_device
           # TODO-MB [231208] - Change --component_category to Edge after fixing cybellum error
           # {'error_code': 'dt_component_category_invalid', 'message': 'Component category parameter is invalid'}
 
