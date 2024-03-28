@@ -174,7 +174,7 @@ jobs:
 
       - name: Set current timestamp
         run: |
-          $env:TIMESTAMP = Get-Date -UFormat "%Y-%m-%d-%H%M%S"
+          $env:TIMESTAMP = Get-Date -UFormat "%Y-%m-%dT%H%M%S"
           echo "TIMESTAMP=$env:TIMESTAMP" >> $env:GITHUB_ENV
 
       - name: Git clone the repository
