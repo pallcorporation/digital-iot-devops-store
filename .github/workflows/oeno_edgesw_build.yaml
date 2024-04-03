@@ -263,7 +263,7 @@ jobs:
       - name: Run SBOM script for main branch
         if: contains( github.ref, 'main' )
         run: |
-          cybellumcli component create-version --host ${{env.SBOM_ENDPOINT}} --port 443 --username ${{env.SBOM_USERNAME}} --password ${{env.SBOM_PASSWORD}} --from-path ./service/dist/${{env.APP_NAME}}.exe --name ${{env.APP_NAME}} --from-version ${{needs.setup.outputs.release_version}} --version ${{needs.setup.outputs.release_version}}-${{env.TIMESTAMP}} --make-default-version --component-type other_medical_device --vulnerabilities --va-autostart --wait-for-completion --no-workflow
+          cybellumcli component create-version --host ${{env.SBOM_ENDPOINT}} --port 443 --username ${{env.SBOM_USERNAME}} --password ${{env.SBOM_PASSWORD}} --from-path ./service/dist/${{env.APP_NAME}}.exe --name ${{env.APP_NAME}} --root-version --version ${{needs.setup.outputs.release_version}}-${{env.TIMESTAMP}} --make-default-version --component-type other_medical_device --vulnerabilities --va-autostart --wait-for-completion --no-workflow
 
       - name: Sign application
         run: |
