@@ -322,9 +322,13 @@ jobs:
           chmod 777 Dockerfile
       # If runtime is nodejs copy Dockerfile from ${{env.PROJECT_FILES_DIRECTORY}}/nodejs
       - name: Copy DockerFile (If runtime is nodejs)
-        if: ${{github.event.repository.name == 'beer-be-web-push' && github.event.repository.name !='beer-be-api-design' }}
+        if: ${{github.event.repository.name == 'beer-be-web-push'}}
         run: |
           cp ${{env.PROJECT_FILES_DIRECTORY}}/nodejs/Dockerfile .
+          chmod 777 Dockerfile
+      - name: Copy DockerFile (If API documentation)
+        if: ${{github.event.repository.name =='beer-be-api-design' }}
+        run: |
           chmod 777 Dockerfile
       - name: Build Docker images
         id: build_images
