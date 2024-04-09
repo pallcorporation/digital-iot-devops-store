@@ -308,6 +308,7 @@ jobs:
           path: ${{env.PROJECT_FILES_DIRECTORY}}
 
       - name: Copy Pipfile
+        if: ${{ github.event.repository.name !='beer-be-api-design'}}
         run: |
           chmod 777 ${{env.PROJECT_FILES_DIRECTORY}}/Pipfile
           chmod 777 ${{env.PROJECT_FILES_DIRECTORY}}/Pipfile.lock
