@@ -295,6 +295,7 @@ jobs:
       #     python3 retrieve_secrets.py
 
       - name: Remove requirements.txt and Dockerfile if they exist
+        if: ${{github.event.repository.name != 'beer-be-web-push' && github.event.repository.name !='beer-be-api-design'}}
         run: |
           [ -f requirements.txt ] && rm requirements.txt || echo "requirements.txt does not exist."           
           [ -f Dockerfile ] && rm Dockerfile || echo "Dockerfile does not exist."
