@@ -20,7 +20,9 @@ on:
       hosting_bucket:
         required: true
         type: string
-
+      hosting_bucket_key_name:
+        required: true
+        type: string
       in_stack_id:
         required: true
         type: string
