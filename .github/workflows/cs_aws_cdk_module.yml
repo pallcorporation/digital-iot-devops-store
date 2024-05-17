@@ -1,0 +1,347 @@
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  #push:
+  #  branches:
+  #    - dev
+  #    - integration
+  workflow_call:
+    inputs:
+      branch_name:
+        required: true
+        type: string
+
+      destroy_stack:
+        type: boolean
+        default: false
+      timestream_init_db:
+        type: string
+
+      deployment_type:
+        type: string
+      config_files_directory:
+        required: true
+        type: string
+
+      repo_name:
+        type: string
+
+      repo_version:
+        type: string
+
+      docker_image_lambda_function_exception:
+        type: string
+
+    secrets:
+      envPAT:
+        required: true
+      teams_uri:
+        required: false
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+env:
+  #BUCKET_NAME : "github-oidc-test-mitch"
+  AWS_REGION: "us-east-1"
+  PROJECT_FILES_GIT: "beer-project-properties.git"
+  ORGANIZATION: "pallcorporation"
+  PROJECT_FILES_NAME: "project.properties"
+  AWS_CDK_LIBRARY_FILE: "aws_cdk_library.properties"
+  AWS_CDK_LIBRARY_DIRECTORY: "aws_cdk_version"
+  PROJECT_FILES_DIRECTORY: "project_file"
+  IMAGE_REGISTRY: "ghcr.io"
+  IMAGE_REGISTRY_USERNAME: ${{github.actor}}
+  IMAGE_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  CDK_MODULE: "cdk_checkedout"
+  API_GATEWAY_STACK_ID: beer-apigateway-0-iot-apigw
+  API_GATEWAY_OUPUT_LOOKUP: beerapigateway0iotapigwurloutput
+  WORKFLOW_FILE: updated-filterrun-workflow.json
+  WORKFLOW_DIRECTORY: workflow_dir
+  WORKFLOW_CONFIGURATION_DIRECTORY: step_function_workflow
+  WORKFLOW_CONFIGURATION_FILE: workflow.properties
+
+permissions:
+  id-token: write
+  contents: read # This is required for actions/checkout@v1
+  packages: write
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  AWS-CDK-Deployment:
+    if: github.repository != 'pallcorporation/digital-iot-devops-store'
+    runs-on: ubuntu-latest
+    steps:
+      # Get current time stamp to use as reference elsewhere
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
+
+      - name: Check if triggered by cron
+        run: |
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            echo "This was triggered by a cron job!"
+            echo "BRANCH_NAME=beta" >> $GITHUB_ENV
+            # Add additional commands or logic here as needed
+          else
+            echo "Triggered by ${{ github.event_name }}"
+          fi
+
+      # Get branch name to use for look up
+      - name: Branch if Dev
+        if: contains( github.ref, 'dev' )
+        run: |
+          echo "BRANCH_NAME=dev" >> $GITHUB_ENV
+
+      - name: Branch if Integration
+        if: contains( github.ref, 'integration' )
+        run: |
+          echo "BRANCH_NAME=integration" >> $GITHUB_ENV
+
+      - name: Branch if Production
+        if: ( contains( github.ref, 'production' ) && (github.repository == 'pallcorporation/beer-application-deployment' || github.repository == 'pallcorporation/beer-aws-github-oidc-federation'|| github.repository == 'pallcorporation/beer-be-iac-apigateway' ))
+        run: |
+          echo "BRANCH_NAME=production" >> $GITHUB_ENV
+
+      - name: Branch if users
+        if: contains( github.ref, 'users' )
+        run: |
+          echo "BRANCH_NAME=dev" >> $GITHUB_ENV
+
+      - name: Branch if BETA
+        if: contains( github.ref, 'beta' )
+        run: |
+          echo "BRANCH_NAME=beta" >> $GITHUB_ENV
+
+      - name: Branch if Tools
+        if: contains( github.ref, 'tools' )
+        run: |
+          echo "BRANCH_NAME=tools" >> $GITHUB_ENV
+
+      - name: Echo branch
+        run: echo "${BRANCH_NAME} is the branch name to use in lookup"
+
+      # Clone repositories prior to work
+      - name: Git clone the repository
+        uses: actions/checkout@v3
+
+      - name: Make repo directory
+        if: ${{inputs.repo_name}}
+        run: mkdir ${{ inputs.repo_name }}_stage
+
+      - name: Check out ${{ inputs.repo_name }}
+        if: ${{inputs.repo_name}}
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/${{ inputs.repo_name }}
+          ref: ${{inputs.repo_version}}
+          path: ${{ inputs.repo_name }}_stage
+
+      - name: Make project files directory
+        run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
+
+      - name: Make AWS cdk library directory
+        run: mkdir ${{env.AWS_CDK_LIBRARY_DIRECTORY}}
+
+      - name: Make cdk directory
+        run: mkdir ${{env.CDK_MODULE}}
+
+      - name: Move files (if from application deployment)
+        if: ${{inputs.repo_name}}
+        run: mv ${{ inputs.repo_name }}_stage/* .
+
+      - name: Find-and-replace strings in tag version from application deployment
+        if: ${{inputs.repo_name}}
+        uses: mad9000/actions-find-and-replace-string@2
+        id: findandreplace_version1
+        with:
+          source: ${{inputs.repo_version}} # this translates to ref/heads/main on the main branch, but can be any arbitrary string
+          find: "v" # we want to remove ref/heads/ from source
+          replace: ""
+
+      - name: Set environment variables for CDK stack
+        if: ${{inputs.repo_name}}
+        run: |
+          echo "DOCKER_IMAGE_TAG=${{steps.findandreplace_version1.outputs.value}}" >> $GITHUB_ENV
+          echo "DOCKER_IMAGE_REPOSITORY=${{inputs.repo_name}}" >> $GITHUB_ENV
+
+      - name: Set environment variables for CDK stack
+        if: ${{inputs.docker_image_lambda_function_exception}}
+        run: |
+          echo "FUNCTION_IMAGE_EXCEPTION=true" >> $GITHUB_ENV
+
+      - name: Project files clone
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/beer-project-properties
+          ref: main
+          path: ${{env.PROJECT_FILES_DIRECTORY}}
+
+      - name: CDK Modules clone
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/digital-iot-devops-cdk-modules
+          ref: main
+          path: ${{env.CDK_MODULE}}
+
+      - name: CDK Library version
+        id: get_cdk_clone_version
+        run: |
+          if [[ ${BRANCH_NAME} == 'production' ]]
+          then
+            echo "CDK_CLONE_VERSION=main" >> $GITHUB_ENV
+          else
+            echo "CDK_CLONE_VERSION=${{env.BRANCH_NAME}}" >> $GITHUB_ENV
+          fi
+
+      - name: AWS CDK library version
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/digital-iot-devops-aws-cdk-library
+          ref: ${{env.CDK_CLONE_VERSION}}
+          path: ${{env.AWS_CDK_LIBRARY_DIRECTORY}}
+
+      - name: Replace github username
+        if: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/integration' && github.ref != 'refs/heads/beta' && github.ref != 'refs/heads/production' && github.ref != 'refs/heads/tools' }}
+        run: |
+          echo "def user():" > "github_user.py"
+          echo "  user=""\""${{github.actor}}"\"" >> "github_user.py"
+          echo "  return user" >> "github_user.py"
+
+          rm ${{env.CDK_MODULE}}/src/github_user.py
+          cp github_user.py ${{env.CDK_MODULE}}/src/
+
+      # Grant permissions to all files in directory
+      - name: Grant permissions to all files
+        run: chmod -R 755 ./
+
+      # Read of project files and set to variables
+      - name: Get project constants from project.properties repo - Branch name, deployment role, skip cdk, destroy stack
+        id: project_constants
+        run: |
+          account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "AWS_ENVIRONMENT=${account_id}" >> $GITHUB_ENV
+
+          oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "OIDC_ROLE_NAME=${oidc_role_name}" >> $GITHUB_ENV
+
+        working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
+
+      - name: Get AWS CDK Version
+        id: aws_install_version
+        run: |
+          version_number="`grep aws_cdk ${{env.AWS_CDK_LIBRARY_FILE}}|cut -d'=' -f2`"
+          echo "AWS_CDK_LIBRARY_VERSION=${version_number}" >> $GITHUB_ENV
+
+        working-directory: ${{env.AWS_CDK_LIBRARY_DIRECTORY}}
+
+      - run: echo "Deploying version ${{env.AWS_CDK_LIBRARY_VERSION}} of AWS cdk"
+
+      - name: Install CDK
+        run: |
+          sudo npm -g install aws-cdk@${{env.AWS_CDK_LIBRARY_VERSION}}
+          cat ${{env.CDK_MODULE}}/requirements.txt
+          pip3 install -r  ${{env.CDK_MODULE}}/requirements.txt
+
+      - name: Copy cdk config files
+        run: |
+          rm -r ${{env.CDK_MODULE}}/config_files/*
+          cp -a ${{inputs.config_files_directory}}/. ${{env.CDK_MODULE}}/config_files/
+          cp -a ${{env.PROJECT_FILES_DIRECTORY}}/. ${{env.CDK_MODULE}}/
+
+      # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS
+      - name: Arn to use
+        id: aws_assume_role
+        run: |
+          echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/${{ env.OIDC_ROLE_NAME}}" >> $GITHUB_ENV
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: ${{env.AWS_ASSUME_ROLE}}
+          role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Grant permissions to all files
+        run: |
+          chmod -R 755 ${{env.CDK_MODULE}}
+
+      - name: Check if Graphql exists
+        id: appsync_graphql
+        run: |
+          DIR="appsync/"
+          ls
+          if [ -d "$DIR" ]; then
+            # Take action if $DIR exists. #
+            echo "Found config files in ${DIR}..."
+            echo "graphql_found=true" >> $GITHUB_ENV
+          fi
+
+      - name: Check if Step function exists
+        id: stepfunction_workflow
+        run: |
+          DIR="step_function_workflow/"
+          ls
+          if [ -d "$DIR" ]; then
+            # Take action if $DIR exists. #
+            echo "Found config files in ${DIR}..."
+            echo "stepfunction_found=true" >> $GITHUB_ENV
+
+          fi
+
+      - name: Merge Graphql Files
+        if: ${{env.graphql_found == 'true'}}
+        run: |
+          ls
+          rm -f all-schema.graphql
+          find appsync/ -type f -name '*.graphql' -exec cat {} + >> all-schema.graphql
+          ls
+          cat all-schema.graphql
+          cp all-schema.graphql appsync/all-schema.graphql
+          echo "GRAPHQL_DIRECTORY=appsync" >> $GITHUB_ENV
+          echo "SCHEMA_FILE_NAME=all-schema.graphql" >> $GITHUB_ENV
+      - name: Image Repository name
+        run: |
+          echo "IMAGE_REPO_NAME=${{ github.event.repository.name }}" >> $GITHUB_ENV
+
+      - name: Check if need to create Step Function Json
+        if: ${{env.stepfunction_found == 'true'}}
+        run: |
+          mkdir ${{env.WORKFLOW_DIRECTORY}}
+
+      - name: Make filterrun workflow JSON
+        if: ${{env.stepfunction_found == 'true'}}
+        run: |
+          mv ${{env.CDK_MODULE}}/src/aws_modules/StepFunction/make_fiterrun_workflow_json.py make_fiterrun_workflow_json.py
+          python3 make_fiterrun_workflow_json.py
+
+      - name: Grant permissions to all files
+        if: ${{env.graphql_found == 'true'}}
+        run: |
+          chmod -R 777 ./
+      # *****************PROJECT SPECIFIC ELEMENTS*****************
+      - name: Running cdk deploy
+        run: |
+          cdk deploy --all --require-approval never --force
+        working-directory: ${{env.CDK_MODULE}}
+
+      - name: Running timetream init DB
+        if: ${{inputs.timestream_init_db}}
+        run: |
+          python3 ${{inputs.timestream_init_db}}
+
+      - name: API Gateway url
+        if: ${{github.repository != 'pallcorporation/beer-application-deployment' || github.repository != 'pallcorporation/beer-aws-github-oidc-federation'}}
+        id: get_api_url
+        run: |
+          API_DOMAIN_URL=$((aws cloudformation --region ${{ env.AWS_REGION }} describe-stacks --stack-name ${{env.API_GATEWAY_STACK_ID}} --query 'Stacks[0].Outputs[?OutputKey==`${{env.API_GATEWAY_OUPUT_LOOKUP}}`].OutputValue' --output text) || (echo "Not found"))
+          echo "API_DOMAIN_URL_OUTPUT=${API_DOMAIN_URL}" >> $GITHUB_ENV
+
+      - name: API Gateway URL echo
+        if: ${{github.repository != 'pallcorporation/beer-application-deployment' || github.repository != 'pallcorporation/beer-aws-github-oidc-federation'}}
+        run: |
+          echo "${{ env.API_DOMAIN_URL_OUTPUT}} is the url"
