@@ -74,23 +74,23 @@ jobs:
         uses: actions/setup-node@v4
 
       - name: Branch if Dev
-        if: contains( github.ref, 'dev' )
+        # if: contains( github.ref, 'dev' )
         run: |
           echo "BRANCH_NAME=dev" >> $GITHUB_ENV
 
-      - name: Branch if Integration
-        if: contains( github.ref, 'integration' )
-        run: |
-          echo "BRANCH_NAME=integration" >> $GITHUB_ENV
+      # - name: Branch if Integration
+      #   if: contains( github.ref, 'integration' )
+      #   run: |
+      #     echo "BRANCH_NAME=integration" >> $GITHUB_ENV
 
-      - name: Branch if Main
-        run: |
-          echo "BRANCH_NAME=production" >> $GITHUB_ENV
+      # - name: Branch if Main
+      #   run: |
+      #     echo "BRANCH_NAME=production" >> $GITHUB_ENV
 
-      - name: Branch if BETA
-        if: contains( github.ref, 'beta' )
-        run: |
-          echo "BRANCH_NAME=beta" >> $GITHUB_ENV
+      # - name: Branch if BETA
+      #   if: contains( github.ref, 'beta' )
+      #   run: |
+      #     echo "BRANCH_NAME=beta" >> $GITHUB_ENV
 
       - name: Echo branch
         run: echo "${BRANCH_NAME} is the branch name to use in lookup"
