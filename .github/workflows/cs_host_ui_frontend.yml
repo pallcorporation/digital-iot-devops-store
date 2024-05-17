@@ -97,6 +97,11 @@ jobs:
       - name: Echo branch
         run: echo "${BRANCH_NAME} is the branch name to use in lookup"
 
+      - name: Build directory react
+        if: ${{inputs.build_project_type == 'react' }}
+        run: |
+          echo "BUILD_DIRECTORY=build" >> $GITHUB_ENV
+
       - name: Build directory echo
         run: echo $BUILD_DIRECTORY
       # Clone repositories prior to work
