@@ -112,7 +112,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.envPAT }}
-          repository: pallcorporation/coalescer-project-properties
+          repository: pallcorporation/beer-project-properties
           ref: main
           path: ${{env.PROJECT_FILES_DIRECTORY}}
 
