@@ -170,7 +170,6 @@ jobs:
           npm install --force
 
       - name: Create NX environment varibles file
-        if: ${{inputs.build_project_type == 'nx'}}
         run: |
           pip3 install boto3
           pip3 install jproperties
