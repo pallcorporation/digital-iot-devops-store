@@ -169,6 +169,15 @@ jobs:
         run: |
           npm install --force
 
+      - name: Create NX environment varibles file
+        if: ${{inputs.build_project_type == 'nx'}}
+        run: |
+          pip3 install boto3
+          pip3 install jproperties
+          mv .env .env_old
+          python3 ${{env.PROJECT_FILES_DIRECTORY}}/create_env_file.py
+          cat .env
+
       - name: Build react Frontend
         run: |
           npm run build
