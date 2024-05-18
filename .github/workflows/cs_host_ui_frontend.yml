@@ -169,7 +169,7 @@ jobs:
         run: |
           npm install --force
 
-      - name: Create NX environment varibles file
+      - name: Create React environment varibles file
         run: |
           pip3 install boto3
           pip3 install jproperties
