@@ -189,9 +189,9 @@ jobs:
           docker push $DOCKER_TAG_VERSION
           docker push $DOCKER_TAG_LATEST
 
-      - name: Deploy App runner
-        if: ${{inputs.app_runner == 'true'}}
-        run: |
-          pip3 install boto3
-          chmod 777 app_runner_deployment.py
-          python3 app_runner_deployment.py
+      # - name: Deploy App runner
+      #   if: ${{inputs.app_runner == 'true'}}
+      #   run: |
+      #     pip3 install boto3
+      #     chmod 777 app_runner_deployment.py
+      #     python3 app_runner_deployment.py
