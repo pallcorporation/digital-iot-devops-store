@@ -113,8 +113,8 @@ jobs:
       - name: Arn to use
         id: aws_assume_role
         run: |
-          echo "::set-output name=role_arn1::arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/hh-github-oidc-access-role"
-          echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/hh-github-oidc-access-role" >> $GITHUB_ENV
+          echo "::set-output name=role_arn1::arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/beer-github-oidc-access-role"
+          echo "AWS_ASSUME_ROLE=arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/beer-github-oidc-access-role" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@master
