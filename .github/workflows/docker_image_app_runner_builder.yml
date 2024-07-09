@@ -154,8 +154,9 @@ jobs:
         if: ${{github.event.repository.name == 'coalescer-api'}}
         run: |
           chmod 777 .env
-          cat .env
           cp .env src/.env
+          cp .env src/utilities/.env
+          cat src/utilities/.env
 
       - name: Image Repository name
         run: |
