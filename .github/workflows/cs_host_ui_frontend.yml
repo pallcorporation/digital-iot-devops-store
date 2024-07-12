@@ -167,12 +167,12 @@ jobs:
           role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # - name: Install Node dependency
-      #   run: |
-      #     npm ci
-      - name: Application dependency installation
+      - name: Install Node dependency
         run: |
-          npm install --force
+          npm ci
+      # - name: Application dependency installation
+      #   run: |
+      #     npm install --force
 
       - name: Create React environment varibles file
         run: |
