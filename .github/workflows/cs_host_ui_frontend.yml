@@ -74,6 +74,8 @@ jobs:
         # Node installation (if required)
       - name: Setup node.js environment
         uses: actions/setup-node@v4
+        with:
+          node-version: "21.7.1"
 
       - name: Branch if Dev
         # if: contains( github.ref, 'dev' )
@@ -165,9 +167,12 @@ jobs:
           role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Application dependency installation
+      - name: Install Node dependency
         run: |
-          npm install --force
+          npm ci
+      # - name: Application dependency installation
+      #   run: |
+      #     npm install --force
 
       - name: Create React environment varibles file
         run: |
