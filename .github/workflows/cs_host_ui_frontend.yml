@@ -181,7 +181,7 @@ jobs:
           if [ -f .env ]; then
             rm .env
           fi
-          python3 ${{env.PROJECT_FILES_DIRECTORY}}/create_env_file.py
+          python3 create_env_file.py
           cat .env
           chmod 755 .env
           ls
