@@ -1,0 +1,150 @@
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  #push:
+  #  branches:
+  #    - dev
+  #    - integration
+  workflow_call:
+    inputs:
+      config_files_directory:
+        required: true
+        type: string
+
+      test_directory:
+        required: true
+        type: string
+
+    secrets:
+      envPAT:
+        required: true
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+env:
+  #BUCKET_NAME : "github-oidc-test-mitch"
+  AWS_REGION: "us-east-1"
+  PROJECT_FILES_GIT: "coalescer-project-properties.git"
+  ORGANIZATION: "pallcorporation"
+  PROJECT_FILES_NAME: "project.properties"
+  PROJECT_FILES_DIRECTORY: "coalescer-project-properties"
+  CDK_MODULE: "cdk_checkedout"
+  DEVOPS_STORE: "devops_store"
+
+permissions:
+  id-token: write
+  contents: read # This is required for actions/checkout@v1
+  packages: write
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  AWS-CDK-Deployment:
+    if: (github.repository != 'pallcorporation/digital-iot-devops-store')
+    runs-on: ubuntu-latest
+
+    steps:
+      # Get current time stamp to use as reference elsewhere
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y%m%dT%H%M%S')" >> $GITHUB_ENV
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+        # Node installation (if required)
+      - name: Setup node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: "21.7.1"
+
+      - name: Branch if Dev
+        run: |
+          echo "BRANCH_NAME=dev" >> $GITHUB_ENV
+
+      - name: Echo branch
+        run: echo "${BRANCH_NAME} is the branch name to use in lookup"
+
+      - name: Build directory react
+        if: ${{inputs.build_project_type == 'react' }}
+        run: |
+          echo "BUILD_DIRECTORY=build" >> $GITHUB_ENV
+
+      - name: Build directory echo
+        run: echo $BUILD_DIRECTORY
+      # Clone repositories prior to work
+
+      - name: Make project files directory
+        run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
+
+      - name: Make cdk directory
+        run: mkdir ${{env.CDK_MODULE}}
+
+      - name: Make devops store directory
+        run: mkdir ${{env.DEVOPS_STORE}}
+
+      - name: Project files clone
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/coalescer-project-properties
+          ref: main
+          path: ${{env.PROJECT_FILES_DIRECTORY}}
+
+      - name: CDK Modules clone
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.envPAT }}
+          repository: pallcorporation/digital-iot-devops-cdk-modules
+          ref: main
+          path: ${{env.CDK_MODULE}}
+
+      # Grant permissions to all files in directory
+      - name: Grant permissions to all files
+        run: chmod -R 755 ./
+
+      # Read of project files and set to variables
+      - name: Get project constants from project.properties repo
+        id: project_constants
+        run: |
+          account_id="`grep aws_${BRANCH_NAME}_account ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "AWS_ENVIRONMENT=${account_id}" >> $GITHUB_ENV
+
+          oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
+          echo "OIDC_ROLE_NAME=${oidc_role_name}" >> $GITHUB_ENV
+        working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
+
+      - name: Copy cdk config files
+        run: |
+          rm -r ${{env.CDK_MODULE}}/config_files/*
+          cp -a ${{inputs.config_files_directory}}/. ${{env.CDK_MODULE}}/config_files/
+          cp -a ${{env.PROJECT_FILES_DIRECTORY}}/. ${{env.CDK_MODULE}}/
+
+      # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS
+      - name: Arn to use
+        id: aws_assume_role
+        run: |
+          echo "OIDC_ROLE_ARN=arn:aws:iam::${{ env.AWS_ENVIRONMENT }}:role/${{ env.OIDC_ROLE_NAME}}" >> $GITHUB_ENV
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: ${{env.OIDC_ROLE_ARN}}
+          role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip  
+          if [ -f src/requirements.txt ]; then pip install -r src/requirements.txt; fi
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.12"
+
+      # run pytest for every file in the test directory if test directory exists
+      - name: Run Coalescer API Pytests
+        run: |
+          if [ -d ${{inputs.test_directory}} ]; then pytest ${{inputs.test_directory}}; fi
