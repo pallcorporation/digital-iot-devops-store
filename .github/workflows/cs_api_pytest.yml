@@ -102,8 +102,30 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: "3.12"
+      - name: Install code coverage
+        run: pip install coverage
 
       # run pytest for every file in the test directory if test directory exists
-      - name: Run Coalescer API Pytests
+      - name: Run Coalescer API Pytests with Coverage
         run: |
-          if [ -d ${{inputs.test_directory}} ]; then pytest ${{inputs.test_directory}}; fi
+          if [ -d ${{inputs.test_directory}} ]; then
+            coverage run -m pytest ${{inputs.test_directory}}
+            coverage report --fail-under=90
+            coverage xml -o coverage.xml
+            coverage html -o htmlcov
+          fi
+      - name: Upload Coverage XML
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+      - name: Upload HTML Coverage Report
+        uses: actions/upload-artifact@v2
+        with:
+          name: html-coverage-report
+          path: htmlcov/
+      # - name: Upload coverage report to GitHub
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: coverage-report
