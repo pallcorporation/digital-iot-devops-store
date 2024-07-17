@@ -30,8 +30,6 @@ env:
   ORGANIZATION: "pallcorporation"
   PROJECT_FILES_NAME: "project.properties"
   PROJECT_FILES_DIRECTORY: "coalescer-project-properties"
-  CDK_MODULE: "cdk_checkedout"
-  DEVOPS_STORE: "devops_store"
 
 permissions:
   id-token: write
@@ -40,7 +38,7 @@ permissions:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  AWS-CDK-Deployment:
+  Python-Unit-Tests:
     if: (github.repository != 'pallcorporation/digital-iot-devops-store')
     runs-on: ubuntu-latest
 
@@ -53,12 +51,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-        # Node installation (if required)
-      - name: Setup node.js environment
-        uses: actions/setup-node@v4
-        with:
-          node-version: "21.7.1"
-
       - name: Branch if Dev
         run: |
           echo "BRANCH_NAME=dev" >> $GITHUB_ENV
@@ -66,23 +58,8 @@ jobs:
       - name: Echo branch
         run: echo "${BRANCH_NAME} is the branch name to use in lookup"
 
-      - name: Build directory react
-        if: ${{inputs.build_project_type == 'react' }}
-        run: |
-          echo "BUILD_DIRECTORY=build" >> $GITHUB_ENV
-
-      - name: Build directory echo
-        run: echo $BUILD_DIRECTORY
-      # Clone repositories prior to work
-
       - name: Make project files directory
         run: mkdir ${{env.PROJECT_FILES_DIRECTORY}}
-
-      - name: Make cdk directory
-        run: mkdir ${{env.CDK_MODULE}}
-
-      - name: Make devops store directory
-        run: mkdir ${{env.DEVOPS_STORE}}
 
       - name: Project files clone
         uses: actions/checkout@v3
@@ -91,14 +68,6 @@ jobs:
           repository: pallcorporation/coalescer-project-properties
           ref: main
           path: ${{env.PROJECT_FILES_DIRECTORY}}
-
-      - name: CDK Modules clone
-        uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.envPAT }}
-          repository: pallcorporation/digital-iot-devops-cdk-modules
-          ref: main
-          path: ${{env.CDK_MODULE}}
 
       # Grant permissions to all files in directory
       - name: Grant permissions to all files
@@ -114,12 +83,6 @@ jobs:
           oidc_role_name="`grep aws_${BRANCH_NAME}_oidc_role_name ${{env.PROJECT_FILES_NAME}}|cut -d'=' -f2`"
           echo "OIDC_ROLE_NAME=${oidc_role_name}" >> $GITHUB_ENV
         working-directory: ${{env.PROJECT_FILES_DIRECTORY}}
-
-      - name: Copy cdk config files
-        run: |
-          rm -r ${{env.CDK_MODULE}}/config_files/*
-          cp -a ${{inputs.config_files_directory}}/. ${{env.CDK_MODULE}}/config_files/
-          cp -a ${{env.PROJECT_FILES_DIRECTORY}}/. ${{env.CDK_MODULE}}/
 
       # Role that will be used for OIDC. This is the role this session will assume when connecting to AWS
       - name: Arn to use
