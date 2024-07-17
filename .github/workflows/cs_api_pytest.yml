@@ -103,7 +103,9 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install code coverage
-        run: pip install coverage
+        run: |
+          pip install coverage
+          pip install pytest
 
       # run pytest for every file in the test directory if test directory exists
       - name: Run Coalescer API Pytests with Coverage
