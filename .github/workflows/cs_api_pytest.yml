@@ -9,10 +9,6 @@ on:
   #    - integration
   workflow_call:
     inputs:
-      config_files_directory:
-        required: true
-        type: string
-
       test_directory:
         required: true
         type: string
