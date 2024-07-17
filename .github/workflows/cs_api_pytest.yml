@@ -93,15 +93,15 @@ jobs:
           role-session-name: ${{ github.event.repository.name }}-${{ env.date }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip  
-          if [ -f src/requirements.txt ]; then pip install -r src/requirements.txt; fi
-
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
           python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip  
+          if [ -f src/requirements.txt ]; then pip install -r src/requirements.txt; fi
 
       # run pytest for every file in the test directory if test directory exists
       - name: Run Coalescer API Pytests
@@ -111,5 +111,7 @@ jobs:
       - name: Coverage details
         run: |
           pip install coverage
+          pip install pytest
+          pip install -r src/requirements.txt
           coverage run -m pytest ${{inputs.test_directory}}
           coverage report -m --fail-under=90
