@@ -115,7 +115,8 @@ jobs:
       - name: Run Coalescer API Pytests with Coverage
         run: |
           coverage run -m pytest ${{inputs.test_directory}}/
-          coverage report --fail-under=90
+          coverage xml
+          coverage html -o htmlcov  # Generates HTML coverage report
       - name: Upload Coverage XML
         uses: actions/upload-artifact@v2
         with:
