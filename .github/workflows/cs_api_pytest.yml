@@ -108,14 +108,14 @@ jobs:
           pip install pytest
 
       # run pytest for every file in the test directory if test directory exists
+      - name: Run Coalescer API Pytests
+        run: |
+          pytest ${{inputs.test_directory}}/
+
       - name: Run Coalescer API Pytests with Coverage
         run: |
-          if [ -d ${{inputs.test_directory}} ]; then
-            coverage run -m pytest ${{inputs.test_directory}}
-            coverage report --fail-under=90
-            coverage xml -o coverage.xml
-            coverage html -o htmlcov
-          fi
+          coverage run -m pytest ${{inputs.test_directory}}/
+          coverage report --fail-under=90
       - name: Upload Coverage XML
         uses: actions/upload-artifact@v2
         with:
