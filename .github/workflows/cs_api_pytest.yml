@@ -103,6 +103,14 @@ jobs:
           python -m pip install --upgrade pip  
           if [ -f src/requirements.txt ]; then pip install -r src/requirements.txt; fi
 
+      - name: Inject secrets into docker build if coalescer-api
+        if: ${{github.event.repository.name == 'coalescer-api'}}
+        run: |
+          pip3 install boto3
+          ls
+          chmod 777 retrieve_secrets.py
+          python3 retrieve_secrets.py
+
       # run pytest for every file in the test directory if test directory exists
       - name: Run Coalescer API Pytests
         run: |
