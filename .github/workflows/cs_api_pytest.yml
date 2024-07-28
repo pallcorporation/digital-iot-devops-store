@@ -116,8 +116,8 @@ jobs:
         run: |
           if [ -d ${{inputs.test_directory}} ]; then pytest ${{inputs.test_directory}}; fi
 
-      # - name: Coverage details
-      #   run: |
-      #     pip install coverage
-      #     coverage run -m pytest ${{inputs.test_directory}}
-      #     coverage report -m --fail-under=96
+      - name: Coverage details
+        run: |
+          pip install coverage
+          coverage run -m pytest ${{inputs.test_directory}}
+          coverage report -m --fail-under=96
