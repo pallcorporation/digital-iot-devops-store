@@ -295,7 +295,7 @@ jobs:
       #     python3 retrieve_secrets.py
 
       - name: Remove requirements.txt and Dockerfile if they exist
-        if: ${{github.event.repository.name != 'beer-be-web-push' && github.event.repository.name !='beer-be-api-design'}}
+        if: ${{github.event.repository.name != 'beer-be-web-push' && github.event.repository.name !='beer-be-api-design' && github.event.repository.name != 'beer-be-report-pipeline-renderer'}}
         run: |
           [ -f requirements.txt ] && rm requirements.txt || echo "requirements.txt does not exist."           
           [ -f Dockerfile ] && rm Dockerfile || echo "Dockerfile does not exist."
@@ -309,7 +309,7 @@ jobs:
           path: ${{env.PROJECT_FILES_DIRECTORY}}
 
       - name: Copy Pipfile
-        if: ${{ github.event.repository.name !='beer-be-api-design'}}
+        if: ${{ github.event.repository.name !='beer-be-api-design' || github.event.repository.name != 'beer-be-report-pipeline-renderer' }}
         run: |
           chmod 777 ${{env.PROJECT_FILES_DIRECTORY}}/Pipfile
           chmod 777 ${{env.PROJECT_FILES_DIRECTORY}}/Pipfile.lock
@@ -317,7 +317,7 @@ jobs:
           cp ${{env.PROJECT_FILES_DIRECTORY}}/Pipfile.lock src/
 
       - name: Copy DockerFile
-        if: ${{github.event.repository.name != 'beer-be-web-push' && github.event.repository.name !='beer-be-api-design' && inputs.override_dockerfile == true}}
+        if: ${{github.event.repository.name != 'beer-be-web-push' && github.event.repository.name !='beer-be-api-design' && github.event.repository.name != 'beer-be-report-pipeline-renderer' && inputs.override_dockerfile == true}}
         run: |
           cp ${{env.PROJECT_FILES_DIRECTORY}}/Dockerfile .
           chmod 777 Dockerfile
@@ -327,8 +327,8 @@ jobs:
         run: |
           cp ${{env.PROJECT_FILES_DIRECTORY}}/nodejs/Dockerfile .
           chmod 777 Dockerfile
-      - name: Copy DockerFile (If API documentation)
-        if: ${{github.event.repository.name =='beer-be-api-design' }}
+      - name: Copy DockerFile (If API documentation & Pipeline Renderer)
+        if: ${{github.event.repository.name =='beer-be-api-design' || github.event.repository.name == 'beer-be-report-pipeline-renderer' }}
         run: |
           chmod 777 Dockerfile
       - name: Build Docker images
