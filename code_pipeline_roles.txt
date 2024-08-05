@@ -1,0 +1,194 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: Pall AWS R&D IoT Pipeline Roles - for multiple environments
+
+Parameters:
+  pGroupId:
+    Description: Group Id
+    Type: String
+    Default: rd
+    AllowedPattern: "^[a-zA-Z0-9-]+$"
+  pApplicationId:
+    Description: Application Identifier
+    Type: String
+    Default: iot
+    AllowedPattern: "^[a-zA-Z0-9-]+$"
+  pCfnVersionNumber:
+    Description: Cloudformation Sequence Number
+    Type: String
+    Default: 1
+    AllowedPattern: "^[0-9]+$"
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Service Identifiers"
+        Parameters:
+          - pGroupId
+          - pApplicationId
+          - pCfnVersionNumber
+
+Resources:
+  RdIotCodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - !Sub codebuild.${AWS::Region}.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: CodeBuildServiceRole
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Effect: Allow
+                Resource:
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*"
+              - Action:
+                  - "s3:PutObject"
+                  - "s3:GetObject"
+                  - "s3:GetObjectVersion"
+                  - "s3:GetBucketAcl"
+                  - "s3:GetBucketLocation"
+                  - "s3:ListBucket"
+                  - "s3:DeleteObject"
+                Effect: Allow
+                Resource:
+                  - !Sub "arn:aws:s3:::codepipeline-${AWS::Region}-*"
+                  - !Sub "arn:aws:s3:::com-pall-${AWS::Region}-*"
+                  - !Sub "arn:aws:s3:::com-pall-${AWS::Region}-*/*"
+
+  RdIotCodePipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: CodePipelineS3Access
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Action:
+                  - "s3:PutObject"
+                  - "s3:GetObject"
+                  - "s3:ListBucket"
+                  - "s3:DeleteObject"
+                Effect: Allow
+                Resource:
+                  - !Sub "arn:aws:s3:::com-pall-${AWS::Region}-*"
+                  - !Sub "arn:aws:s3:::com-pall-${AWS::Region}-*/*"
+        - PolicyName: CodePipelineCodeCommitAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Action:
+                  - "codecommit:BatchGetRepositories"
+                  - "codecommit:Get*"
+                  - "codecommit:List*"
+                  - "codecommit:GitPull"
+                  - "codecommit:UploadArchive"
+                Effect: Allow
+                Resource: "*"
+        - PolicyName: CodePipelineCodeBuildAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Action:
+                  - "codebuild:StartBuild"
+                  - "codebuild:BatchGetBuilds"
+                Effect: Allow
+                Resource: !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/*"
+        - PolicyName: CodePipelineCloudformationAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Action:
+                  - "cloudformation:DescribeStacks"
+                  - "cloudformation:CreateStack"
+                Effect: Allow
+                Resource: "*"
+              - Action:
+                  - "cloudformation:DeleteStack"
+                  - "cloudformation:UpdateStack"
+                  - "cloudformation:DescribeChangeSet"
+                  - "cloudformation:CreateChangeSet"
+                  - "cloudformation:ExecuteChangeSet"
+                  - "cloudformation:DeleteChangeSet"
+                  - "cloudformation:SetStackPolicy"
+                Effect: Allow
+                Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/*"
+        - PolicyName: CodePipelineIamAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Action:
+                  - "iam:PassRole"
+                Effect: Allow
+                Resource: "*"
+
+  RdIotPipelineCfnRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: ["sts:AssumeRole"]
+            Effect: Allow
+            Principal:
+              Service: [cloudformation.amazonaws.com]
+        Version: "2012-10-17"
+      Path: /
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/PowerUserAccess"
+      Policies:
+        - PolicyName: CfnIamAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Action:
+                  - "iam:GetRole"
+                  - "iam:PassRole"
+                Effect: Allow
+                Resource: "*"
+              - Action:
+                  - "iam:PutRolePolicy"
+                  - "iam:AttachRolePolicy"
+                  - "iam:DetachRolePolicy"
+                  - "iam:DeleteRolePolicy"
+                  - "iam:UpdateAssumeRolePolicy"
+                  - "iam:CreateRole"
+                  - "iam:DeleteRole"
+                Effect: Allow
+                Resource: !Sub "arn:aws:iam::${AWS::AccountId}:role/*"
+
+Outputs:
+  RdIotCodeBuildRole:
+    Value: !GetAtt RdIotCodeBuildRole.Arn
+    Export:
+      Name: !Sub ${pGroupId}-${pApplicationId}-codebuild-role-arn-${pCfnVersionNumber}
+  RdIotCodePipelineRole:
+    Value: !GetAtt RdIotCodePipelineRole.Arn
+    Export:
+      Name: !Sub ${pGroupId}-${pApplicationId}-codepipeline-role-arn-${pCfnVersionNumber}
+  RdIotPipelineCfnRole:
+    Value: !GetAtt RdIotPipelineCfnRole.Arn
+    Export:
+      Name: !Sub ${pGroupId}-${pApplicationId}-pipeline-cfn-role-arn-${pCfnVersionNumber}
